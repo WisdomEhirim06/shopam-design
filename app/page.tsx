@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -28,19 +29,19 @@ export default function LandingPage() {
       id: 1,
       title: 'Shopping Never Gets Stressful with ShopAm',
       subtitle: 'Discover amazing products from trusted vendors',
-      image: '/api/placeholder/1200/600',
+      image: '/images/hero-1.png', // Your first image
     },
     {
       id: 2,
       title: 'Everything You Need in One Place',
       subtitle: 'Browse thousands of products across all categories',
-      image: '/api/placeholder/1200/600',
+      image: '/images/hero-2.png', // Your second image
     },
     {
       id: 3,
       title: 'Connect with Local Vendors',
       subtitle: 'Support Nigerian businesses and get the best deals',
-      image: '/api/placeholder/1200/600',
+      image: '/images/hero-3.png', // Your third image
     },
   ];
 
@@ -145,8 +146,7 @@ export default function LandingPage() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center">
-                <img src="./public/shopam-logo.png" />
-                
+                <img src="/images/shopam-logo.png" alt="ShopAm Logo" />
               </div>
               <span className="text-2xl font-bold text-gray-900">ShopAm</span>
             </Link>
@@ -255,11 +255,39 @@ export default function LandingPage() {
               transition={{ duration: 0.5 }}
               className="absolute inset-0"
             >
-              {/* Background Image with Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-[#FA3728] to-[#E31B23]">
-                <div className="absolute inset-0 bg-black/40"></div>
+              {/* Background with Creative Image Integration */}
+              <div className="absolute inset-0">
+                {/* Red Gradient Base */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#FA3728] to-[#E31B23]"></div>
+                
+                {/* Creative Diagonal Split Image */}
+                <div className="absolute inset-0 overflow-hidden">
+                  {/* Image with diagonal clip-path */}
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{
+                      backgroundImage: `url(${heroImages[currentSlide].image})`,
+                      clipPath: 'polygon(60% 0, 100% 0, 100% 100%, 40% 100%)',
+                      opacity: 0.3,
+                    }}
+                  ></div>
+                  
+                  {/* Additional creative overlay effect */}
+                  <div 
+                    className="absolute right-0 top-0 bottom-0 w-1/2 bg-cover bg-center mix-blend-overlay"
+                    style={{
+                      backgroundImage: `url(${heroImages[currentSlide].image})`,
+                      opacity: 0.2,
+                    }}
+                  ></div>
+                </div>
+                
+                {/* Dark Gradient Overlay for readability */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-transparent"></div>
+                
+                {/* Pattern Overlay */}
                 <div
-                  className="absolute inset-0 opacity-20"
+                  className="absolute inset-0 opacity-10"
                   style={{
                     backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
                   }}
@@ -497,7 +525,7 @@ export default function LandingPage() {
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center">
-                  <img src="/public/shopam-logo.png" />
+                  <span className="text-white font-bold">S</span>
                 </div>
                 <span className="text-xl font-bold">ShopAm</span>
               </div>
