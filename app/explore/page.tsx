@@ -431,7 +431,7 @@ export default function ExplorePage() {
                   {/* Badges */}
                   <div className="absolute top-2 left-2 flex flex-col gap-1">
                     {product.discount && (
-                      <span className="px-2 py-1 bg-[#FA3728] text-white text-xs font-bold rounded">
+                      <span className="px-2 py-1 bg-[#FA3728] backdrop-blur-sm rounded-full text-xs font-semibold text-white flex items-center gap-1">
                         -{product.discount}%
                       </span>
                     )}

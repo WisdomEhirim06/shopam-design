@@ -263,92 +263,64 @@ export default function VendorsPage() {
             found
           </p>
 
-          {/* Vendors Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Vendors Grid - SIMPLIFIED */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredVendors.map((vendor, index) => (
               <motion.div
                 key={vendor.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all"
+                className="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all border border-gray-100"
               >
-                {/* Cover Image */}
-                <div className="relative h-32 bg-gradient-to-r from-[#FA3728] to-[#E31B23]">
-                  <div className="absolute inset-0 opacity-20 bg-[url('/api/placeholder/600/200')]"></div>
-                </div>
-
-                {/* Vendor Info */}
-                <div className="relative px-6 pb-6">
+                {/* Vendor Picture & Name */}
+                <div className="flex items-start gap-4 mb-4">
                   {/* Avatar */}
-                  <div className="relative -mt-12 mb-4">
-                    <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                  <div className="relative flex-shrink-0">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center text-white text-2xl font-bold shadow-md">
                       {vendor.name[0]}
                     </div>
                     {vendor.verified && (
-                      <div className="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
-                        <CheckCircle size={16} className="text-white fill-white" />
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                        <CheckCircle size={12} className="text-white fill-white" />
                       </div>
                     )}
                   </div>
 
-                  {/* Name & Bio */}
-                  <Link href={`/vendors/${vendor.id}`}>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 hover:text-[#FA3728] transition-colors">
-                      {vendor.name}
-                    </h3>
-                  </Link>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{vendor.bio}</p>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-gray-900">{vendor.followers.toLocaleString()}</p>
-                      <p className="text-xs text-gray-600">Followers</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-gray-900">{vendor.products}</p>
-                      <p className="text-xs text-gray-600">Products</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-gray-900">{vendor.rating}</p>
-                      <p className="text-xs text-gray-600">Rating</p>
-                    </div>
-                  </div>
-
-                  {/* Details */}
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin size={14} className="text-[#FA3728]" />
-                      <span>{vendor.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Star size={14} className="text-amber-400 fill-amber-400" />
-                      <span>
-                        {vendor.rating} ({vendor.reviews} reviews)
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleFollow(vendor.id)}
-                      className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all ${
-                        followedVendors.includes(vendor.id)
-                          ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                          : 'bg-[#FA3728] text-white hover:bg-[#E31B23]'
-                      }`}
-                    >
-                      {followedVendors.includes(vendor.id) ? 'Following' : 'Follow'}
-                    </button>
-                    <Link
-                      href={`/vendors/${vendor.id}`}
-                      className="px-4 py-2 border border-gray-200 rounded-lg font-semibold text-gray-700 hover:border-[#FA3728] hover:text-[#FA3728] transition-all"
-                    >
-                      View Shop
+                  {/* Name */}
+                  <div className="flex-1 min-w-0">
+                    <Link href={`/vendors/${vendor.id}`}>
+                      <h3 className="text-lg font-bold text-gray-900 hover:text-[#FA3728] transition-colors truncate">
+                        {vendor.name}
+                      </h3>
                     </Link>
+                    <p className="text-sm text-gray-500">{vendor.category}</p>
                   </div>
+                </div>
+
+                {/* Description */}
+                <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+                  {vendor.bio}
+                </p>
+
+                {/* Actions - Two Buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleFollow(vendor.id)}
+                    className={`flex-1 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+                      followedVendors.includes(vendor.id)
+                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-[#FA3728] text-white hover:bg-[#E31B23] shadow-sm'
+                    }`}
+                  >
+                    {followedVendors.includes(vendor.id) ? 'Following' : 'Follow'}
+                  </button>
+                  <Link
+                    href={`/vendors/${vendor.id}`}
+                    className="flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-lg font-semibold text-sm text-gray-700 hover:border-[#FA3728] hover:text-[#FA3728] transition-all text-center"
+                  >
+                    View Shop
+                  </Link>
                 </div>
               </motion.div>
             ))}

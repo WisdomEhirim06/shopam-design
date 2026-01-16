@@ -59,6 +59,7 @@ export default function ProfilePage() {
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [expandedPosts, setExpandedPosts] = useState<string[]>([]);
   
   // Form state for create/edit post
   const [postForm, setPostForm] = useState({
@@ -93,7 +94,7 @@ export default function ProfilePage() {
     {
       id: '1',
       image: '/api/placeholder/400/400',
-      caption: 'New African print dress collection! 🔥',
+      caption: 'New African print dress collection! 🔥 These stunning pieces celebrate African heritage with vibrant patterns and modern cuts. Perfect for any special occasion or everyday wear. Limited stock available!',
       likes: 234,
       comments: 45,
       views: 1200,
@@ -252,7 +253,6 @@ export default function ProfilePage() {
 
   const handleDeletePost = (postId: string) => {
     setPosts(posts.filter((p) => p.id !== postId));
-    // TODO: API call - DELETE /api/vendor/posts/:id
   };
 
   const handleEditPost = (post: Post) => {
@@ -266,7 +266,7 @@ export default function ProfilePage() {
     setShowEditPost(true);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -308,7 +308,6 @@ export default function ProfilePage() {
     setPosts([newPost, ...posts]);
     setShowCreatePost(false);
     resetPostForm();
-    // TODO: API call - POST /api/vendor/posts
   };
 
   const handleUpdatePost = () => {
@@ -328,7 +327,6 @@ export default function ProfilePage() {
     setPosts(updatedPosts);
     setShowEditPost(false);
     resetPostForm();
-    // TODO: API call - PUT /api/vendor/posts/:id
   };
 
   const handleViewProduct = (product: Product) => {
@@ -488,7 +486,7 @@ export default function ProfilePage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
           >
             {posts.map((post, index) => (
               <motion.div
@@ -496,59 +494,93 @@ export default function ProfilePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="theme-card rounded-xl overflow-hidden group cursor-pointer hover:scale-[1.02] transition-transform"
+                className="theme-card rounded-xl overflow-hidden group cursor-pointer hover:scale-[1.01] transition-transform"
               >
                 {/* Post Image */}
-                <div className="relative aspect-square bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
+                <div className="relative aspect-[4/3] bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-crimson/20 to-shopam/20"></div>
                   
                   {/* Overlay on hover */}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6">
-                    <div className="flex items-center gap-2 text-white">
-                      <Heart size={24} />
-                      <span className="font-semibold">{post.likes}</span>
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                    <div className="flex items-center gap-1.5 text-white">
+                      <Heart size={20} />
+                      <span className="font-semibold text-sm">{post.likes}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-white">
-                      <MessageCircle size={24} />
-                      <span className="font-semibold">{post.comments}</span>
+                    <div className="flex items-center gap-1.5 text-white">
+                      <MessageCircle size={20} />
+                      <span className="font-semibold text-sm">{post.comments}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-white">
-                      <Eye size={24} />
-                      <span className="font-semibold">{post.views}</span>
+                    <div className="flex items-center gap-1.5 text-white">
+                      <Eye size={20} />
+                      <span className="font-semibold text-sm">{post.views}</span>
                     </div>
                   </div>
 
                   {/* Action buttons */}
-                  <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleEditPost(post);
                       }}
-                      className="p-2 bg-white/90 rounded-lg hover:bg-white transition-colors"
+                      className="p-1.5 bg-white/90 rounded-lg hover:bg-white transition-colors"
                     >
-                      <Edit3 size={16} className="text-gray-800" />
+                      <Edit3 size={14} className="text-gray-800" />
                     </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeletePost(post.id);
                       }}
-                      className="p-2 bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+                      className="p-1.5 bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
                     >
-                      <Trash2 size={16} className="text-white" />
+                      <Trash2 size={14} className="text-white" />
                     </button>
                   </div>
                 </div>
 
                 {/* Post Info */}
-                <div className="p-4">
-                  <p className="theme-text-primary mb-2 line-clamp-2">{post.caption}</p>
-                  <div className="flex items-center justify-between text-sm theme-text-secondary">
+                <div className="p-3">
+                  <div className="theme-text-primary mb-2 text-sm">
+                    {expandedPosts.includes(post.id) ? (
+                      <>
+                        {post.caption}{' '}
+                        {post.caption.length > 80 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedPosts(expandedPosts.filter((id) => id !== post.id));
+                            }}
+                            className="text-gray-500 hover:text-gray-700 font-medium"
+                          >
+                            see less
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {post.caption.length > 80
+                          ? `${post.caption.substring(0, 80)}... `
+                          : post.caption}
+                        {post.caption.length > 80 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedPosts([...expandedPosts, post.id]);
+                            }}
+                            className="text-gray-500 hover:text-gray-700 font-medium"
+                          >
+                            more
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between text-xs theme-text-secondary">
                     <span>{new Date(post.date).toLocaleDateString()}</span>
-                    <div className="flex gap-2">
-                      {post.tags.map((tag) => (
-                        <span key={tag} className="px-2 py-1 rounded text-xs" style={{ backgroundColor: 'var(--primary-red-light)', color: 'var(--primary-red)' }}>
+                    <div className="flex gap-1.5">
+                      {post.tags.slice(0, 2).map((tag) => (
+                        <span key={tag} className="px-1.5 py-0.5 rounded text-[10px]" style={{ backgroundColor: 'var(--primary-red-light)', color: 'var(--primary-red)' }}>
                           #{tag}
                         </span>
                       ))}
@@ -567,7 +599,7 @@ export default function ProfilePage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
           >
             {products.map((product, index) => (
               <motion.div
@@ -575,42 +607,49 @@ export default function ProfilePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="theme-card rounded-xl overflow-hidden hover:shadow-xl transition-all group"
+                className="theme-card rounded-xl overflow-hidden hover:shadow-lg transition-all group"
               >
                 <div className="relative aspect-square bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-crimson/10 to-shopam/10"></div>
-                  <div className="absolute top-3 right-3">
-                    <span className="px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full">
-                      {product.stock} in stock
+                  <div className="absolute top-2 right-2">
+                    <span className="px-2 py-1 bg-green-500 text-white text-[10px] font-semibold rounded-full">
+                      {product.stock} left
                     </span>
                   </div>
                 </div>
 
-                <div className="p-4">
-                  <h3 className="font-semibold theme-text-primary mb-2 line-clamp-1">{product.name}</h3>
+                <div className="p-3">
+                  <h3 className="font-semibold theme-text-primary mb-1 line-clamp-1 text-sm">{product.name}</h3>
                   
                   <div className="flex items-center gap-1 mb-2">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        size={14}
+                        size={12}
                         className={i < Math.floor(product.rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-600'}
                       />
                     ))}
-                    <span className="text-sm theme-text-secondary ml-1">
+                    <span className="text-xs theme-text-secondary ml-1">
                       ({product.reviews})
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-2xl font-bold theme-red">₦{product.price.toLocaleString()}</p>
-                    <span className="text-sm theme-text-secondary">{product.sales} sold</span>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-sm" style={{ color: 'var(--primary-red)' }}>
+                      ₦{product.price.toLocaleString()}
+                    </span>
+                    <span className="text-xs theme-text-secondary">
+                      {product.sales} sold
+                    </span>
                   </div>
 
                   <button
                     onClick={() => handleViewProduct(product)}
-                    className="w-full py-2 rounded-lg font-medium transition-all theme-card hover:border-primary border"
-                    style={{ borderColor: 'var(--border-primary)', color: 'var(--primary-red)' }}
+                    className="w-full py-1.5 rounded-lg text-xs font-semibold transition-all"
+                    style={{
+                      backgroundColor: 'var(--primary-red)',
+                      color: 'white',
+                    }}
                   >
                     View Details
                   </button>
@@ -752,7 +791,7 @@ export default function ProfilePage() {
                     ref={createPostFileRef}
                     type="file"
                     accept="image/*"
-                    onChange={(e) => handleFileChange(e)}
+                    onChange={handleFileChange}
                     className="hidden"
                   />
                   <div
@@ -880,7 +919,7 @@ export default function ProfilePage() {
                     ref={editPostFileRef}
                     type="file"
                     accept="image/*"
-                    onChange={(e) => handleFileChange(e, true)}
+                    onChange={handleFileChange}
                     className="hidden"
                   />
                   <div

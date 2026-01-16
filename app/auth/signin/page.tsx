@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -33,7 +34,7 @@ export default function VendorSignInPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Brand Section */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden" style={{ backgroundColor: 'var(--primary-red)' }}>
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden" style={{ backgroundColor: 'crimson' }}>
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -41,23 +42,10 @@ export default function VendorSignInPage() {
           }}></div>
         </div>
 
-        {/* Content */}
-        <div className="relative z-10 flex flex-col justify-between p-12 text-white">
-          {/* Logo */}
-          <div>
-            <Link href="/auth" className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
-                <span className="font-bold text-2xl" style={{ color: 'var(--primary-red)' }}>SA</span>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold">ShopAm</h1>
-                <p className="text-sm opacity-90">Vendor Dashboard</p>
-              </div>
-            </Link>
-          </div>
-
+        {/* Content - CENTERED */}
+        <div className="relative z-10 flex flex-col justify-center items-center text-center p-12 text-white w-full">
           {/* Main Content */}
-          <div className="space-y-8">
+          <div className="space-y-8 max-w-md">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -66,7 +54,7 @@ export default function VendorSignInPage() {
               <h2 className="text-5xl font-bold mb-4 leading-tight">
                 Welcome Back!
               </h2>
-              <p className="text-2xl opacity-90 font-light">
+              <p className="text-xl opacity-90 font-light">
                 Sign in to manage your store
               </p>
             </motion.div>
@@ -76,7 +64,7 @@ export default function VendorSignInPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="grid grid-cols-2 gap-6"
+              className="grid grid-cols-2 gap-4"
             >
               {[
                 { value: '10,000+', label: 'Active Vendors' },
@@ -85,15 +73,26 @@ export default function VendorSignInPage() {
                 { value: '24/7', label: 'Support' },
               ].map((stat, index) => (
                 <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <p className="text-3xl font-bold mb-1">{stat.value}</p>
-                  <p className="text-sm opacity-90">{stat.label}</p>
+                  <p className="text-2xl font-bold mb-1">{stat.value}</p>
+                  <p className="text-xs opacity-90">{stat.label}</p>
                 </div>
               ))}
             </motion.div>
           </div>
 
-          {/* Footer */}
-          <div className="opacity-75">
+          {/* Logo - Top */}
+          <Link href="/auth" className="absolute top-8 left-8 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+              <span className="font-bold text-lg" style={{ color: 'var(--primary-red)' }}>SA</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">ShopAm</h1>
+              <p className="text-xs opacity-90">Vendor Dashboard</p>
+            </div>
+          </Link>
+
+          {/* Footer - Bottom */}
+          <div className="absolute bottom-8 opacity-75">
             <p className="text-sm">© 2026 ShopAm. All rights reserved.</p>
           </div>
         </div>
@@ -111,6 +110,7 @@ export default function VendorSignInPage() {
             <div className="text-center mb-6">
               <div className="inline-flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-crimson to-shopam flex items-center justify-center">
+                  <Image src="/images/black-logo.png" alt="ShopAm" width={40} height={40} />
                   <span className="font-bold text-xl text-white">SA</span>
                 </div>
                 <div className="text-left">

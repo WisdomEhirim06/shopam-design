@@ -245,10 +245,10 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <Image src="/images/black-logo.png" alt="ShopAm" width={40} height={40} />
               <span className="text-2xl font-bold text-gray-900">ShopAm</span>
-            </Link>
+            </div>
 
             {/* Nav Links */}
             <div className="hidden md:flex items-center gap-8">
@@ -297,9 +297,9 @@ export default function LandingPage() {
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSlide}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0, x: 100}}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -100 }}
               transition={{ duration: 0.5 }}
               className="absolute inset-0"
             >
@@ -314,6 +314,7 @@ export default function LandingPage() {
                   style={{
                     backgroundImage: `url(${heroImages[currentSlide].image})`,
                     clipPath: 'polygon(60% 0, 100% 0, 100% 100%, 40% 100%)',
+                    opacity: 0.3,
                   }}
                 ></div>
 

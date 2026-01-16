@@ -16,6 +16,7 @@ import {
 
 export default function FeedPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedPosts, setExpandedPosts] = useState<number[]>([]);
 
   // Sample posts from vendors
   const posts = [
@@ -28,7 +29,7 @@ export default function FeedPage() {
         followers: 2340,
       },
       image: '/api/placeholder/600/600',
-      caption: 'New collection alert! 🔥 African print dresses now available. Limited stock!',
+      caption: 'New collection alert! 🔥 African print dresses now available. Limited stock! These beautiful pieces celebrate African heritage with modern cuts and vibrant patterns. Perfect for any occasion from casual outings to special events. Get yours before they sell out!',
       likes: 234,
       comments: 45,
       timeAgo: '2 hours ago',
@@ -45,7 +46,7 @@ export default function FeedPage() {
         followers: 5670,
       },
       image: '/api/placeholder/600/600',
-      caption: 'Premium wireless earbuds with noise cancellation. Get yours today! 🎧',
+      caption: 'Premium wireless earbuds with noise cancellation. Get yours today! 🎧 Experience crystal clear sound quality with active noise cancellation technology. Long battery life, comfortable fit, and premium build quality make these a must-have.',
       likes: 567,
       comments: 89,
       timeAgo: '5 hours ago',
@@ -108,6 +109,12 @@ export default function FeedPage() {
   const handleSave = (postId: number) => {
     setPostsState(
       postsState.map((post) => (post.id === postId ? { ...post, isSaved: !post.isSaved } : post))
+    );
+  };
+
+  const toggleExpand = (postId: number) => {
+    setExpandedPosts((prev) =>
+      prev.includes(postId) ? prev.filter((id) => id !== postId) : [...prev, postId]
     );
   };
 
@@ -196,80 +203,80 @@ export default function FeedPage() {
 
       {/* Main Content */}
       <div className="pt-32 pb-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Feed Posts */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {postsState.map((post, index) => (
               <motion.div
                 key={post.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-2xl shadow-sm overflow-hidden"
+                className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow"
               >
-                {/* Post Header */}
-                <div className="p-4 flex items-center justify-between">
-                  <Link href={`/vendors/${post.vendor.name}`} className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center">
-                      <span className="text-white font-bold">{post.vendor.name[0]}</span>
+                {/* Post Header - REDUCED */}
+                <div className="p-3 flex items-center justify-between">
+                  <Link href={`/vendors/${post.vendor.name}`} className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">{post.vendor.name[0]}</span>
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-gray-900">{post.vendor.name}</h3>
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="font-semibold text-gray-900 text-sm">{post.vendor.name}</h3>
                         {post.vendor.verified && (
-                          <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs">✓</span>
+                          <div className="w-3.5 h-3.5 bg-blue-500 rounded-full flex items-center justify-center">
+                            <span className="text-white text-[10px]">✓</span>
                           </div>
                         )}
                       </div>
-                      <p className="text-sm text-gray-500">{post.timeAgo}</p>
+                      <p className="text-xs text-gray-500">{post.timeAgo}</p>
                     </div>
                   </Link>
-                  <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <MoreVertical size={20} className="text-gray-600" />
+                  <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+                    <MoreVertical size={18} className="text-gray-600" />
                   </button>
                 </div>
 
-                {/* Post Image */}
-                <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200">
+                {/* Post Image - REDUCED */}
+                <div className="relative aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200">
                   <div className="absolute inset-0 bg-gradient-to-br from-[#FA3728]/5 to-[#E31B23]/5"></div>
                 </div>
 
-                {/* Post Actions */}
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-4">
+                {/* Post Actions - REDUCED */}
+                <div className="p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
                       <button
                         onClick={() => handleLike(post.id)}
-                        className="flex items-center gap-2 group"
+                        className="flex items-center gap-1.5 group"
                       >
                         <Heart
-                          size={24}
+                          size={20}
                           className={`transition-all ${
                             post.isLiked
                               ? 'fill-[#FA3728] text-[#FA3728]'
                               : 'text-gray-700 group-hover:text-[#FA3728]'
                           }`}
                         />
-                        <span className="font-semibold text-gray-900">{post.likes}</span>
+                        <span className="font-semibold text-gray-900 text-sm">{post.likes}</span>
                       </button>
-                      <button className="flex items-center gap-2 group">
+                      <button className="flex items-center gap-1.5 group">
                         <MessageCircle
-                          size={24}
+                          size={20}
                           className="text-gray-700 group-hover:text-[#FA3728] transition-colors"
                         />
-                        <span className="font-semibold text-gray-900">{post.comments}</span>
+                        <span className="font-semibold text-gray-900 text-sm">{post.comments}</span>
                       </button>
                       <button className="group">
                         <Share2
-                          size={24}
+                          size={20}
                           className="text-gray-700 group-hover:text-[#FA3728] transition-colors"
                         />
                       </button>
                     </div>
                     <button onClick={() => handleSave(post.id)}>
                       <Bookmark
-                        size={24}
+                        size={20}
                         className={`transition-all ${
                           post.isSaved
                             ? 'fill-[#FA3728] text-[#FA3728]'
@@ -279,20 +286,46 @@ export default function FeedPage() {
                     </button>
                   </div>
 
-                  {/* Caption */}
-                  <p className="text-gray-900 mb-2">
+                  {/* Caption with See More - IMPROVED */}
+                  <div className="text-sm text-gray-900 mb-2">
                     <Link href={`/vendors/${post.vendor.name}`} className="font-semibold">
                       {post.vendor.name}
                     </Link>{' '}
-                    {post.caption}
-                  </p>
+                    {expandedPosts.includes(post.id) ? (
+                      <>
+                        {post.caption}{' '}
+                        {post.caption.length > 100 && (
+                          <button
+                            onClick={() => toggleExpand(post.id)}
+                            className="text-gray-500 font-medium hover:text-gray-700"
+                          >
+                            see less
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {post.caption.length > 100
+                          ? `${post.caption.substring(0, 100)}... `
+                          : post.caption}
+                        {post.caption.length > 100 && (
+                          <button
+                            onClick={() => toggleExpand(post.id)}
+                            className="text-gray-500 font-medium hover:text-gray-700"
+                          >
+                            more
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
 
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-3">
+                  {/* Tags - REDUCED */}
+                  <div className="flex flex-wrap gap-1.5 mb-2">
                     {post.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="text-sm text-[#FA3728] hover:underline cursor-pointer"
+                        className="text-xs text-[#FA3728] hover:underline cursor-pointer"
                       >
                         #{tag}
                       </span>
@@ -301,7 +334,7 @@ export default function FeedPage() {
 
                   {/* View Comments */}
                   {post.comments > 0 && (
-                    <button className="text-sm text-gray-500 hover:text-gray-700">
+                    <button className="text-xs text-gray-500 hover:text-gray-700">
                       View all {post.comments} comments
                     </button>
                   )}
@@ -311,8 +344,8 @@ export default function FeedPage() {
           </div>
 
           {/* Load More */}
-          <div className="text-center mt-8">
-            <button className="px-8 py-3 bg-white border border-gray-200 hover:border-[#FA3728] rounded-full font-semibold transition-all">
+          <div className="text-center mt-6">
+            <button className="px-8 py-2.5 bg-white border border-gray-200 hover:border-[#FA3728] rounded-full font-semibold text-sm transition-all">
               Load More Posts
             </button>
           </div>

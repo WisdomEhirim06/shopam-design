@@ -19,6 +19,7 @@ const config: Config = {
         'theme-text': 'var(--text-primary)',
         'theme-text-secondary': 'var(--text-secondary)',
         'theme-border': 'var(--border-primary)',
+        'theme-red': 'var(--primary-red)',
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",

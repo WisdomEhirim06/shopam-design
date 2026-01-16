@@ -6,7 +6,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ShopAm - Vendor Dashboard",
+  title: "ShopAm - Shop better, Sell smarter",
   description: "High-end vendor dashboard for ShopAm marketplace",
 };
 
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider>
           {children}
