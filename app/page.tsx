@@ -12,6 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
+  Menu,
+  X,
 } from 'lucide-react';
 
 // Stress Relief Section Component
@@ -163,6 +165,7 @@ function StressReliefSection() {
 
 export default function LandingPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Hero carousel images (your 3 images)
   const heroImages = [
@@ -240,17 +243,20 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Fixed Navigation */}
+      {/* Fixed Navigation - RESPONSIVE */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
               <Image src="/images/black-logo.png" alt="ShopAm" width={40} height={40} />
-              <span className="text-2xl font-bold text-gray-900">ShopAm</span>
-            </div>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center">
+                <span className="text-white font-bold text-lg">S</span>
+              </div>
+              <span className="text-xl sm:text-2xl font-bold text-gray-900">ShopAm</span>
+            </Link>
 
-            {/* Nav Links */}
+            {/* Desktop Nav Links */}
             <div className="hidden md:flex items-center gap-8">
               <Link
                 href="/explore"
@@ -272,23 +278,92 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            {/* Auth Buttons */}
-            <div className="md:flex items-center gap-4">
+            {/* Desktop Auth Buttons */}
+            <div className="hidden md:flex items-center gap-4">
               <Link
                 href="/auth/signin"
-                className="text-gray-600 hover:text-[#FA3728] transition-colors font-medium"
+                className="text-[#FA3728] hover:text-[#E31B23] transition-colors font-medium"
               >
                 Sign In
               </Link>
               <Link
                 href="/auth/signup"
-                className="px-6 py-2.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-semibold transition-all shadow-md hover:shadow-lg"
+                className="px-6 py-2.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-semibold transition-all shadow-md hover:shadow-lg whitespace-nowrap"
               >
                 Become a Vendor
               </Link>
             </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <X size={24} className="text-gray-900" />
+              ) : (
+                <Menu size={24} className="text-gray-900" />
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden border-t border-gray-100 bg-white"
+            >
+              <div className="px-4 py-4 space-y-3">
+                {/* Mobile Nav Links */}
+                <Link
+                  href="/explore"
+                  className="block px-4 py-2 text-gray-600 hover:text-[#FA3728] hover:bg-gray-50 rounded-lg transition-colors font-medium"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Explore
+                </Link>
+                <Link
+                  href="/categories"
+                  className="block px-4 py-2 text-gray-600 hover:text-[#FA3728] hover:bg-gray-50 rounded-lg transition-colors font-medium"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Categories
+                </Link>
+                <Link
+                  href="/vendors"
+                  className="block px-4 py-2 text-gray-600 hover:text-[#FA3728] hover:bg-gray-50 rounded-lg transition-colors font-medium"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Vendors
+                </Link>
+
+                {/* Mobile Auth Buttons */}
+                <div className="pt-3 space-y-2 border-t border-gray-100">
+                  <Link
+                    href="/auth/signin"
+                    className="block px-4 py-2.5 text-center text-[#FA3728] hover:bg-red-50 rounded-lg transition-colors font-semibold"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    className="block px-4 py-2.5 text-center bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-lg font-semibold transition-all shadow-md"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Become a Vendor
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Hero Carousel Section */}
@@ -297,16 +372,16 @@ export default function LandingPage() {
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSlide}
-              initial={{ opacity: 0, x: 100}}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -100 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
               className="absolute inset-0"
             >
               {/* Background with Diagonal Image Effect */}
               <div className="absolute inset-0">
                 {/* Base Red Gradient */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#FA3728] to-[#E31B23]"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-[#FA3728] to-[#E31B23]"></div>
 
                 {/* Image Layer 1 - Diagonal clip */}
                 <div
@@ -314,7 +389,6 @@ export default function LandingPage() {
                   style={{
                     backgroundImage: `url(${heroImages[currentSlide].image})`,
                     clipPath: 'polygon(60% 0, 100% 0, 100% 100%, 40% 100%)',
-                    opacity: 0.3,
                   }}
                 ></div>
 

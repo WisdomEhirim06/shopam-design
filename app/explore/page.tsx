@@ -204,75 +204,75 @@ export default function ExplorePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Fixed Top Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+      {/* Fixed Top Navigation - IMPROVED RESPONSIVE */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 flex-shrink-0">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center">
                 <span className="text-white font-bold text-lg">S</span>
               </div>
               <span className="text-xl font-bold text-gray-900 hidden sm:inline">ShopAm</span>
             </Link>
 
-            {/* Search Bar */}
-            <div className="flex-1 max-w-2xl mx-4">
+            {/* Search Bar - BETTER MOBILE */}
+            <div className="flex-1 max-w-2xl mx-2 sm:mx-4 lg:mx-8">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
-                  placeholder="Search products, vendors, categories..."
+                  placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-full border border-gray-200 focus:border-[#FA3728] focus:ring-2 focus:ring-[#FA3728]/20 outline-none transition-all"
+                  className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2 sm:py-3 text-sm sm:text-base rounded-full border border-gray-200 focus:border-[#FA3728] focus:ring-2 focus:ring-[#FA3728]/20 outline-none transition-all"
                 />
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3">
+            {/* Action Buttons - RESPONSIVE */}
+            <div className="flex items-center gap-2 flex-shrink-0">
               <Link
                 href="/cart"
-                className="relative p-2 hover:bg-gray-100 rounded-full transition-colors hidden sm:block"
+                className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
-                <ShoppingCart size={24} className="text-gray-700" />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FA3728] text-white text-xs flex items-center justify-center rounded-full">
+                <ShoppingCart size={20} className="text-gray-700" />
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#FA3728] text-white text-[10px] flex items-center justify-center rounded-full">
                   3
                 </span>
               </Link>
               <Link
                 href="/auth/signin"
-                className="px-4 py-2 text-gray-700 hover:text-[#FA3728] transition-colors font-medium hidden md:block"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm text-gray-700 hover:text-[#FA3728] transition-colors font-medium hidden md:block"
               >
                 Sign In
               </Link>
               <Link
                 href="/auth/signup"
-                className="px-4 py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-semibold transition-all hidden md:block"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-semibold transition-all hidden sm:block"
               >
                 Sign Up
               </Link>
             </div>
           </div>
 
-          {/* Secondary Nav - Explore Tabs */}
-          <div className="flex items-center gap-8 pb-3 overflow-x-auto">
+          {/* Secondary Nav - Explore Tabs - BETTER MOBILE */}
+          <div className="flex items-center gap-4 sm:gap-8 pb-3 overflow-x-auto scrollbar-hide">
             <Link
               href="/explore"
-              className="text-[#FA3728] border-b-2 border-[#FA3728] font-semibold pb-1 whitespace-nowrap"
+              className="text-[#FA3728] border-b-2 border-[#FA3728] font-semibold pb-1 whitespace-nowrap text-sm sm:text-base"
             >
               Products
             </Link>
             <Link
               href="/feed"
-              className="text-gray-600 hover:text-[#FA3728] font-medium pb-1 transition-colors whitespace-nowrap"
+              className="text-gray-600 hover:text-[#FA3728] font-medium pb-1 transition-colors whitespace-nowrap text-sm sm:text-base"
             >
               Feed
             </Link>
             <Link
               href="/vendors"
-              className="text-gray-600 hover:text-[#FA3728] font-medium pb-1 transition-colors whitespace-nowrap"
+              className="text-gray-600 hover:text-[#FA3728] font-medium pb-1 transition-colors whitespace-nowrap text-sm sm:text-base"
             >
               Vendors
             </Link>
@@ -280,8 +280,8 @@ export default function ExplorePage() {
         </div>
       </nav>
 
-      {/* Main Content */}
-      <div className="pt-32 pb-12">
+      {/* Main Content - MORE TOP SPACE */}
+      <div className="pt-36 sm:pt-40 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Filter Bar */}
           <div className="flex items-center justify-between mb-6">
@@ -431,7 +431,7 @@ export default function ExplorePage() {
                   {/* Badges */}
                   <div className="absolute top-2 left-2 flex flex-col gap-1">
                     {product.discount && (
-                      <span className="px-2 py-1 bg-[#FA3728] backdrop-blur-sm rounded-full text-xs font-semibold text-white flex items-center gap-1">
+                      <span className="px-2 py-1 bg-[#FA3728] text-white text-xs font-bold rounded">
                         -{product.discount}%
                       </span>
                     )}

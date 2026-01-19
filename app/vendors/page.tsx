@@ -238,14 +238,14 @@ export default function VendorsPage() {
             </p>
           </div>
 
-          {/* Categories Filter */}
-          <div className="mb-8 overflow-x-auto pb-4">
-            <div className="flex gap-3">
+          {/* Categories Filter - FULLY RESPONSIVE */}
+          <div className="mb-8 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex gap-2 sm:gap-3 min-w-max">
               {categories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-6 py-2 rounded-full font-medium whitespace-nowrap transition-all ${
+                  className={`px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-medium whitespace-nowrap transition-all ${
                     selectedCategory === category
                       ? 'bg-[#FA3728] text-white shadow-lg'
                       : 'bg-white text-gray-700 hover:shadow-md border border-gray-200'
