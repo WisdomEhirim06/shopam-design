@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, ShoppingBag, Shield, Zap } from 'lucide-react';
+import { authService } from '@/lib/api';
 
 export default function UserSignUpPage() {
   const router = useRouter();
@@ -12,8 +13,11 @@ export default function UserSignUpPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
+    phone: '',
+    first_name: '',
+    last_name: '',
     password: '',
     confirmPassword: '',
     agreeToTerms: false,
@@ -30,19 +34,65 @@ export default function UserSignUpPage() {
       return;
     }
 
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
     if (!formData.agreeToTerms) {
       setError('Please agree to terms and conditions');
       return;
     }
 
+    if (!formData.phone) {
+      setError('Phone number is required');
+      return;
+    }
+
+    if (!formData.username) {
+      setError('Username is required');
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Real API call
+      const response = await authService.registerUser({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        first_name: formData.first_name || undefined,
+        last_name: formData.last_name || undefined,
+      });
 
-    // Redirect to verification
-    setIsSubmitting(false);
-    router.push('/auth/user-verify');
+      console.log('Registration successful:', response.user);
+      
+      // Redirect to explore page (user is automatically logged in)
+      router.push('/explore');
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      
+      // Handle different error types
+      if (err.response?.data?.username) {
+        setError(`Username: ${err.response.data.username[0]}`);
+      } else if (err.response?.data?.email) {
+        setError(`Email: ${err.response.data.email[0]}`);
+      } else if (err.response?.data?.phone) {
+        setError(`Phone: ${err.response.data.phone[0]}`);
+      } else if (err.response?.data?.password) {
+        setError(`Password: ${err.response.data.password[0]}`);
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else {
+        setError('Registration failed. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -140,19 +190,53 @@ export default function UserSignUpPage() {
               </div>
             )}
 
-            {/* Name Input */}
+            {/* Username Input */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
+                Username
               </label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
                   required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter your full name"
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  placeholder="Choose a username"
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none transition-all text-gray-900"
+                />
+              </div>
+            </div>
+
+            {/* First Name Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                First Name (Optional)
+              </label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                  placeholder="Enter your first name"
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none transition-all text-gray-900"
+                />
+              </div>
+            </div>
+
+            {/* Last Name Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Last Name (Optional)
+              </label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  value={formData.last_name}
+                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                  placeholder="Enter your last name"
                   className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none transition-all text-gray-900"
                 />
               </div>
@@ -171,6 +255,24 @@ export default function UserSignUpPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="Enter your email"
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none transition-all text-gray-900"
+                />
+              </div>
+            </div>
+
+            {/* Phone Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number
+              </label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="tel"
+                  required
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+234 800 000 0000"
                   className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none transition-all text-gray-900"
                 />
               </div>

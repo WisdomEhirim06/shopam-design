@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, ShoppingBag, Shield, Zap } from 'lucide-react';
+import { authService } from '@/lib/api';
 
 export default function UserSignInPage() {
   const router = useRouter();
@@ -21,12 +22,42 @@ export default function UserSignInPage() {
     setError('');
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Real API call
+      const response = await authService.login({
+        username: formData.email, // Backend accepts email as username
+        password: formData.password,
+      });
 
-    // Redirect to verification
-    setIsSubmitting(false);
-    router.push('/auth/user-verify');
+      console.log('Login successful:', response.user);
+      
+      // Check if user is a customer (not vendor)
+      if (response.user.is_vendor) {
+        setError('Please use vendor sign-in page');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Redirect to explore page after successful login
+      router.push('/explore');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      
+      // Handle different error types
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else if (err.response?.status === 401) {
+        setError('Invalid email or password');
+      } else if (err.response?.status === 400) {
+        setError('Please check your credentials');
+      } else {
+        setError('Login failed. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

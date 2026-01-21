@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
+import { authService } from '@/lib/api';
 
 export default function VendorSignInPage() {
   const router = useRouter();
@@ -23,18 +23,48 @@ export default function VendorSignInPage() {
     setError('');
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Real API call
+      const response = await authService.login({
+        username: formData.email, // Backend accepts email as username
+        password: formData.password,
+      });
 
-    // Simulate successful login
-    setIsSubmitting(false);
-    router.push('/dashboard');
+      console.log('Login successful:', response.user);
+      
+      // Check if user is a vendor
+      if (!response.user.is_vendor) {
+        setError('Please use customer sign-in page');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Redirect to vendor dashboard
+      router.push('/dashboard');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      
+      // Handle different error types
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else if (err.response?.status === 401) {
+        setError('Invalid email or password');
+      } else if (err.response?.status === 400) {
+        setError('Please check your credentials');
+      } else {
+        setError('Login failed. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Brand Section */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden" style={{ backgroundColor: 'crimson' }}>
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden" style={{ backgroundColor: 'var(--primary-red)' }}>
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -110,7 +140,6 @@ export default function VendorSignInPage() {
             <div className="text-center mb-6">
               <div className="inline-flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-crimson to-shopam flex items-center justify-center">
-                  <Image src="/images/black-logo.png" alt="ShopAm" width={40} height={40} />
                   <span className="font-bold text-xl text-white">SA</span>
                 </div>
                 <div className="text-left">
