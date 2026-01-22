@@ -1,10 +1,20 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import JsonLd from "@/components/JsonLd";
 
-const inter = Inter({ subsets: ["latin"] });
+const jakartaSans = Plus_Jakarta_Sans({ 
+  subsets: ["latin"],
+  variable: '--font-jakarta',
+  display: 'swap',
+});
+
+const dmSans = DM_Sans({ 
+  subsets: ["latin"],
+  variable: '--font-dm-sans',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -36,18 +46,28 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://shopam.ng'), // Update with your actual domain
+  metadataBase: new URL('https://www.shopam.net'), // Update with your actual domain
   alternates: {
     canonical: '/',
+  },
+  icons: {
+    icon: [
+      { url: '/images/Vector.png' },
+      { url: '/icon.png', type: 'image/png', sizes: '32x32' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
   openGraph: {
     title: "ShopAm - Nigeria's Trusted Online Marketplace",
     description: "Shop from 500+ verified vendors across 50+ categories. Quality products, trusted service, 24/7 support.",
-    url: 'https://shopam.ng',
+    url: 'https://www.shopam.net',
     siteName: 'ShopAm',
     images: [
       {
-        url: '/images/og-image.jpg', // Add your OG image
+        url: '/images/hero-3.jpg',
         width: 1200,
         height: 630,
         alt: 'ShopAm - Shopping Never Gets Stressful',
@@ -60,8 +80,8 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "ShopAm - Nigeria's Trusted Online Marketplace",
     description: "Shop from 500+ verified vendors. Quality products, trusted service.",
-    images: ['/images/twitter-image.jpg'], // Add your Twitter card image
-    creator: '@shopam_ng', // Update with your Twitter handle
+    images: ['/twitter-image.jpg'],
+    creator: '@shopam_ng',
   },
   robots: {
     index: true,
@@ -75,9 +95,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'your-google-verification-code', // Add your Google Search Console verification
-    // yandex: 'your-yandex-verification-code',
-    // bing: 'your-bing-verification-code',
+    google: 'your-google-verification-code',
   },
 };
 
@@ -87,11 +105,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${jakartaSans.variable} ${dmSans.variable}`}>
       <head>
         <JsonLd />
       </head>
-      <body className={inter.className}>
+      <body className={jakartaSans.className}>
         <ThemeProvider>
           {children}
         </ThemeProvider>

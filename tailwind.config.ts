@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: 'class',
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -8,6 +9,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
+        button: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
+      },
       colors: {
         charcoal: "#0A0A0A",
         pitch: "#000000",
