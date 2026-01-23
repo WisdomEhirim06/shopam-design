@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag,
@@ -36,7 +35,7 @@ export default function LandingPage() {
       image: '/images/hero-woman-shopping.png',
       title: 'Shopping Never Gets',
       titleHighlight: 'Stressful',
-      titleEnd: 'with ShopAm',
+     
       subtitle: 'Discover amazing products from trusted vendors',
     },
     {
@@ -62,7 +61,7 @@ export default function LandingPage() {
     },
     {
       text: "Can't find what you need?",
-      image: '/images/stress-2.jpg',
+      image: '/images/stress-2.jpeg',
     },
     {
       text: "Worried about getting scammed?",
@@ -84,7 +83,7 @@ export default function LandingPage() {
     { id: 2, name: 'Ankara Dress', price: 28000, image: '/images/products/fashion.jpg', vendor: "Sarah's Fashion", rating: 4.9, reviews: 189 },
     { id: 3, name: 'Smart Watch', price: 45000, originalPrice: 55000, discount: 18, image: '/images/products/smartwatch.jpg', vendor: 'Gadgets Plus', rating: 4.7, reviews: 456 },
     { id: 4, name: 'Leather Handbag', price: 32000, image: '/images/products/handbad.jpg', vendor: 'Luxury Bags', rating: 4.6, reviews: 321 },
-    { id: 5, name: 'Running Shoes', price: 25000, image: '/images/products/boots.jpg', vendor: 'SportFit NG', rating: 4.8, reviews: 278 },
+    { id: 5, name: 'Running Shoes', price: 25000, image: '/images/products/shoes-black.jpg', vendor: 'SportFit NG', rating: 4.8, reviews: 278 },
     { id: 6, name: 'Bluetooth Speaker', price: 18000, originalPrice: 25000, discount: 28, image: '/images/products/speaker.jpg', vendor: 'Audio World', rating: 4.7, reviews: 445 },
     { id: 7, name: 'Laptop Backpack', price: 12000, image: '/images/products/backpack.jpg', vendor: 'Bags & More', rating: 4.5, reviews: 167 },
     { id: 8, name: 'Phone Case', price: 3500, image: '/images/products/phone.png', vendor: 'Accessories Hub', rating: 4.6, reviews: 892 },
@@ -148,16 +147,16 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* OPTIMIZED NAVBAR - Perfect Mobile */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md border-b border-white/20">
+      {/* FIXED NAVBAR - Perfect Mobile */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-12 sm:h-16 lg:h-20">
-            {/* Logo - Compact on mobile */}
-            <Link href="/" className="flex items-center gap-2">
-              <div className="relative">
-                <Image src="/images/black-logo.png" alt="ShopAm Logo" width={40} height={100} className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10" />
+          <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
+            {/* Logo - Fixed visibility */}
+            <Link href="/" className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <div className="relative flex items-center justify-center">
+                <img src="/images/shopam-logo.png" alt="ShopAm Logo" className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 object-contain" />
               </div>
-              <span className="text-base sm:text-xl lg:text-2xl font-bold text-white">
+              <span className="text-lg sm:text-xl lg:text-2xl font-bold text-white whitespace-nowrap">
                 Shop<span className="text-[#FA3728]">Am</span>
               </span>
             </Link>
@@ -175,27 +174,28 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            {/* MOBILE OPTIMIZED CTA Buttons */}
-            <div className="flex items-center gap-1 sm:gap-2 lg:gap-3">
+            {/* FIXED CTA Buttons */}
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 href="/auth/user-signin"
-                className="hidden sm:block text-white/90 hover:text-white font-medium transition-colors px-2 lg:px-3 py-1 lg:py-2 text-xs lg:text-sm"
+                className="hidden sm:block text-white/90 hover:text-white font-medium transition-colors px-3 py-2 text-sm"
               >
                 Sign in
               </Link>
               <Link
                 href="/auth/signup"
-                className="px-2 sm:px-4 lg:px-6 py-1 sm:py-2 lg:py-2.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-button font-semibold transition-all shadow-lg text-[9px] sm:text-sm lg:text-base whitespace-nowrap"
+                className="px-3 py-1.5 sm:px-5 sm:py-2 lg:px-6 lg:py-2.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-button font-semibold transition-all shadow-lg text-xs sm:text-sm lg:text-base whitespace-nowrap"
               >
-                Vendor
+                <span className="hidden sm:inline">Become a Vendor</span>
+                <span className="sm:hidden">Become A Vendor</span>
               </Link>
 
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-1 text-white"
+                className="md:hidden p-1.5 text-white"
               >
-                {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+                {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
             </div>
           </div>
@@ -229,8 +229,8 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* HERO - Optimized Mobile Height & Text */}
-      <section className="relative h-[45vh] sm:h-[65vh] lg:h-[88vh] min-h-[380px] max-h-[900px] overflow-hidden">
+      {/* HERO - Fixed Mobile Layout */}
+      <section className="relative h-[55vh] sm:h-[70vh] lg:h-[90vh] min-h-[450px] max-h-[900px] overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
@@ -249,17 +249,17 @@ export default function LandingPage() {
                   e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"%3E%3Crect fill="%23f3f4f6" width="1920" height="1080"/%3E%3C/svg%3E';
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-900/85 via-gray-900/65 to-gray-900/45"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-900/90 via-gray-900/70 to-gray-900/50"></div>
             </div>
 
-            <div className="relative h-full flex items-center pt-12 sm:pt-16 lg:pt-20">
-              <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full">
+            <div className="relative h-full flex items-center">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-14 sm:pt-16 lg:pt-20">
                 <div className="max-w-xl sm:max-w-2xl lg:max-w-3xl">
                   <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="text-xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight mb-2 sm:mb-4 lg:mb-6"
+                    className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.2] sm:leading-tight mb-3 sm:mb-4 lg:mb-6"
                   >
                     {heroSlides[currentSlide].title}{' '}
                     <span className="text-[#FA3728]">{heroSlides[currentSlide].titleHighlight}</span>{' '}
@@ -270,7 +270,7 @@ export default function LandingPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="text-xs sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-3 sm:mb-6 lg:mb-10"
+                    className="text-sm sm:text-lg md:text-xl lg:text-2xl text-white/95 mb-4 sm:mb-6 lg:mb-10 leading-relaxed"
                   >
                     {heroSlides[currentSlide].subtitle}
                   </motion.p>
@@ -282,21 +282,21 @@ export default function LandingPage() {
                   >
                     <Link
                       href="/explore"
-                      className="inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-button font-semibold text-xs sm:text-base lg:text-lg transition-all shadow-xl hover:shadow-2xl"
+                      className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 lg:py-4 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-button font-semibold text-sm sm:text-base lg:text-lg transition-all shadow-xl hover:shadow-2xl"
                     >
                       Explore Products
-                      <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
+                      <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                     </Link>
                   </motion.div>
 
-                  {/* Refined Indicators */}
-                  <div className="flex gap-1 sm:gap-2 mt-3 sm:mt-8 lg:mt-12">
+                  {/* Fixed Indicators Position */}
+                  <div className="flex gap-1.5 sm:gap-2 mt-6 sm:mt-10 lg:mt-12">
                     {heroSlides.map((_, index) => (
                       <button
                         key={index}
                         onClick={() => setCurrentSlide(index)}
-                        className={`h-0.5 sm:h-1 rounded-full transition-all ${
-                          index === currentSlide ? 'w-5 sm:w-8 bg-[#FA3728]' : 'w-2.5 sm:w-4 bg-white/40'
+                        className={`h-1 sm:h-1.5 rounded-full transition-all ${
+                          index === currentSlide ? 'w-8 sm:w-10 bg-[#FA3728]' : 'w-4 sm:w-5 bg-white/50'
                         }`}
                       />
                     ))}
@@ -307,15 +307,15 @@ export default function LandingPage() {
 
             <button
               onClick={prevSlide}
-              className="absolute left-1.5 sm:left-4 top-1/2 -translate-y-1/2 w-7 h-7 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 flex items-center justify-center text-white transition-all"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/50 flex items-center justify-center text-white transition-all"
             >
-              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
             <button
               onClick={nextSlide}
-              className="absolute right-1.5 sm:right-4 top-1/2 -translate-y-1/2 w-7 h-7 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 flex items-center justify-center text-white transition-all"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/50 flex items-center justify-center text-white transition-all"
             >
-              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </motion.div>
         </AnimatePresence>
@@ -426,7 +426,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* 5 columns, MUCH shorter cards on mobile */}
+          {/* 5 columns, shorter cards on mobile using CSS */}
           <div className="grid grid-cols-5 gap-1.5 sm:gap-3 lg:gap-4">
             {trendingProducts.map((product, index) => (
               <motion.div
@@ -437,8 +437,8 @@ export default function LandingPage() {
                 transition={{ delay: index * 0.05 }}
                 className="bg-white rounded-md sm:rounded-lg lg:rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group"
               >
-                {/* SHORTER image on mobile: 100px mobile, 150px desktop */}
-                <div className="relative w-full bg-gray-100" style={{ height: window.innerWidth < 640 ? '80px' : '150px' }}>
+                {/* Responsive image height: 110px mobile, 150px desktop */}
+                <div className="relative w-full bg-gray-100" style={{ height: window.innerWidth < 640 ? '60px' : '150px' }}>
                   <img
                     src={product.image}
                     alt={product.name}
@@ -448,36 +448,36 @@ export default function LandingPage() {
                     }}
                   />
                   {product.discount && (
-                    <span className="absolute top-0.5 left-0.5 sm:top-1.5 sm:left-1.5 px-1 py-0.5 bg-[#FA3728] text-white text-[7px] sm:text-[10px] font-bold rounded">
+                    <span className="absolute top-1 left-1 sm:top-1.5 sm:left-1.5 px-1 py-0.5 bg-[#FA3728] text-white text-[8px] sm:text-[10px] font-bold rounded">
                       -{product.discount}%
                     </span>
                   )}
-                  <button className="absolute top-0.5 right-0.5 sm:top-1.5 sm:right-1.5 w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Heart size={8} className="sm:w-3 sm:h-3 text-gray-700" />
+                  <button className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Heart size={10} className="sm:w-3 sm:h-3 text-gray-700" />
                   </button>
-                  <div className="absolute bottom-0.5 right-0.5 sm:bottom-1.5 sm:right-1.5 px-1 py-0.5 bg-white/95 backdrop-blur-sm rounded-full text-[7px] sm:text-[10px] font-semibold flex items-center gap-0.5">
-                    <Star size={7} className="sm:w-2.5 sm:h-2.5 text-amber-400 fill-amber-400" />
+                  <div className="absolute bottom-1 right-1 sm:bottom-1.5 sm:right-1.5 px-1 py-0.5 bg-white/95 backdrop-blur-sm rounded-full text-[8px] sm:text-[10px] font-semibold flex items-center gap-0.5">
+                    <Star size={8} className="sm:w-2.5 sm:h-2.5 text-amber-400 fill-amber-400" />
                     {product.rating}
                   </div>
                 </div>
 
-                {/* Ultra-compact text on mobile */}
-                <div className="p-1 sm:p-2">
+                {/* Compact text section */}
+                <div className="p-1 sm:p-1.5 lg:p-2">
                   <p className="text-[7px] sm:text-[9px] text-gray-500 mb-0.5 truncate">{product.vendor}</p>
-                  <h3 className="font-semibold text-[8px] sm:text-[10px] lg:text-xs text-gray-900 mb-0.5 sm:mb-1 line-clamp-2 leading-tight">
+                  <h3 className="font-semibold text-[8px] sm:text-[9px] lg:text-xs text-gray-900 mb-0.5 line-clamp-2 leading-tight">
                     {product.name}
                   </h3>
-                  <div className="flex items-center gap-0.5 sm:gap-1 mb-0.5">
-                    <p className="text-[10px] sm:text-sm lg:text-base font-bold text-[#FA3728]">
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <p className="text-xs sm:text-sm lg:text-base font-bold text-[#FA3728]">
                       ₦{product.price.toLocaleString()}
                     </p>
                     {product.originalPrice && (
-                      <p className="text-[7px] sm:text-[9px] text-gray-400 line-through">
+                      <p className="text-[8px] sm:text-[10px] text-gray-400 line-through">
                         ₦{product.originalPrice.toLocaleString()}
                       </p>
                     )}
                   </div>
-                  <p className="text-[7px] sm:text-[9px] text-gray-500">({product.reviews})</p>
+                  <p className="text-[8px] sm:text-[10px] text-gray-500">({product.reviews})</p>
                 </div>
               </motion.div>
             ))}
@@ -643,7 +643,7 @@ export default function LandingPage() {
               </Link>
               <Link
                 href="/auth/signup"
-                className="px-5 py-2.5 sm:px-8 sm:py-3 lg:py-4 bg-transparent border-2 border-white text-white rounded-full font-button font-bold hover:bg-white/10 transition-all text-sm sm:text-base lg:text-lg"
+                className="px-4 sm:px-8 py-2 sm:py-3 lg:py-4 bg-transparent border-2 border-white text-white rounded-full font-button font-bold hover:bg-white/10 transition-all text-xs sm:text-base lg:text-lg"
               >
                 Become a Vendor
               </Link>
@@ -726,4 +726,4 @@ export default function LandingPage() {
       `}</style>
     </div>
   );
-}
+}                                                         
