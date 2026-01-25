@@ -154,11 +154,9 @@ export default function LandingPage() {
             {/* Logo - Fixed visibility */}
             <Link href="/" className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               <div className="relative flex items-center justify-center">
-                <img src="/images/shopam-logo.png" alt="ShopAm Logo" className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 object-contain" />
+                <img src="/images/shopam-logo.png" alt="ShopAm Logo" className="w-8 h-8 sm:w-8 sm:h-8 lg:w-10 lg:h-10 object-contain" />
               </div>
-              <span className="text-lg sm:text-xl lg:text-2xl font-bold text-white whitespace-nowrap">
-                Shop<span className="text-[#FA3728]">Am</span>
-              </span>
+              
             </Link>
 
             {/* Desktop Navigation */}
