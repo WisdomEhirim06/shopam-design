@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag,
@@ -227,6 +228,16 @@ export default function LandingPage() {
 
       {/* HERO - Compact on mobile, expansive on desktop */}
       <section className="relative h-[50vh] sm:h-[70vh] lg:h-[90vh] min-h-[360px] sm:min-h-[500px] max-h-[900px] overflow-hidden">
+        {heroSlides.map((slide, i) => (
+          <link
+            key={i}
+            rel={i == 0 ? 'preload' : 'prefetch'}
+            as='image'
+            href={slide.image}
+
+          />
+        ))}
+        
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
@@ -350,9 +361,11 @@ export default function LandingPage() {
               {/* Image */}
               <div className="order-1">
                 <div className="relative aspect-[4/3] rounded-xl sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-xl sm:shadow-xl lg:shadow-2xl">
-                  <img
+                  <Image
                     src={stressPhrases[currentStressPhrase].image}
                     alt="Shopping experience"
+                    fill
+                    quality={75}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="600"%3E%3Crect fill="%23f3f4f6" width="800" height="600"/%3E%3C/svg%3E';
@@ -426,9 +439,11 @@ export default function LandingPage() {
                 className="bg-white rounded-lg sm:rounded-lg lg:rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group"
               >
                 <div className="relative w-full aspect-square sm:aspect-[4/3] bg-gray-100">
-                  <img
+                  <Image
                     src={product.image}
                     alt={product.name}
+                    fill
+                    quality={70}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
                       e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="150" height="150"%3E%3Crect fill="%23f3f4f6" width="150" height="150"/%3E%3C/svg%3E';
