@@ -684,8 +684,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
             <div className="col-span-1 sm:col-span-2">
               <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <ShoppingBag className="text-[#FA3728]" size={22} />
-                <span className="text-lg sm:text-2xl font-bold">ShopAm</span>
+                <img src="/images/shopam-logo.png" alt="ShopAm Logo" width={100} height={100}/>
               </div>
               <p className="text-sm sm:text-base text-gray-400 mb-3 sm:mb-4 max-w-sm">
                 Your trusted marketplace for quality products and services from verified vendors across Nigeria.
