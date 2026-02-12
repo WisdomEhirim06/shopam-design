@@ -32,7 +32,7 @@ export default function LandingPage() {
 
   const heroSlides = [
     {
-      image: '/images/hero-woman-shopping.png',
+      image: '/images/hero-shopping.jpg',
       title: 'Shopping Never Gets',
       titleHighlight: 'Stressful',
      
@@ -154,7 +154,7 @@ export default function LandingPage() {
             {/* Logo - Larger */}
             <Link href="/" className="flex items-center gap-2 flex-shrink-0">
               <div className="relative flex items-center justify-center">
-                <img src="/images/shopam-logo.png" alt="ShopAm Logo" className="w-12 h-12 sm:w-12 sm:h-12 lg:w-14 lg:h-14 object-contain" />
+                <img src="/images/shopam-logo.png" alt="ShopAm Logo" width={100} height={100}/>
               </div>
             </Link>
 
@@ -248,8 +248,8 @@ export default function LandingPage() {
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/50 to-gray-900/20 sm:bg-gradient-to-r sm:from-gray-900/90 sm:via-gray-900/70 sm:to-gray-900/50"></div>
             </div>
 
-            <div className="relative h-full flex items-end sm:items-center pb-6 sm:pb-0">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-14 sm:pt-16 lg:pt-20">
+            <div className="relative h-full flex items-center sm:items-center">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-10 sm:pt-16 lg:pt-20">
                 <div className="max-w-xl sm:max-w-2xl lg:max-w-3xl">
                   <motion.h1
                     initial={{ opacity: 0, y: 15 }}
@@ -287,20 +287,8 @@ export default function LandingPage() {
                     </Link>
                   </motion.div>
 
-                  {/* Slide Indicators - smaller on mobile */}
-                  <div className="flex gap-1.5 sm:gap-2 mt-5 sm:mt-10 lg:mt-12">
-                    {heroSlides.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentSlide(index)}
-                        className={`rounded-full transition-all duration-300 ${
-                          index === currentSlide
-                            ? 'w-6 sm:w-10 h-[3px] sm:h-1.5 bg-[#FA3728]'
-                            : 'w-3 sm:w-5 h-[3px] sm:h-1.5 bg-white/40 hover:bg-white/60'
-                        }`}
-                      />
-                    ))}
-                  </div>
+                  
+                  
                 </div>
               </div>
             </div>
