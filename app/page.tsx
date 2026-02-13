@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag,
   ArrowRight,
-  Sparkles,
+
   Home,
   Utensils,
   Dumbbell,
@@ -234,22 +234,21 @@ export default function LandingPage() {
             rel={i == 0 ? 'preload' : 'prefetch'}
             as='image'
             href={slide.image}
-
           />
         ))}
-        
-        <AnimatePresence mode="wait">
+
+        {/* Render all slides stacked, crossfade via opacity */}
+        {heroSlides.map((slide, index) => (
           <motion.div
-            key={currentSlide}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.7 }}
+            key={index}
+            animate={{ opacity: index === currentSlide ? 1 : 0 }}
+            transition={{ duration: 1, ease: 'easeInOut' }}
             className="absolute inset-0"
+            style={{ zIndex: index === currentSlide ? 1 : 0 }}
           >
             <div className="absolute inset-0">
               <img
-                src={heroSlides[currentSlide].image}
+                src={slide.image}
                 alt="Shopping"
                 className="w-full h-full object-cover object-center"
                 onError={(e) => {
@@ -258,67 +257,59 @@ export default function LandingPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/50 to-gray-900/20 sm:bg-gradient-to-r sm:from-gray-900/90 sm:via-gray-900/70 sm:to-gray-900/50"></div>
             </div>
+          </motion.div>
+        ))}
 
-            <div className="relative h-full flex items-center sm:items-center">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-10 sm:pt-16 lg:pt-20">
-                <div className="max-w-xl sm:max-w-2xl lg:max-w-3xl">
-                  <motion.h1
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-[1.65rem] sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.2] sm:leading-tight mb-2 sm:mb-4 lg:mb-6"
-                  >
+        {/* Text overlay - always on top */}
+        <div className="relative z-10 h-full flex items-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div className="max-w-xl sm:max-w-2xl lg:max-w-3xl">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentSlide}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.5, ease: 'easeInOut' }}
+                >
+                  <h1 className="text-[1.65rem] sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.2] sm:leading-tight mb-2 sm:mb-4 lg:mb-6">
                     {heroSlides[currentSlide].title}{' '}
                     <span className="text-[#FA3728]">{heroSlides[currentSlide].titleHighlight}</span>
                     {heroSlides[currentSlide].titleEnd && (
                       <> {heroSlides[currentSlide].titleEnd}</>
                     )}
-                  </motion.h1>
+                  </h1>
 
-                  <motion.p
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="text-[13px] sm:text-lg md:text-xl lg:text-2xl text-white/85 mb-4 sm:mb-6 lg:mb-10 leading-relaxed max-w-sm sm:max-w-none"
-                  >
+                  <p className="text-[13px] sm:text-lg md:text-xl lg:text-2xl text-white/85 mb-4 sm:mb-6 lg:mb-10 leading-relaxed max-w-sm sm:max-w-none">
                     {heroSlides[currentSlide].subtitle}
-                  </motion.p>
+                  </p>
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
+                  <Link
+                    href="/explore"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-8 sm:py-3.5 lg:py-4 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-semibold text-[13px] sm:text-base lg:text-lg transition-all shadow-xl hover:shadow-2xl active:scale-95"
                   >
-                    <Link
-                      href="/explore"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-8 sm:py-3.5 lg:py-4 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-semibold text-[13px] sm:text-base lg:text-lg transition-all shadow-xl hover:shadow-2xl active:scale-95"
-                    >
-                      Explore Products
-                      <ArrowRight className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
-                    </Link>
-                  </motion.div>
-
-                  
-                  
-                </div>
-              </div>
+                    Explore Products
+                    <ArrowRight className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                  </Link>
+                </motion.div>
+              </AnimatePresence>
             </div>
+          </div>
+        </div>
 
-            {/* Navigation arrows - hidden on small mobile, visible on larger screens */}
-            <button
-              onClick={prevSlide}
-              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-full bg-black/25 backdrop-blur-sm hover:bg-black/50 hidden sm:flex items-center justify-center text-white transition-all active:scale-90"
-            >
-              <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-full bg-black/25 backdrop-blur-sm hover:bg-black/50 hidden sm:flex items-center justify-center text-white transition-all active:scale-90"
-            >
-              <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
-            </button>
-          </motion.div>
-        </AnimatePresence>
+        {/* Navigation arrows */}
+        <button
+          onClick={prevSlide}
+          className="absolute z-10 left-2 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-full bg-black/25 backdrop-blur-sm hover:bg-black/50 hidden sm:flex items-center justify-center text-white transition-all active:scale-90"
+        >
+          <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
+        </button>
+        <button
+          onClick={nextSlide}
+          className="absolute z-10 right-2 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-full bg-black/25 backdrop-blur-sm hover:bg-black/50 hidden sm:flex items-center justify-center text-white transition-all active:scale-90"
+        >
+          <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
+        </button>
       </section>
 
       {/* STATS */}
@@ -347,74 +338,82 @@ export default function LandingPage() {
       </section>
 
       {/* STRESS CAROUSEL */}
-      <section className="py-12 sm:py-16 lg:py-24 bg-white" style={{ marginTop: '80px' }}>
+      <section className="py-10 sm:py-16 lg:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStressPhrase}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center"
-            >
-              {/* Image */}
-              <div className="order-1">
-                <div className="relative aspect-[4/3] rounded-xl sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-xl sm:shadow-xl lg:shadow-2xl">
-                  <Image
-                    src={stressPhrases[currentStressPhrase].image}
-                    alt="Shopping experience"
-                    fill
-                    quality={75}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="600"%3E%3Crect fill="%23f3f4f6" width="800" height="600"/%3E%3C/svg%3E';
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Text */}
-              <div className="order-2 text-left">
-                <h2
-                  className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight mb-3 sm:mb-4 lg:mb-6 ${
-                    stressPhrases[currentStressPhrase].isResolution
-                      ? 'text-[#FA3728]'
-                      : 'text-gray-900'
-                  }`}
-                >
-                  {stressPhrases[currentStressPhrase].text}
-                </h2>
-
-                {stressPhrases[currentStressPhrase].isResolution && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-sm sm:text-lg md:text-xl lg:text-2xl text-gray-600"
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
+            {/* Image - crossfade, no white flash */}
+            <div className="order-1">
+              <div className="relative aspect-[4/3] rounded-xl sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-xl sm:shadow-xl lg:shadow-2xl">
+                {stressPhrases.map((phrase, index) => (
+                  <motion.div
+                    key={index}
+                    animate={{ opacity: index === currentStressPhrase ? 1 : 0 }}
+                    transition={{ duration: 0.8, ease: 'easeInOut' }}
+                    className="absolute inset-0"
+                    style={{ zIndex: index === currentStressPhrase ? 1 : 0 }}
                   >
-                    Verified vendors. Real products. Trusted service.
-                  </motion.p>
-                )}
-
-                <div className="flex gap-1.5 sm:gap-2 mt-4 sm:mt-4 lg:mt-6">
-                  {stressPhrases.map((_, index) => (
-                    <div
-                      key={index}
-                      className={`h-1 sm:h-1 rounded-full transition-all ${
-                        index === currentStressPhrase ? 'w-8 sm:w-8 bg-[#FA3728]' : 'w-4 sm:w-4 bg-gray-300'
-                      }`}
+                    <Image
+                      src={phrase.image}
+                      alt="Shopping experience"
+                      fill
+                      quality={75}
+                      className="object-cover"
                     />
-                  ))}
-                </div>
+                  </motion.div>
+                ))}
               </div>
-            </motion.div>
-          </AnimatePresence>
+            </div>
+
+            {/* Text */}
+            <div className="order-2 text-left">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStressPhrase}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.4, ease: 'easeInOut' }}
+                >
+                  <h2
+                    className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight mb-3 sm:mb-4 lg:mb-6 ${
+                      stressPhrases[currentStressPhrase].isResolution
+                        ? 'text-[#FA3728]'
+                        : 'text-gray-900'
+                    }`}
+                  >
+                    {stressPhrases[currentStressPhrase].text}
+                  </h2>
+
+                  {stressPhrases[currentStressPhrase].isResolution && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                      className="text-sm sm:text-lg md:text-xl lg:text-2xl text-gray-600"
+                    >
+                      Verified vendors. Real products. Trusted service.
+                    </motion.p>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+
+              <div className="flex gap-1.5 sm:gap-2 mt-4 sm:mt-4 lg:mt-6">
+                {stressPhrases.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`h-1 sm:h-1 rounded-full transition-all ${
+                      index === currentStressPhrase ? 'w-8 sm:w-8 bg-[#FA3728]' : 'w-4 sm:w-4 bg-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* PRODUCTS */}
-      <section className="py-12 sm:py-16 lg:py-24 bg-gray-50" style={{ marginTop: '80px' }}>
+      <section className="py-10 sm:py-16 lg:py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="text-center mb-6 sm:mb-10 lg:mb-12">
             <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-orange-100 text-[#FA3728] rounded-full text-[11px] sm:text-sm font-semibold mb-2 sm:mb-4">
@@ -497,7 +496,7 @@ export default function LandingPage() {
       </section>
 
       {/* INFINITE SCROLL */}
-      <section className="py-12 sm:py-16 lg:py-24 bg-white overflow-hidden" style={{ marginTop: '80px' }}>
+      <section className="py-10 sm:py-16 lg:py-24 bg-white overflow-hidden">
         <div className="mb-5 sm:mb-8 lg:mb-10 text-center">
           <h3 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">Shop by Category</h3>
         </div>
@@ -544,7 +543,7 @@ export default function LandingPage() {
       </section>
 
       {/* CATEGORIES - Compact horizontal layout on mobile, grid on larger screens */}
-      <section className="py-12 sm:py-16 lg:py-24 bg-gradient-to-b from-gray-50 to-white" style={{ marginTop: '80px' }}>
+      <section className="py-10 sm:py-16 lg:py-24 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6 sm:mb-10 lg:mb-12">
             <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-pink-100 text-[#FA3728] rounded-full text-[11px] sm:text-sm font-semibold mb-2 sm:mb-4">
@@ -607,7 +606,7 @@ export default function LandingPage() {
       </section>
 
       {/* WHY CHOOSE - Always horizontal */}
-      <section className="py-12 sm:py-16 lg:py-24 bg-white" style={{ marginTop: '80px' }}>
+      <section className="py-10 sm:py-16 lg:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6 sm:mb-10 lg:mb-12">
             <h2 className="text-xl sm:text-3xl lg:text-5xl font-bold text-gray-900 mb-1.5 sm:mb-4">
@@ -647,7 +646,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-14 sm:py-16 lg:py-24 bg-gradient-to-br from-[#FA3728] to-[#E31B23] text-white" style={{ marginTop: '80px' }}>
+      <section className="py-12 sm:py-16 lg:py-24 bg-gradient-to-br from-[#FA3728] to-[#E31B23] text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
