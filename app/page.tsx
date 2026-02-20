@@ -36,7 +36,7 @@ export default function LandingPage() {
       image: '/images/hero-shopping.jpg',
       title: 'Shopping Never Gets',
       titleHighlight: 'Stressful',
-     
+
       subtitle: 'Discover amazing products from trusted vendors',
     },
     {
@@ -155,7 +155,7 @@ export default function LandingPage() {
             {/* Logo - Larger */}
             <Link href="/" className="flex items-center gap-2 flex-shrink-0">
               <div className="relative flex items-center justify-center">
-                <img src="/images/shopam-logo.png" alt="ShopAm Logo" width={100} height={100}/>
+                <img src="/images/shopam-logo.png" alt="ShopAm Logo" width={100} height={100} />
               </div>
             </Link>
 
@@ -226,8 +226,8 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* HERO - Compact on mobile, expansive on desktop */}
-      <section className="relative h-[50vh] sm:h-[70vh] lg:h-[90vh] min-h-[360px] sm:min-h-[500px] max-h-[900px] overflow-hidden">
+      {/* HERO - Responsive height */}
+      <section className="relative h-[65vh] sm:h-[70vh] lg:h-[90vh] min-h-[420px] sm:min-h-[500px] max-h-[900px] overflow-hidden">
         {heroSlides.map((slide, i) => (
           <link
             key={i}
@@ -255,13 +255,13 @@ export default function LandingPage() {
                   e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"%3E%3Crect fill="%23f3f4f6" width="1920" height="1080"/%3E%3C/svg%3E';
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/50 to-gray-900/20 sm:bg-gradient-to-r sm:from-gray-900/90 sm:via-gray-900/70 sm:to-gray-900/50"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/70 to-gray-900/40 sm:bg-gradient-to-r sm:from-gray-900/90 sm:via-gray-900/70 sm:to-gray-900/50"></div>
             </div>
           </motion.div>
         ))}
 
         {/* Text overlay - always on top */}
-        <div className="relative z-10 h-full flex items-center">
+        <div className="relative z-10 h-full flex items-center pt-8 sm:pt-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             <div className="max-w-xl sm:max-w-2xl lg:max-w-3xl">
               <AnimatePresence mode="wait">
@@ -272,7 +272,7 @@ export default function LandingPage() {
                   exit={{ opacity: 0, y: -12 }}
                   transition={{ duration: 0.5, ease: 'easeInOut' }}
                 >
-                  <h1 className="text-[1.65rem] sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.2] sm:leading-tight mb-2 sm:mb-4 lg:mb-6">
+                  <h1 className="text-[2rem] sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.15] sm:leading-tight mb-3 sm:mb-4 lg:mb-6">
                     {heroSlides[currentSlide].title}{' '}
                     <span className="text-[#FA3728]">{heroSlides[currentSlide].titleHighlight}</span>
                     {heroSlides[currentSlide].titleEnd && (
@@ -280,13 +280,13 @@ export default function LandingPage() {
                     )}
                   </h1>
 
-                  <p className="text-[13px] sm:text-lg md:text-xl lg:text-2xl text-white/85 mb-4 sm:mb-6 lg:mb-10 leading-relaxed max-w-sm sm:max-w-none">
+                  <p className="text-[15px] sm:text-lg md:text-xl lg:text-2xl text-white/85 mb-5 sm:mb-6 lg:mb-10 leading-relaxed max-w-[280px] sm:max-w-none">
                     {heroSlides[currentSlide].subtitle}
                   </p>
 
                   <Link
                     href="/explore"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-8 sm:py-3.5 lg:py-4 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-semibold text-[13px] sm:text-base lg:text-lg transition-all shadow-xl hover:shadow-2xl active:scale-95"
+                    className="inline-flex items-center gap-2 px-6 py-3 sm:px-8 sm:py-3.5 lg:py-4 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-semibold text-sm sm:text-base lg:text-lg transition-all shadow-xl hover:shadow-2xl active:scale-95"
                   >
                     Explore Products
                     <ArrowRight className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
@@ -313,7 +313,7 @@ export default function LandingPage() {
       </section>
 
       {/* STATS */}
-      <section className="bg-gray-900 py-6 sm:py-10 lg:py-12">
+      <section className="bg-gray-900 mt-2 sm:mt-4 lg:mt-6 py-8 sm:py-12 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
             {[
@@ -338,7 +338,7 @@ export default function LandingPage() {
       </section>
 
       {/* STRESS CAROUSEL */}
-      <section className="py-10 sm:py-16 lg:py-24 bg-white">
+      <section className="mt-3 sm:mt-6 lg:mt-8 pt-10 sm:pt-16 lg:pt-24 pb-12 sm:pb-20 lg:pb-28 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
             {/* Image - crossfade, no white flash */}
@@ -375,11 +375,10 @@ export default function LandingPage() {
                   transition={{ duration: 0.4, ease: 'easeInOut' }}
                 >
                   <h2
-                    className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight mb-3 sm:mb-4 lg:mb-6 ${
-                      stressPhrases[currentStressPhrase].isResolution
-                        ? 'text-[#FA3728]'
-                        : 'text-gray-900'
-                    }`}
+                    className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight mb-3 sm:mb-4 lg:mb-6 ${stressPhrases[currentStressPhrase].isResolution
+                      ? 'text-[#FA3728]'
+                      : 'text-gray-900'
+                      }`}
                   >
                     {stressPhrases[currentStressPhrase].text}
                   </h2>
@@ -401,9 +400,8 @@ export default function LandingPage() {
                 {stressPhrases.map((_, index) => (
                   <div
                     key={index}
-                    className={`h-1 sm:h-1 rounded-full transition-all ${
-                      index === currentStressPhrase ? 'w-8 sm:w-8 bg-[#FA3728]' : 'w-4 sm:w-4 bg-gray-300'
-                    }`}
+                    className={`h-1 sm:h-1 rounded-full transition-all ${index === currentStressPhrase ? 'w-8 sm:w-8 bg-[#FA3728]' : 'w-4 sm:w-4 bg-gray-300'
+                      }`}
                   />
                 ))}
               </div>
@@ -413,7 +411,7 @@ export default function LandingPage() {
       </section>
 
       {/* PRODUCTS */}
-      <section className="py-10 sm:py-16 lg:py-24 bg-gray-50">
+      <section className="mt-3 sm:mt-6 lg:mt-8 pt-10 sm:pt-16 lg:pt-24 pb-12 sm:pb-20 lg:pb-28 bg-gray-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="text-center mb-6 sm:mb-10 lg:mb-12">
             <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-orange-100 text-[#FA3728] rounded-full text-[11px] sm:text-sm font-semibold mb-2 sm:mb-4">
@@ -496,7 +494,7 @@ export default function LandingPage() {
       </section>
 
       {/* INFINITE SCROLL */}
-      <section className="py-10 sm:py-16 lg:py-24 bg-white overflow-hidden">
+      <section className="mt-3 sm:mt-6 lg:mt-8 pt-10 sm:pt-16 lg:pt-24 pb-12 sm:pb-20 lg:pb-28 bg-white overflow-hidden">
         <div className="mb-5 sm:mb-8 lg:mb-10 text-center">
           <h3 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">Shop by Category</h3>
         </div>
@@ -543,7 +541,7 @@ export default function LandingPage() {
       </section>
 
       {/* CATEGORIES - Compact horizontal layout on mobile, grid on larger screens */}
-      <section className="py-10 sm:py-16 lg:py-24 bg-gradient-to-b from-gray-50 to-white">
+      <section className="mt-3 sm:mt-6 lg:mt-8 pt-10 sm:pt-16 lg:pt-24 pb-12 sm:pb-20 lg:pb-28 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6 sm:mb-10 lg:mb-12">
             <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-pink-100 text-[#FA3728] rounded-full text-[11px] sm:text-sm font-semibold mb-2 sm:mb-4">
@@ -606,7 +604,7 @@ export default function LandingPage() {
       </section>
 
       {/* WHY CHOOSE - Always horizontal */}
-      <section className="py-10 sm:py-16 lg:py-24 bg-white">
+      <section className="mt-3 sm:mt-6 lg:mt-8 pt-10 sm:pt-16 lg:pt-24 pb-12 sm:pb-20 lg:pb-28 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6 sm:mb-10 lg:mb-12">
             <h2 className="text-xl sm:text-3xl lg:text-5xl font-bold text-gray-900 mb-1.5 sm:mb-4">
@@ -646,7 +644,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-12 sm:py-16 lg:py-24 bg-gradient-to-br from-[#FA3728] to-[#E31B23] text-white">
+      <section className="mt-4 sm:mt-8 lg:mt-12 pt-14 sm:pt-20 lg:pt-28 pb-14 sm:pb-20 lg:pb-28 bg-gradient-to-br from-[#FA3728] to-[#E31B23] text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -683,7 +681,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
             <div className="col-span-1 sm:col-span-2">
               <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <img src="/images/shopam-logo.png" alt="ShopAm Logo" width={100} height={100}/>
+                <img src="/images/shopam-logo.png" alt="ShopAm Logo" width={100} height={100} />
               </div>
               <p className="text-sm sm:text-base text-gray-400 mb-3 sm:mb-4 max-w-sm">
                 Your trusted marketplace for quality products and services from verified vendors across Nigeria.
