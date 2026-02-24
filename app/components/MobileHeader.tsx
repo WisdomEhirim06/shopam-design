@@ -27,11 +27,10 @@ export default function MobileHeader({ onMenuToggle }: MobileHeaderProps) {
         <div className="flex items-center justify-between p-4">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full theme-red-bg flex items-center justify-center font-bold text-lg text-white">
-              SA
+            <div className="flex items-center justify-center font-bold text-lg text-white">
+              <img src="/images/black-logo.png" alt="ShopAm Logo" width={100} height={100} />
             </div>
             <div>
-              <h1 className="font-bold text-sm theme-text-primary">ShopAm</h1>
               <p className="text-xs theme-text-secondary">Vendor Dashboard</p>
             </div>
           </div>

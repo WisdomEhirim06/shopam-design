@@ -313,7 +313,7 @@ export default function LandingPage() {
       </section>
 
       {/* STATS */}
-      <section className="bg-gray-900 mt-2 sm:mt-4 lg:mt-6 py-8 sm:py-12 lg:py-16">
+      <section className="bg-gray-900 py-8 sm:py-12 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
             {[
@@ -338,7 +338,7 @@ export default function LandingPage() {
       </section>
 
       {/* STRESS CAROUSEL */}
-      <section className="mt-3 sm:mt-6 lg:mt-8 pt-10 sm:pt-16 lg:pt-24 pb-12 sm:pb-20 lg:pb-28 bg-white">
+      <section className="py-12 sm:py-20 lg:py-28 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
             {/* Image - crossfade, no white flash */}
@@ -411,7 +411,7 @@ export default function LandingPage() {
       </section>
 
       {/* PRODUCTS */}
-      <section className="mt-3 sm:mt-6 lg:mt-8 pt-10 sm:pt-16 lg:pt-24 pb-12 sm:pb-20 lg:pb-28 bg-gray-50">
+      <section className="py-16 sm:py-24 lg:py-32 bg-gray-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="text-center mb-6 sm:mb-10 lg:mb-12">
             <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-orange-100 text-[#FA3728] rounded-full text-[11px] sm:text-sm font-semibold mb-2 sm:mb-4">
@@ -494,7 +494,7 @@ export default function LandingPage() {
       </section>
 
       {/* INFINITE SCROLL */}
-      <section className="mt-3 sm:mt-6 lg:mt-8 pt-10 sm:pt-16 lg:pt-24 pb-12 sm:pb-20 lg:pb-28 bg-white overflow-hidden">
+      <section className="py-16 sm:py-24 lg:py-32 bg-white overflow-hidden">
         <div className="mb-5 sm:mb-8 lg:mb-10 text-center">
           <h3 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">Shop by Category</h3>
         </div>
@@ -541,7 +541,7 @@ export default function LandingPage() {
       </section>
 
       {/* CATEGORIES - Compact horizontal layout on mobile, grid on larger screens */}
-      <section className="mt-3 sm:mt-6 lg:mt-8 pt-10 sm:pt-16 lg:pt-24 pb-12 sm:pb-20 lg:pb-28 bg-gradient-to-b from-gray-50 to-white">
+      <section className="py-16 sm:py-24 lg:py-32 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6 sm:mb-10 lg:mb-12">
             <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-pink-100 text-[#FA3728] rounded-full text-[11px] sm:text-sm font-semibold mb-2 sm:mb-4">
@@ -604,7 +604,7 @@ export default function LandingPage() {
       </section>
 
       {/* WHY CHOOSE - Always horizontal */}
-      <section className="mt-3 sm:mt-6 lg:mt-8 pt-10 sm:pt-16 lg:pt-24 pb-12 sm:pb-20 lg:pb-28 bg-white">
+      <section className="py-16 sm:py-24 lg:py-32 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6 sm:mb-10 lg:mb-12">
             <h2 className="text-xl sm:text-3xl lg:text-5xl font-bold text-gray-900 mb-1.5 sm:mb-4">
@@ -644,7 +644,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="mt-4 sm:mt-8 lg:mt-12 pt-14 sm:pt-20 lg:pt-28 pb-14 sm:pb-20 lg:pb-28 bg-gradient-to-br from-[#FA3728] to-[#E31B23] text-white">
+      <section className="py-20 sm:py-28 lg:py-36 bg-gradient-to-br from-[#FA3728] to-[#E31B23] text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
