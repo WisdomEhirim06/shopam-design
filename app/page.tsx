@@ -47,7 +47,7 @@ export default function LandingPage() {
       subtitle: 'From fashion to electronics, we have it all',
     },
     {
-      image: '/images/hero-4.jpg',
+      image: '/images/hero-man-shopping.jpg',
       title: 'Shop with',
       titleHighlight: 'Confidence',
       titleEnd: 'Every Time',
