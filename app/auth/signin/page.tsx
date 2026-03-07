@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
+import Image from 'next/image';
 import { authService } from '@/lib/api';
 
 export default function VendorSignInPage() {
@@ -31,7 +32,7 @@ export default function VendorSignInPage() {
       });
 
       console.log('Login successful:', response.user);
-      
+
       // Check if user is a vendor
       if (!response.user.is_vendor) {
         setError('Please use customer sign-in page');
@@ -43,7 +44,7 @@ export default function VendorSignInPage() {
       router.push('/dashboard');
     } catch (err: any) {
       console.error('Login error:', err);
-      
+
       // Handle different error types
       if (err.response?.data?.message) {
         setError(err.response.data.message);
@@ -132,23 +133,23 @@ export default function VendorSignInPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <div className="w-full max-w-md">
           {/* Mobile Header */}
-          <div className="lg:hidden mb-6">
-            <Link href="/auth" className="inline-flex items-center gap-2 theme-text-secondary mb-4">
+          <div className="lg:hidden mb-12 flex justify-between items-center w-full relative">
+            <Link href="/" className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-[#FA3728] transition-colors absolute left-0">
               <ArrowLeft size={20} />
-              <span>Back</span>
             </Link>
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-crimson to-shopam flex items-center justify-center">
-                  <span className="font-bold text-xl text-white">SA</span>
-                </div>
-                <div className="text-left">
-                  <h1 className="text-xl font-bold theme-text-primary">ShopAm</h1>
-                  <p className="text-sm theme-text-secondary">Vendor Dashboard</p>
-                </div>
-              </div>
+            <div className="flex-1 flex justify-center">
+              <Image src="/images/black-logo.png" alt="ShopAm Logo" width={100} height={100} className="object-contain" />
             </div>
           </div>
+
+          {/* Desktop Back Button */}
+          <Link
+            href="/"
+            className="hidden lg:inline-flex items-center gap-2 text-gray-600 hover:text-[#FA3728] transition-colors mb-8"
+          >
+            <ArrowLeft size={20} />
+            <span>Back to Home</span>
+          </Link>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -166,82 +167,66 @@ export default function VendorSignInPage() {
               {/* Email */}
               <div>
                 <label className="block text-sm font-medium mb-2 theme-text-primary">
-                  Email Address
+                  Email
                 </label>
-                <div className="relative">
-                  <Mail size={20} className="absolute left-3 top-1/2 -translate-y-1/2 theme-text-secondary" />
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="your@email.com"
-                    className="theme-input w-full pl-11 pr-4 py-3 rounded-lg"
-                    required
-                  />
-                </div>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="theme-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
+                  required
+                />
               </div>
 
               {/* Password */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium theme-text-primary">
-                    Password
-                  </label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="text-sm theme-red hover:underline"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium theme-text-primary">
+                  Password
+                </label>
                 <div className="relative">
-                  <Lock size={20} className="absolute left-3 top-1/2 -translate-y-1/2 theme-text-secondary" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Enter your password"
-                    className="theme-input w-full pl-11 pr-12 py-3 rounded-lg"
+                    className="theme-input w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 theme-text-secondary hover:opacity-80"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 theme-text-secondary hover:opacity-80 transition-colors"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
-              </div>
-
-              {/* Remember Me */}
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="rememberMe"
-                  checked={formData.rememberMe}
-                  onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
-                  className="w-4 h-4 rounded theme-input cursor-pointer"
-                  style={{ accentColor: 'var(--primary-red)' }}
-                />
-                <label htmlFor="rememberMe" className="ml-2 text-sm theme-text-secondary cursor-pointer">
-                  Remember me for 30 days
-                </label>
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-                  <p className="text-sm text-red-500">{error}</p>
+                <div className="flex justify-between items-center mt-2">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="rememberMe"
+                      checked={formData.rememberMe}
+                      onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
+                      className="w-4 h-4 rounded theme-input cursor-pointer"
+                      style={{ accentColor: 'var(--primary-red)' }}
+                    />
+                    <label htmlFor="rememberMe" className="ml-2 text-sm theme-text-secondary cursor-pointer">
+                      Remember me
+                    </label>
+                  </div>
+                  <Link
+                    href="/auth/forgot-password"
+                    className="text-sm theme-red hover:underline font-medium"
+                  >
+                    Forgot password?
+                  </Link>
                 </div>
-              )}
+              </div>
 
               {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isSubmitting || !formData.email || !formData.password}
-                className="w-full py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                style={{ backgroundColor: 'var(--primary-red)', boxShadow: 'var(--primary-red-glow)' }}
+                className="w-full py-4 mt-8 bg-gradient-to-r from-[#FA3728] to-[#E31B23] text-white rounded-xl font-bold text-lg transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
                   <>
@@ -249,10 +234,7 @@ export default function VendorSignInPage() {
                     Signing In...
                   </>
                 ) : (
-                  <>
-                    Sign In
-                    <ArrowRight size={20} />
-                  </>
+                  'Sign In'
                 )}
               </button>
             </form>
@@ -270,16 +252,12 @@ export default function VendorSignInPage() {
             </div>
 
             {/* Sign Up Link */}
-            <Link
-              href="/auth/signup"
-              className="block w-full py-4 rounded-xl font-semibold text-center transition-all theme-card hover:border-primary"
-              style={{ 
-                borderColor: 'var(--border-primary)',
-                color: 'var(--primary-red)'
-              }}
-            >
-              Create Vendor Account
-            </Link>
+            <p className="text-center text-sm theme-text-secondary mt-6">
+              New to ShopAm?{' '}
+              <Link href="/auth/signup" className="text-[#FA3728] hover:underline font-semibold">
+                Create Vendor Account
+              </Link>
+            </p>
 
             {/* Footer */}
             <div className="mt-8 pt-6 border-t border-primary text-center text-sm theme-text-secondary" style={{ borderColor: 'var(--border-primary)' }}>

@@ -61,7 +61,7 @@ export default function VendorSignUpPage() {
   // Handle form submission
   const handleSubmit = async () => {
     setError('');
-    
+
     // Validation
     if (personalData.password !== personalData.confirmPassword) {
       setError('Passwords do not match');
@@ -79,7 +79,7 @@ export default function VendorSignUpPage() {
     }
 
     setIsSubmitting(true);
-    
+
     try {
       // Step 1: Register user account first
       const userResponse = await authService.registerUser({
@@ -121,7 +121,7 @@ export default function VendorSignUpPage() {
     } catch (err: any) {
       console.error('Registration error:', err);
       setIsSubmitting(false);
-      
+
       if (err.response?.data?.username) {
         setError(`Username: ${err.response.data.username[0]}`);
       } else if (err.response?.data?.email) {
@@ -160,8 +160,8 @@ export default function VendorSignUpPage() {
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <div>
             <Link href="/" className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
-                <span className="font-bold text-2xl text-[#FA3728]">SA</span>
+              <div className="flex items-center justify-center">
+                <img src="/images/shopam-logo.png" width={100} height={100}></img>
               </div>
               <div>
                 <h1 className="text-2xl font-bold">ShopAm</h1>
@@ -190,14 +190,12 @@ export default function VendorSignUpPage() {
                   return (
                     <div
                       key={step.key}
-                      className={`flex items-center gap-4 ${
-                        isActive ? 'opacity-100' : isCompleted ? 'opacity-75' : 'opacity-40'
-                      }`}
+                      className={`flex items-center gap-4 ${isActive ? 'opacity-100' : isCompleted ? 'opacity-75' : 'opacity-40'
+                        }`}
                     >
                       <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                          isActive ? 'bg-white text-[#FA3728]' : 'bg-white/10'
-                        }`}
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${isActive ? 'bg-white text-[#FA3728]' : 'bg-white/10'
+                          }`}
                       >
                         {isCompleted ? <CheckCircle size={20} /> : <Icon size={20} />}
                       </div>
@@ -222,10 +220,9 @@ export default function VendorSignUpPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 overflow-y-auto bg-white">
         <div className="w-full max-w-md">
           {/* Mobile Header */}
-          <div className="lg:hidden mb-6">
-            <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-[#FA3728] mb-4">
+          <div className="lg:hidden mb-2">
+            <Link href="/" className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-[#FA3728] transition-colors">
               <ArrowLeft size={20} />
-              <span>Back</span>
             </Link>
           </div>
 
@@ -253,92 +250,55 @@ export default function VendorSignUpPage() {
                   {/* Username */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Username *</label>
-                    <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                      <input
-                        type="text"
-                        required
-                        value={personalData.username}
-                        onChange={(e) => setPersonalData({ ...personalData, username: e.target.value })}
-                        placeholder="Choose a username"
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none"
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={personalData.username}
+                      onChange={(e) => setPersonalData({ ...personalData, username: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
+                    />
                   </div>
 
                   {/* Email */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                      <input
-                        type="email"
-                        required
-                        value={personalData.email}
-                        onChange={(e) => setPersonalData({ ...personalData, email: e.target.value })}
-                        placeholder="your@email.com"
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none"
-                      />
-                    </div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                    <input
+                      type="email"
+                      required
+                      value={personalData.email}
+                      onChange={(e) => setPersonalData({ ...personalData, email: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
+                    />
                   </div>
 
                   {/* Phone */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-                    <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                      <input
-                        type="tel"
-                        required
-                        value={personalData.phone}
-                        onChange={(e) => setPersonalData({ ...personalData, phone: e.target.value })}
-                        placeholder="+234 800 000 0000"
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* First Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">First Name (Optional)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
                     <input
-                      type="text"
-                      value={personalData.first_name}
-                      onChange={(e) => setPersonalData({ ...personalData, first_name: e.target.value })}
-                      placeholder="First name"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none"
+                      type="tel"
+                      required
+                      value={personalData.phone}
+                      onChange={(e) => setPersonalData({ ...personalData, phone: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
                     />
                   </div>
 
-                  {/* Last Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Last Name (Optional)</label>
-                    <input
-                      type="text"
-                      value={personalData.last_name}
-                      onChange={(e) => setPersonalData({ ...personalData, last_name: e.target.value })}
-                      placeholder="Last name"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none"
-                    />
-                  </div>
 
                   {/* Password */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
                     <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                       <input
                         type={showPassword ? 'text' : 'password'}
                         required
                         value={personalData.password}
                         onChange={(e) => setPersonalData({ ...personalData, password: e.target.value })}
-                        placeholder="Create a password (min 8 characters)"
-                        className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none"
+                        className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                       >
                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                       </button>
@@ -349,19 +309,17 @@ export default function VendorSignUpPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password *</label>
                     <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         required
                         value={personalData.confirmPassword}
                         onChange={(e) => setPersonalData({ ...personalData, confirmPassword: e.target.value })}
-                        placeholder="Confirm your password"
-                        className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none"
+                        className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                       >
                         {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                       </button>
@@ -419,7 +377,7 @@ export default function VendorSignUpPage() {
                     <select
                       value={businessData.business_category}
                       onChange={(e) => setBusinessData({ ...businessData, business_category: e.target.value as BusinessCategory })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#FA3728] outline-none transition-colors bg-white"
                     >
                       {businessCategories.map((cat) => (
                         <option key={cat.value} value={cat.value}>
@@ -431,25 +389,23 @@ export default function VendorSignUpPage() {
 
                   {/* CAC Registration */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">CAC Registration Number (Optional)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">CAC Number <span className="text-gray-400 font-normal">(Optional)</span></label>
                     <input
                       type="text"
                       value={businessData.cac_registration}
                       onChange={(e) => setBusinessData({ ...businessData, cac_registration: e.target.value })}
-                      placeholder="Enter CAC number"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
                     />
                   </div>
 
                   {/* TIN */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">TIN Number (Optional)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">TIN <span className="text-gray-400 font-normal">(Optional)</span></label>
                     <input
                       type="text"
                       value={businessData.tin}
                       onChange={(e) => setBusinessData({ ...businessData, tin: e.target.value })}
-                      placeholder="Enter TIN"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
                     />
                     <p className="text-xs text-gray-500 mt-2">
                       CAC and TIN are optional but help build trust with customers
