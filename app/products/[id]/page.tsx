@@ -194,53 +194,35 @@ export default function ProductDetailPage() {
                   <h3 className="font-bold text-gray-900 group-hover:text-[#FA3728] transition-colors">
                     {product.vendor.name}
                   </h3>
-                  <div className="flex items-center gap-1 text-sm">
-                    <Star size={14} className="text-amber-400 fill-amber-400" />
-                    <span className="font-semibold text-gray-900">
-                      {product.vendor.rating}
-                    </span>
-                    <span className="text-gray-600">
-                      ({product.vendor.reviews.toLocaleString()})
-                    </span>
-                  </div>
+                <div className="flex items-center gap-1 text-sm mt-0.5">
+                  <Star size={14} className="text-amber-400 fill-amber-400" />
+                  <span className="font-semibold text-gray-900">
+                    {product.vendor.rating}
+                  </span>
+                  <span className="text-gray-500">
+                    ({product.vendor.reviews.toLocaleString()})
+                  </span>
                 </div>
-              </Link>
-              <button
-                onClick={() => setIsFollowing(!isFollowing)}
-                className={`px-5 py-2 rounded-full font-semibold transition-all ${
-                  isFollowing
-                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    : 'bg-[#FA3728] text-white hover:bg-[#E31B23]'
-                }`}
-              >
-                {isFollowing ? 'Following' : 'Follow'}
-              </button>
+              </div>
+            </Link>
             </div>
 
             {/* Product Title */}
             <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2 leading-tight">
                 {product.name}
               </h1>
               <div className="flex items-center gap-2">
                 <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      size={18}
-                      className={`${
-                        i < Math.floor(product.rating)
-                          ? 'text-amber-400 fill-amber-400'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
+                  <Star size={16} className="text-amber-400 fill-amber-400" />
+                  <span className="ml-1 text-sm font-semibold text-gray-900">{product.rating}</span>
                 </div>
+                <span className="text-gray-300">•</span>
                 <Link
                   href="#reviews"
-                  className="text-sm text-[#FA3728] hover:underline font-medium"
+                  className="text-sm text-gray-500 hover:text-[#FA3728] transition-colors"
                 >
-                  {product.totalRatings.toLocaleString()} ratings
+                  {product.totalRatings.toLocaleString()} reviews
                 </Link>
               </div>
             </div>
@@ -292,99 +274,67 @@ export default function ProductDetailPage() {
 
             {/* Quantity */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-3">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Quantity
               </label>
-              <div className="flex items-center gap-4 w-fit bg-gray-100 rounded-full px-4 py-3">
+              <div className="flex items-center justify-between w-[120px] bg-gray-50 rounded-full px-3 py-1.5 border border-gray-200">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-full transition-colors"
+                  className="w-8 h-8 flex flex-shrink-0 items-center justify-center text-gray-600 hover:bg-white rounded-full transition-colors"
                 >
-                  <Minus size={18} />
+                  <Minus size={16} />
                 </button>
-                <span className="font-bold text-lg min-w-[30px] text-center">
+                <span className="font-semibold text-gray-900 text-lg w-8 text-center bg-transparent">
                   {quantity}
                 </span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-full transition-colors"
+                  className="w-8 h-8 flex flex-shrink-0 items-center justify-center text-gray-600 hover:bg-white rounded-full transition-colors"
                 >
-                  <Plus size={18} />
+                  <Plus size={16} />
                 </button>
               </div>
             </div>
 
-            {/* Purchase Type */}
-            <div className="p-4 bg-gray-50 rounded-xl">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="purchaseType"
-                  defaultChecked
-                  className="w-5 h-5 text-[#FA3728]"
-                />
-                <span className="font-semibold text-gray-900">One time purchase</span>
-              </label>
-            </div>
-
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button className="flex-1 py-4 bg-gray-900 hover:bg-gray-800 text-white rounded-full font-bold transition-all">
-                Buy now
-              </button>
-              <button className="flex-1 py-4 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-bold transition-all shadow-lg hover:shadow-xl">
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button className="flex-1 py-4 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
                 Add to cart
               </button>
-            </div>
-
-            {/* Additional Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
               <button
                 onClick={() => setIsSaved(!isSaved)}
-                className="flex items-center gap-2 text-gray-700 hover:text-[#FA3728] font-medium transition-colors"
+                className="px-6 py-4 flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-full font-semibold transition-colors border border-gray-200"
               >
                 <Heart
                   size={20}
                   className={isSaved ? 'fill-[#FA3728] text-[#FA3728]' : ''}
                 />
-                <span>{isSaved ? 'Saved' : 'Save'}</span>
-              </button>
-              <button className="flex items-center gap-2 text-gray-700 hover:text-[#FA3728] font-medium transition-colors">
-                <Share2 size={20} />
-                <span>Share</span>
+                <span className="hidden sm:inline">{isSaved ? 'Saved' : 'Save'}</span>
               </button>
             </div>
 
             {/* Trust Badges */}
-            <div className="grid grid-cols-2 gap-4 pt-6 border-t border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                  <Shield size={20} className="text-[#FA3728]" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">Verified Vendor</p>
-                  <p className="text-xs text-gray-600">Trusted seller</p>
-                </div>
+            <div className="flex items-center gap-6 pt-4 border-t border-gray-100 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <Shield size={18} className="text-[#FA3728]" />
+                <span>Verified Vendor</span>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                  <Truck size={20} className="text-[#FA3728]" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">Fast Delivery</p>
-                  <p className="text-xs text-gray-600">2-5 business days</p>
-                </div>
+              <div className="flex items-center gap-2">
+                <Truck size={18} className="text-[#FA3728]" />
+                <span>Fast Delivery</span>
               </div>
             </div>
           </div>
         </div>
 
+
+
         {/* Product Description */}
-        <div className="mt-12 max-w-4xl">
+        <div className="mt-12 w-full lg:max-w-none">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Product Details</h2>
-          <div className="bg-gray-50 rounded-2xl p-6">
+          <div className="bg-gray-50 rounded-2xl p-6 lg:p-8">
             <div
-              className={`text-gray-700 leading-relaxed ${
+              className={`text-gray-700 leading-relaxed text-lg ${
                 showFullDescription ? '' : 'line-clamp-6'
               }`}
             >
@@ -392,7 +342,7 @@ export default function ProductDetailPage() {
               <p className="mb-4">
                 A unique blend of premium African print fabric designed to give you:
               </p>
-              <ul className="space-y-2 list-disc list-inside">
+              <ul className="space-y-3 list-disc list-inside px-2">
                 {product.features.map((feature, index) => (
                   <li key={index}>{feature}</li>
                 ))}
@@ -400,66 +350,16 @@ export default function ProductDetailPage() {
             </div>
             <button
               onClick={() => setShowFullDescription(!showFullDescription)}
-              className="mt-4 text-[#FA3728] hover:text-[#E31B23] font-semibold flex items-center gap-1"
+              className="mt-6 text-[#FA3728] hover:text-[#E31B23] font-semibold flex items-center gap-1 text-lg"
             >
               {showFullDescription ? 'View less' : 'View more'}
               <ChevronRight
-                size={18}
+                size={20}
                 className={`transition-transform ${
                   showFullDescription ? 'rotate-90' : ''
                 }`}
               />
             </button>
-          </div>
-        </div>
-
-        {/* Reviews Section */}
-        <div id="reviews" className="mt-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Reviews</h2>
-            <Link
-              href="#"
-              className="flex items-center gap-2 text-[#FA3728] hover:text-[#E31B23] font-medium"
-            >
-              See all
-              <ArrowRight size={18} />
-            </Link>
-          </div>
-
-          <div className="space-y-4">
-            {reviews.map((review) => (
-              <div key={review.id} className="bg-gray-50 rounded-2xl p-6">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-gray-900">{review.author}</h4>
-                      {review.verified && (
-                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                          Verified
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            size={14}
-                            className={`${
-                              i < review.rating
-                                ? 'text-amber-400 fill-amber-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm text-gray-600">{review.date}</span>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-gray-700 leading-relaxed">{review.comment}</p>
-              </div>
-            ))}
           </div>
         </div>
 

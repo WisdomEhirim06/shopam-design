@@ -147,96 +147,95 @@ export default function CartPage() {
                   className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow"
                 >
                   {/* Vendor Info */}
-                  <Link
-                    href={`/vendors/${item.vendor.name}`}
-                    className="flex items-center gap-3 mb-4 group"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center">
-                      <span className="text-white font-bold text-sm">
-                        {item.vendor.name[0]}
-                      </span>
+                  {/* Vendor Info */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-[#FA3728] flex items-center justify-center text-white font-bold text-sm">
+                      {item.vendor.name[0]}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 group-hover:text-[#FA3728] transition-colors">
+                      <h3 className="font-semibold text-gray-900 leading-tight">
                         {item.vendor.name}
                       </h3>
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                      <div className="flex items-center gap-1 text-sm text-gray-500 mt-0.5">
                         <Star size={14} className="text-amber-400 fill-amber-400" />
                         <span className="font-medium">{item.vendor.rating}</span>
                         <span>({item.vendor.reviews.toLocaleString()})</span>
                       </div>
                     </div>
-                  </Link>
+                  </div>
 
-                  {/* Product Info */}
+                  {/* Product Info Row */}
                   <div className="flex gap-4">
                     {/* Product Image */}
                     <Link
                       href={`/products/${item.id}`}
-                      className="flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 bg-gray-100 rounded-xl overflow-hidden group"
+                      className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-xl overflow-hidden group block"
                     >
                       <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 group-hover:scale-105 transition-transform"></div>
                     </Link>
 
                     {/* Product Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex-1 min-w-0 flex flex-col">
+                      <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <Link href={`/products/${item.id}`}>
-                            <h4 className="font-semibold text-gray-900 hover:text-[#FA3728] transition-colors line-clamp-2">
+                            <h4 className="font-medium text-gray-900 hover:text-[#FA3728] transition-colors truncate">
                               {item.name}
                             </h4>
                           </Link>
-                          {item.size && (
-                            <p className="text-sm text-gray-600 mt-1">Size: {item.size}</p>
-                          )}
+                          {/* Force consistent height for size/attributes */}
+                          <div className="min-h-[24px] mt-1 mb-2">
+                            <p className={`text-sm text-gray-500 truncate ${!item.size ? 'invisible' : ''}`}>
+                              Size: {item.size || '-'}
+                            </p>
+                          </div>
                         </div>
-                        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
-                          <MoreVertical size={18} className="text-gray-600" />
+                        <button className="text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0">
+                          <MoreVertical size={18} />
                         </button>
                       </div>
 
                       {/* Price and Quantity */}
-                      <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center justify-between mt-auto">
                         <p className="text-xl font-bold text-[#FA3728]">
                           ₦{item.price.toLocaleString()}
                         </p>
 
                         {/* Quantity Controls */}
-                        <div className="flex items-center gap-3 bg-gray-50 rounded-full px-2 py-1">
+                        <div className="flex items-center justify-between w-[120px] bg-gray-50 rounded-full px-3 py-1.5">
                           <button
                             onClick={() => updateQuantity(item.id, -1)}
-                            className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-full transition-colors"
+                            className="w-8 h-8 flex flex-shrink-0 items-center justify-center text-gray-600 hover:bg-white rounded-full transition-colors"
                           >
-                            <Minus size={16} className="text-gray-700" />
+                            <Minus size={16} />
                           </button>
-                          <span className="font-semibold text-gray-900 min-w-[20px] text-center">
+                          <span className="font-semibold text-gray-900 w-8 text-center bg-transparent">
                             {item.quantity}
                           </span>
                           <button
                             onClick={() => updateQuantity(item.id, 1)}
-                            className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-full transition-colors"
+                            className="w-8 h-8 flex flex-shrink-0 items-center justify-center text-gray-600 hover:bg-white rounded-full transition-colors"
                           >
-                            <Plus size={16} className="text-gray-700" />
+                            <Plus size={16} />
                           </button>
                         </div>
                       </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-4 mt-4">
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
-                        >
-                          <Trash2 size={16} />
-                          Remove
-                        </button>
-                        <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#FA3728] font-medium transition-colors">
-                          <Heart size={16} />
-                          Save for later
-                        </button>
-                      </div>
                     </div>
+                  </div>
+
+                  {/* Actions Row */}
+                  <div className="flex items-center justify-center gap-6 mt-6 pt-2">
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="flex items-center gap-2 text-sm text-[#FA3728] hover:text-[#E31B23] font-medium transition-colors"
+                    >
+                      <Trash2 size={16} />
+                      Remove
+                    </button>
+                    <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors">
+                      <Heart size={16} />
+                      Save for later
+                    </button>
                   </div>
                 </motion.div>
               ))

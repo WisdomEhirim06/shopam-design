@@ -63,7 +63,7 @@ export default function VendorSignInPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div data-theme="light" className="min-h-screen flex bg-gray-50">
       {/* Left Side - Brand Section */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden" style={{ backgroundColor: 'var(--primary-red)' }}>
         {/* Background Pattern */}
@@ -130,7 +130,7 @@ export default function VendorSignInPage() {
       </div>
 
       {/* Right Side - Sign In Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 bg-white">
         <div className="w-full max-w-md">
           {/* Mobile Header */}
           <div className="lg:hidden mb-12 flex justify-between items-center w-full relative">
