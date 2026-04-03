@@ -189,7 +189,7 @@ select option {
 .theme-input {
   background-color: var(--input-bg);
   border: 1px solid var(--border-primary);
-  color: var(--text-primary);
+  color: #111827;
   transition: all 0.3s ease;
 }
 
@@ -259,7 +259,8 @@ select option {
   }
 
   /* Touch-friendly buttons */
-  button, a {
+  button,
+  a {
     min-height: 44px;
     min-width: 44px;
   }
@@ -286,6 +287,7 @@ select option {
   from {
     transform: translateX(-100%);
   }
+
   to {
     transform: translateX(0);
   }
@@ -295,6 +297,7 @@ select option {
   from {
     transform: translateY(100%);
   }
+
   to {
     transform: translateY(0);
   }
@@ -304,6 +307,7 @@ select option {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -331,6 +335,7 @@ select option {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -342,9 +347,12 @@ select option {
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(227, 27, 35, 0.3);
   }
+
   50% {
     box-shadow: 0 0 40px rgba(227, 27, 35, 0.6);
   }
@@ -372,7 +380,7 @@ textarea,
 select {
   border: 1px solid var(--border-primary) !important;
   background-color: var(--input-bg);
-  color: var(--text-primary);
+  color: #111827;
   transition: all 0.2s ease;
 }
 
@@ -389,7 +397,8 @@ select {
 :root[data-theme='light'] input[type="datetime-local"],
 :root[data-theme='light'] textarea,
 :root[data-theme='light'] select {
-  border: 1px solid #D1D5DB !important; /* gray-300 */
+  border: 1px solid #D1D5DB !important;
+  /* gray-300 */
   background-color: #FFFFFF;
 }
 
@@ -481,10 +490,13 @@ input[type="range"] {
 
 /* Hide scrollbar for horizontal scroll containers */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari and Opera */
+  display: none;
+  /* Chrome, Safari and Opera */
 }
