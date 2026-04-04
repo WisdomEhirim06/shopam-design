@@ -163,18 +163,18 @@ export default function CartPage() {
                   className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden"
                 >
                   {/* Vendor Header */}
-                  <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between">
+                  <div className="p-3 sm:p-4 border-b border-gray-100 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#FA3728]/10 flex items-center justify-center text-[#FA3728] font-bold text-sm">
+                      <div className="w-8 h-8 rounded-full bg-[#FA3728]/10 flex items-center justify-center text-[#FA3728] font-bold text-sm">
                         {group.vendor.name[0]}
                       </div>
-                      <h3 className="font-bold text-gray-900 leading-tight">
+                      <h3 className="font-bold text-gray-900 leading-tight text-sm sm:text-base">
                         {group.vendor.name}
                       </h3>
                     </div>
                     <Link
                       href={`/chats/${vendorSlug}`}
-                      className="px-6 py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white text-sm font-semibold rounded-full md:rounded-xl transition-colors shadow-sm"
+                      className="inline-flex items-center justify-center px-4 py-1.5 sm:px-6 sm:py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white text-xs sm:text-sm font-semibold rounded-full md:rounded-xl transition-colors shadow-sm"
                     >
                       Order
                     </Link>
@@ -183,39 +183,39 @@ export default function CartPage() {
                   {/* Vendor Items */}
                   <div className="divide-y divide-gray-50">
                     {group.items.map((item, index) => (
-                      <div key={item.id} className="p-4 sm:p-5 flex flex-col sm:flex-row gap-4">
+                      <div key={item.id} className="p-3 sm:p-4 flex flex-row gap-3 sm:gap-4">
                         {/* Product Image */}
                         <Link
                           href={`/products/${item.id}`}
-                          className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-xl overflow-hidden group block"
+                          className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg sm:rounded-xl overflow-hidden group block"
                         >
                           <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 group-hover:scale-105 transition-transform"></div>
                         </Link>
 
                         {/* Product Details */}
-                        <div className="flex-1 min-w-0 flex flex-col">
+                        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <Link href={`/products/${item.id}`}>
-                                <h4 className="font-semibold text-gray-900 hover:text-[#FA3728] transition-colors truncate">
+                                <h4 className="font-semibold text-gray-900 hover:text-[#FA3728] transition-colors truncate text-sm sm:text-base">
                                   {item.name}
                                 </h4>
                               </Link>
                             </div>
-                            <button onClick={() => removeItem(item.id)} className="text-[#FA3728] hover:text-[#E31B23] transition-colors flex-shrink-0 p-1">
-                              <Trash2 size={18} />
+                            <button onClick={() => removeItem(item.id)} className="text-gray-400 hover:text-[#FA3728] transition-colors flex-shrink-0 p-1">
+                              <Trash2 size={16} />
                             </button>
                           </div>
                           
-                          <p className="font-bold text-[#FA3728] mt-1">₦{item.price.toLocaleString()}</p>
-
-                          {/* Controls Row */}
-                          <div className="flex items-center justify-between mt-auto pt-2">
+                          {/* Price & Quantity Row */}
+                          <div className="flex items-center justify-between mt-2">
+                             <p className="font-bold text-[#FA3728] text-sm sm:text-base">₦{item.price.toLocaleString()}</p>
+                             
                              {/* Quantity Controls */}
-                            <div className="flex items-center justify-between w-28 bg-gray-50 rounded-full px-2 py-1 border border-gray-100">
+                            <div className="flex items-center justify-between w-24 sm:w-28 bg-gray-50 rounded-full px-2 py-1.5 border border-gray-100">
                               <button
                                 onClick={() => updateQuantity(item.id, -1)}
-                                className="w-8 h-8 flex flex-shrink-0 items-center justify-center text-gray-600 hover:bg-white rounded-full transition-colors shadow-sm"
+                                className="w-6 h-6 sm:w-8 sm:h-8 flex flex-shrink-0 items-center justify-center text-gray-600 hover:bg-white rounded-full transition-colors shadow-sm"
                               >
                                 <Minus size={14} />
                               </button>
@@ -224,7 +224,7 @@ export default function CartPage() {
                               </span>
                               <button
                                 onClick={() => updateQuantity(item.id, 1)}
-                                className="w-8 h-8 flex flex-shrink-0 items-center justify-center text-gray-600 hover:bg-white rounded-full transition-colors shadow-sm"
+                                className="w-6 h-6 sm:w-8 sm:h-8 flex flex-shrink-0 items-center justify-center text-gray-600 hover:bg-white rounded-full transition-colors shadow-sm"
                               >
                                 <Plus size={14} />
                               </button>
@@ -236,7 +236,7 @@ export default function CartPage() {
                   </div>
                   
                   {/* Vendor Subtotal */}
-                  <div className="p-4 sm:p-5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+                  <div className="p-3 sm:p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
                      <span className="text-gray-500 text-sm font-medium">Subtotal</span>
                      <span className="font-bold text-gray-900">₦{groupSubtotal.toLocaleString()}</span>
                   </div>
