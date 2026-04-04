@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 
 export default function FeedPage() {
+  const isComingSoon = true; // Feature flag
+
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedPosts, setExpandedPosts] = useState<number[]>([]);
 
@@ -203,6 +205,25 @@ export default function FeedPage() {
 
       {/* Main Content */}
       <div className="pt-32 pb-12">
+        {isComingSoon ? (
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-10">
+            <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100">
+              <div className="w-20 h-20 bg-[#FA3728]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Bookmark size={32} className="text-[#FA3728]" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">Feed Coming Soon!</h2>
+              <p className="text-gray-500 max-w-md mx-auto mb-8">
+                We're building an exciting new way for you to discover posts, updates, and offers directly from your favorite vendors. Stay tuned!
+              </p>
+              <Link
+                href="/explore"
+                className="px-8 py-3 bg-[#FA3728] text-white rounded-full font-semibold transition-colors hover:bg-[#E31B23]"
+              >
+                Explore Products
+              </Link>
+            </div>
+          </div>
+        ) : (
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Feed Posts */}
           <div className="space-y-4">
@@ -350,6 +371,7 @@ export default function FeedPage() {
             </button>
           </div>
         </div>
+        )}
       </div>
 
       {/* Sign Up Prompt (if not authenticated) */}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -11,196 +11,156 @@ import {
   Star,
   X,
   ChevronDown,
+  Loader2,
+  MessageCircle,
 } from 'lucide-react';
+import { productsService, categoriesService, cartService, authService } from '@/lib/api';
+import type { Product, Category } from '@/lib/api';
 
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [priceRange, setPriceRange] = useState('All');
   const [sortBy, setSortBy] = useState('popular');
   const [showFilters, setShowFilters] = useState(false);
   const [activeView, setActiveView] = useState<'home' | 'products'>('home');
 
-  // Categories
-  const categories = [
-    { id: 'all', name: 'All', color: 'gray' },
-    { id: 'fashion', name: 'Fashion', color: 'pink' },
-    { id: 'gadgets', name: 'Gadgets', color: 'blue' },
-    { id: 'beauty', name: 'Beauty', color: 'purple' },
-    { id: 'food', name: 'Food & Drinks', color: 'orange' },
-    { id: 'toys', name: 'Toys & Hobbies', color: 'cyan' },
-    { id: 'tech', name: 'Tech & Skills', color: 'indigo' },
-    { id: 'accessories', name: 'Accessories', color: 'yellow' },
-    { id: 'books', name: 'Books', color: 'red' },
-    { id: 'electronics', name: 'Electronics', color: 'slate' },
-    { id: 'arts', name: 'Arts & Crafts', color: 'teal' },
-    { id: 'sports', name: 'Sports', color: 'green' },
-  ];
+  // API State
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [cartCount, setCartCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalProducts, setTotalProducts] = useState(0);
 
-  // Sample products
-  const products = [
-    {
-      id: 1,
-      name: 'Premium Wireless Earbuds Pro',
-      price: 15000,
-      originalPrice: 20000,
-      discount: 25,
-      image: '/api/placeholder/300/300',
-      vendor: 'TechHub Nigeria',
-      rating: 4.8,
-      reviews: 234,
-      category: 'electronics',
-      inStock: true,
-    },
-    {
-      id: 2,
-      name: 'African Print Ankara Dress',
-      price: 28000,
-      image: '/api/placeholder/300/300',
-      vendor: "Sarah's Fashion",
-      rating: 4.9,
-      reviews: 189,
-      category: 'fashion',
-      inStock: true,
-    },
-    {
-      id: 3,
-      name: 'Smart Watch Series 5',
-      price: 45000,
-      originalPrice: 55000,
-      discount: 18,
-      image: '/api/placeholder/300/300',
-      vendor: 'Electronics Plus',
-      rating: 4.7,
-      reviews: 456,
-      category: 'gadgets',
-      inStock: true,
-    },
-    {
-      id: 4,
-      name: 'Luxury Leather Handbag',
-      price: 32000,
-      image: '/api/placeholder/300/300',
-      vendor: 'Luxury Bags NG',
-      rating: 4.6,
-      reviews: 321,
-      category: 'fashion',
-      inStock: true,
-    },
-    {
-      id: 5,
-      name: 'Gaming Headset Pro RGB',
-      price: 22000,
-      image: '/api/placeholder/300/300',
-      vendor: 'Gamer Store',
-      rating: 4.8,
-      reviews: 567,
-      category: 'electronics',
-      inStock: true,
-    },
-    {
-      id: 6,
-      name: 'Ergonomic Office Chair',
-      price: 55000,
-      image: '/api/placeholder/300/300',
-      vendor: 'Home & Office NG',
-      rating: 4.9,
-      reviews: 234,
-      category: 'accessories',
-      inStock: false,
-    },
-    {
-      id: 7,
-      name: 'Bluetooth Speaker Portable',
-      price: 18000,
-      originalPrice: 25000,
-      discount: 28,
-      image: '/api/placeholder/300/300',
-      vendor: 'Audio World',
-      rating: 4.7,
-      reviews: 445,
-      category: 'electronics',
-      inStock: true,
-    },
-    {
-      id: 8,
-      name: 'Running Shoes Sport Pro',
-      price: 25000,
-      image: '/api/placeholder/300/300',
-      vendor: 'SportFit NG',
-      rating: 4.8,
-      reviews: 678,
-      category: 'sports',
-      inStock: true,
-    },
-  ];
+  // Fetch categories on mount
+  useEffect(() => {
+    loadCategories();
+    loadCartCount();
+  }, []);
 
-  // Trending Vendors
-  const trendingVendors = [
-    {
-      id: 1,
-      name: 'FreshTrend Organics',
-      avatar: '/api/placeholder/100/100',
-      badge: '🔥',
-      followers: '2.5k',
-      products: 45,
-    },
-    {
-      id: 2,
-      name: 'Glam And African',
-      avatar: '/api/placeholder/100/100',
-      badge: '⭐',
-      followers: '3.2k',
-      products: 67,
-    },
-    {
-      id: 3,
-      name: 'StyleSquare.ng',
-      avatar: '/api/placeholder/100/100',
-      badge: '✨',
-      followers: '1.8k',
-      products: 34,
-    },
-  ];
+  // Fetch products when filters change
+  useEffect(() => {
+    loadProducts();
+  }, [selectedCategory, sortBy, searchQuery, page]);
 
-  // Best Deals Today
-  const bestDeals = [
-    {
-      id: 1,
-      name: 'Nike Air Jordan',
-      image: '/api/placeholder/300/300',
-      originalPrice: 450000,
-      discountPrice: 350000,
-      rating: 4.8,
-      reviews: 245,
-    },
-    {
-      id: 2,
-      name: 'iPhone 15 Pro Max',
-      image: '/api/placeholder/300/300',
-      originalPrice: 1250000,
-      discountPrice: 950000,
-      rating: 4.9,
-      reviews: 567,
-    },
-    {
-      id: 3,
-      name: 'Warm Winter Jacket',
-      image: '/api/placeholder/300/300',
-      originalPrice: 85000,
-      discountPrice: 55000,
-      rating: 4.7,
-      reviews: 189,
-    },
-  ];
+  const loadCategories = async () => {
+    try {
+      const data = await categoriesService.getCategories();
+      setCategories(data);
+    } catch (err) {
+      console.error('Failed to load categories:', err);
+    }
+  };
 
-  // Vendors Near You
-  const vendorsNearYou = [
-    { id: 1, name: "Fresh N'Park Veggies", type: 'Food', badge: 'New' },
-    { id: 2, name: 'Cynthia Clothing Store', type: 'Fashion', badge: null },
-    { id: 3, name: 'Dash Tech House', type: 'Electronics', badge: 'Sale' },
-    { id: 4, name: 'Swim N Essentials', type: 'Sports', badge: null },
-  ];
+  const loadProducts = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const filters: any = {
+        page,
+        page_size: 20,
+      };
+
+      if (selectedCategory) {
+        filters.category = selectedCategory;
+      }
+
+      if (searchQuery) {
+        filters.search = searchQuery;
+      }
+
+      // Map sortBy to API ordering
+      switch (sortBy) {
+        case 'price-low':
+          filters.ordering = 'price';
+          break;
+        case 'price-high':
+          filters.ordering = '-price';
+          break;
+        case 'newest':
+          filters.ordering = '-created_at';
+          break;
+        default:
+          filters.ordering = '-created_at'; // Default to newest
+      }
+
+      const response = await productsService.getProducts(filters);
+
+      if (page === 1) {
+        setProducts(response.results);
+      } else {
+        setProducts([...products, ...response.results]);
+      }
+
+      setTotalProducts(response.count);
+      setHasMore(!!response.next);
+    } catch (err: any) {
+      console.error('Failed to load products:', err);
+      setError('Failed to load products. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCartCount = async () => {
+    try {
+      if (authService.isAuthenticated()) {
+        const cart = await cartService.getCart();
+        const count = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+        setCartCount(count);
+      }
+    } catch (err) {
+      console.error('Failed to load cart count:', err);
+    }
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setPage(1); // Reset to first page
+  };
+
+  const handleCategoryChange = (categoryId: number | null) => {
+    setSelectedCategory(categoryId);
+    setPage(1); // Reset to first page
+  };
+
+  const handleSortChange = (sort: string) => {
+    setSortBy(sort);
+    setPage(1); // Reset to first page
+  };
+
+  const loadMore = () => {
+    if (hasMore && !loading) {
+      setPage(page + 1);
+    }
+  };
+
+  const addToCart = async (productId: string) => {
+    if (!authService.isAuthenticated()) {
+      window.location.href = '/auth/user-signin';
+      return;
+    }
+
+    try {
+      await cartService.addToCart({
+        product: productId,
+        quantity: 1,
+      });
+
+      // Update cart count
+      loadCartCount();
+
+      // Show success feedback (you can add a toast notification here)
+      alert('Product added to cart!');
+    } catch (err: any) {
+      console.error('Failed to add to cart:', err);
+      alert('Failed to add to cart. Please try again.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -209,11 +169,11 @@ export default function ExplorePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo */}
+            {/* Logo - Larger */}
             <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center">
-                <span className="text-white font-bold text-lg">S</span>
+              <div className="relative flex items-center justify-center">
+                <img src="/images/black-logo.png" alt="ShopAm Logo" width={100} height={100} />
               </div>
-              <span className="text-xl font-bold text-gray-900 hidden sm:inline">ShopAm</span>
             </Link>
 
             {/* Search Bar - BETTER MOBILE */}
@@ -224,7 +184,15 @@ export default function ExplorePage() {
                   type="text"
                   placeholder="Search products..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    // Debounce search - you can add lodash debounce here
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearch(searchQuery);
+                    }
+                  }}
                   className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2 sm:py-3 text-sm sm:text-base rounded-full border border-gray-200 focus:border-[#FA3728] focus:ring-2 focus:ring-[#FA3728]/20 outline-none transition-all"
                 />
               </div>
@@ -237,22 +205,41 @@ export default function ExplorePage() {
                 className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
                 <ShoppingCart size={20} className="text-gray-700" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#FA3728] text-white text-[10px] flex items-center justify-center rounded-full">
-                  3
-                </span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FA3728] text-white text-[10px] flex items-center justify-center rounded-full font-bold">
+                    {cartCount}
+                  </span>
+                )}
               </Link>
               <Link
-                href="/auth/signin"
-                className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm text-gray-700 hover:text-[#FA3728] transition-colors font-medium hidden md:block"
+                href="/chats"
+                className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
-                Sign In
+                <MessageCircle size={20} className="text-gray-700" />
               </Link>
-              <Link
-                href="/auth/signup"
-                className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-semibold transition-all hidden sm:block"
-              >
-                Sign Up
-              </Link>
+              {authService.isAuthenticated() ? (
+                <Link
+                  href="/dashboard"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm text-gray-700 hover:text-[#FA3728] transition-colors font-medium hidden md:block"
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/auth/user-signin"
+                    className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm text-gray-700 hover:text-[#FA3728] transition-colors font-medium hidden md:block"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/auth/user-signup"
+                    className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-semibold transition-all hidden sm:block"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
@@ -296,19 +283,18 @@ export default function ExplorePage() {
 
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e) => handleSortChange(e.target.value)}
                 className="px-4 py-2 bg-white border border-gray-200 rounded-lg font-medium outline-none hover:border-[#FA3728] transition-colors"
               >
                 <option value="popular">Most Popular</option>
                 <option value="newest">Newest First</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
               </select>
             </div>
 
             <p className="text-gray-600 text-sm hidden sm:block">
-              <span className="font-semibold text-gray-900">{products.length}</span> products found
+              {loading ? 'Loading...' : `${totalProducts} products`}
             </p>
           </div>
 
@@ -317,12 +303,11 @@ export default function ExplorePage() {
             {categories.map((category) => (
               <button
                 key={category.id}
-                onClick={() => setSelectedCategory(category.name)}
-                className={`p-4 rounded-xl text-center transition-all ${
-                  selectedCategory === category.name
-                    ? 'bg-[#FA3728] text-white shadow-lg'
-                    : 'bg-white text-gray-700 hover:shadow-md'
-                }`}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`p-4 rounded-xl text-center transition-all ${selectedCategory === category.id
+                  ? 'bg-[#FA3728] text-white shadow-lg'
+                  : 'bg-white text-gray-700 hover:shadow-md'
+                  }`}
               >
                 <p className="font-semibold text-sm">{category.name}</p>
               </button>
@@ -415,82 +400,125 @@ export default function ExplorePage() {
           )}
 
           {/* Products Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {products.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group cursor-pointer"
+          {loading && products.length === 0 ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="w-10 h-10 text-[#FA3728] animate-spin" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-20">
+              <p className="text-red-600 mb-4">{error}</p>
+              <button
+                onClick={() => loadProducts()}
+                className="px-6 py-3 bg-[#FA3728] text-white rounded-lg hover:bg-[#E31B23]"
               >
-                {/* Product Image */}
-                <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#FA3728]/5 to-[#E31B23]/5"></div>
+                Try Again
+              </button>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-gray-600 text-lg">No products found</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {products.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group"
+                >
+                  <Link href={`/products/${product.id}`}>
+                    {/* Product Image */}
+                    <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden cursor-pointer">
+                      {product.images && product.images[0] ? (
+                        <img
+                          src={product.images[0]}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-[#FA3728]/5 to-[#E31B23]/5 flex items-center justify-center">
+                          <ShoppingCart size={40} className="text-gray-300" />
+                        </div>
+                      )}
 
-                  {/* Badges */}
-                  <div className="absolute top-2 left-2 flex flex-col gap-1">
-                    {product.discount && (
-                      <span className="px-2 py-1 bg-[#FA3728] text-white text-xs font-bold rounded">
-                        -{product.discount}%
-                      </span>
-                    )}
-                    {!product.inStock && (
-                      <span className="px-2 py-1 bg-gray-800 text-white text-xs font-bold rounded">
-                        Out of Stock
-                      </span>
-                    )}
-                  </div>
+                      {/* Badges */}
+                      <div className="absolute top-2 left-2 flex flex-col gap-1">
+                        {product.stock === 0 && (
+                          <span className="px-2 py-1 bg-gray-800 text-white text-xs font-bold rounded">
+                            Out of Stock
+                          </span>
+                        )}
+                      </div>
 
-                  {/* Actions */}
-                  <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-2 bg-white rounded-full shadow-md hover:bg-[#FA3728] hover:text-white transition-all">
-                      <Heart size={18} />
-                    </button>
-                    <button className="p-2 bg-white rounded-full shadow-md hover:bg-[#FA3728] hover:text-white transition-all">
-                      <ShoppingCart size={18} />
-                    </button>
-                  </div>
-
-                  {/* Rating Badge */}
-                  <div className="absolute bottom-2 right-2">
-                    <div className="px-2 py-1 bg-white/95 backdrop-blur-sm rounded-full text-xs font-semibold flex items-center gap-1">
-                      <Star size={12} className="text-amber-400 fill-amber-400" />
-                      {product.rating}
+                      {/* Rating Badge */}
+                      {product.rating && (
+                        <div className="absolute bottom-2 right-2">
+                          <div className="px-2 py-1 bg-white/95 backdrop-blur-sm rounded-full text-xs font-semibold flex items-center gap-1">
+                            <Star size={12} className="text-amber-400 fill-amber-400" />
+                            {product.rating.toFixed(1)}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </div>
 
-                {/* Product Info */}
-                <div className="p-3 md:p-4">
-                  <p className="text-xs text-gray-500 mb-1 truncate">{product.vendor}</p>
-                  <h3 className="font-semibold text-sm md:text-base text-gray-900 mb-2 line-clamp-2 group-hover:text-[#FA3728] transition-colors min-h-[2.5rem]">
-                    {product.name}
-                  </h3>
-
-                  <div className="flex items-center gap-2 mb-2">
-                    <p className="text-lg md:text-xl font-bold text-[#FA3728]">
-                      ₦{product.price.toLocaleString()}
-                    </p>
-                    {product.originalPrice && (
-                      <p className="text-sm text-gray-400 line-through">
-                        ₦{product.originalPrice.toLocaleString()}
+                    {/* Product Info */}
+                    <div className="p-3 md:p-4">
+                      <p className="text-xs text-gray-500 mb-1 truncate">
+                        {product.vendor || 'ShopAm Vendor'}
                       </p>
-                    )}
-                  </div>
+                      <h3 className="font-semibold text-sm md:text-base text-gray-900 mb-2 line-clamp-2 group-hover:text-[#FA3728] transition-colors min-h-[2.5rem]">
+                        {product.name}
+                      </h3>
 
-                  <p className="text-xs text-gray-500">({product.reviews} reviews)</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <p className="text-lg md:text-xl font-bold text-[#FA3728]">
+                          ₦{parseFloat(product.price).toLocaleString()}
+                        </p>
+                      </div>
+
+                      {product.reviews_count !== undefined && (
+                        <p className="text-xs text-gray-500">
+                          ({product.reviews_count} reviews)
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+
+                  {/* Add to Cart Button */}
+                  <div className="px-3 pb-3">
+                    <button
+                      onClick={() => addToCart(product.id)}
+                      disabled={product.stock === 0}
+                      className="w-full py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <ShoppingCart size={16} />
+                      {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
 
           {/* Load More */}
-          <div className="text-center mt-12">
-            <button className="px-8 py-3 bg-white border border-gray-200 hover:border-[#FA3728] rounded-full font-semibold transition-all">
-              Load More Products
-            </button>
-          </div>
+          {hasMore && !loading && products.length > 0 && (
+            <div className="text-center mt-12">
+              <button
+                onClick={loadMore}
+                className="px-8 py-3 bg-white border border-gray-200 hover:border-[#FA3728] rounded-full font-semibold transition-all"
+              >
+                Load More Products
+              </button>
+            </div>
+          )}
+
+          {loading && products.length > 0 && (
+            <div className="text-center mt-8">
+              <Loader2 className="w-6 h-6 text-[#FA3728] animate-spin mx-auto" />
+            </div>
+          )}
         </div>
       </div>
     </div>
