@@ -178,7 +178,7 @@ export default function ExplorePage() {
             </Link>
 
             {/* Search Bar - BETTER MOBILE */}
-            <div className="flex-1 max-w-2xl mx-2 sm:mx-4 lg:mx-8">
+            <div className="flex-1 min-w-0 mx-2 sm:mx-4">
               <div className="relative">
                 <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
@@ -194,7 +194,8 @@ export default function ExplorePage() {
                       handleSearch(searchQuery);
                     }
                   }}
-                  className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2 sm:py-3 text-sm rounded-full border border-gray-300 focus:border-[#FA3728] focus:ring-2 focus:ring-[#FA3728]/20 outline-none transition-all"
+                  style={{ border: '2px solid #D1D5DB', backgroundColor: '#fff', color: '#111827' }}
+                  className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2 sm:py-2.5 text-sm rounded-full outline-none transition-all focus:!border-[#FA3728]"
                 />
               </div>
             </div>

@@ -163,15 +163,16 @@ export default function VendorsPage() {
             </Link>
 
             {/* Search Bar */}
-            <div className="flex-1 max-w-2xl mx-4">
+            <div className="flex-1 min-w-0 mx-2 sm:mx-4">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
                   placeholder="Search vendors by name or category..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-full border border-gray-200 focus:border-[#FA3728] focus:ring-2 focus:ring-[#FA3728]/20 outline-none transition-all"
+                  style={{ border: '2px solid #D1D5DB', backgroundColor: '#fff', color: '#111827' }}
+                  className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2 sm:py-2.5 text-sm rounded-full outline-none transition-all focus:!border-[#FA3728]"
                 />
               </div>
             </div>
