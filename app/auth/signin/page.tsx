@@ -133,23 +133,11 @@ export default function VendorSignInPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 bg-white">
         <div className="w-full max-w-md">
           {/* Mobile Header */}
-          <div className="lg:hidden mb-12 flex justify-between items-center w-full relative">
-            <Link href="/" className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-[#FA3728] transition-colors absolute left-0">
-              <ArrowLeft size={20} />
+          <div className="lg:hidden mb-12 flex justify-center w-full relative">
+            <Link href="/">
+              <Image src="/images/black-logo.png" alt="ShopAm Logo" width={120} height={40} className="object-contain" />
             </Link>
-            <div className="flex-1 flex justify-center">
-              <Image src="/images/black-logo.png" alt="ShopAm Logo" width={100} height={100} className="object-contain" />
-            </div>
           </div>
-
-          {/* Desktop Back Button */}
-          <Link
-            href="/"
-            className="hidden lg:inline-flex items-center gap-2 text-gray-600 hover:text-[#FA3728] transition-colors mb-8"
-          >
-            <ArrowLeft size={20} />
-            <span>Back to Home</span>
-          </Link>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -173,7 +161,7 @@ export default function VendorSignInPage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="theme-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
+                  className="theme-input w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
                   required
                 />
               </div>
@@ -188,7 +176,7 @@ export default function VendorSignInPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="theme-input w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
+                    className="theme-input w-full pl-4 pr-12 py-3 border-2 border-gray-300 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
                     required
                   />
                   <button
@@ -199,27 +187,16 @@ export default function VendorSignInPage() {
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
-                <div className="flex justify-between items-center mt-2">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="rememberMe"
-                      checked={formData.rememberMe}
-                      onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
-                      className="w-4 h-4 rounded theme-input cursor-pointer"
-                      style={{ accentColor: 'var(--primary-red)' }}
-                    />
-                    <label htmlFor="rememberMe" className="ml-2 text-sm theme-text-secondary cursor-pointer">
-                      Remember me
-                    </label>
-                  </div>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="text-sm theme-red hover:underline font-medium"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
+              </div>
+
+              {/* Forgot Password */}
+              <div className="flex justify-end text-sm mt-2">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-[#FA3728] hover:underline font-medium"
+                >
+                  Forgot password?
+                </Link>
               </div>
 
               {/* Submit Button */}

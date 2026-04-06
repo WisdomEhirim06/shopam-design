@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, ShoppingBag, Shield, Zap } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Shield, Zap, ShoppingBag } from 'lucide-react';
 import { authService } from '@/lib/api';
 
 export default function UserSignInPage() {
@@ -64,7 +64,7 @@ export default function UserSignInPage() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Side - Red Brand Section */}
-      <div className="lg:w-1/2 bg-gradient-to-br from-[#FA3728] to-[#E31B23] relative overflow-hidden">
+      <div className="hidden lg:flex flex-col lg:w-1/2 bg-gradient-to-br from-[#FA3728] to-[#E31B23] relative overflow-hidden">
         {/* Decorative Elements */}
         <div className="absolute inset-0 opacity-10">
           <div
@@ -84,10 +84,9 @@ export default function UserSignInPage() {
         <div className="relative z-10 flex flex-col justify-center h-full p-8 lg:p-16 text-white">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 mb-12">
-            <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
-              <ShoppingBag className="text-[#FA3728]" size={24} />
+            <div className="relative flex items-center justify-center bg-white p-2 rounded-xl">
+              <Image src="/images/black-logo.png" alt="ShopAm Logo" width={100} height={40} className="object-contain" />
             </div>
-            <span className="text-3xl font-bold">ShopAm</span>
           </Link>
 
           {/* Main Heading */}
@@ -128,29 +127,14 @@ export default function UserSignInPage() {
       </div>
 
       {/* Right Side - Sign In Form */}
-      <div className="lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-white">
         <div className="w-full max-w-md">
-          {/* Mobile Header & Back Button */}
-          <div className="lg:hidden mb-12 flex justify-between items-center w-full relative">
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-[#FA3728] transition-colors absolute left-0"
-            >
-              <ArrowLeft size={20} />
+          {/* Mobile Header */}
+          <div className="lg:hidden mb-12 flex justify-center w-full relative">
+            <Link href="/">
+              <Image src="/images/black-logo.png" alt="ShopAm Logo" width={120} height={40} className="object-contain" />
             </Link>
-            <div className="flex-1 flex justify-center">
-              <Image src="/images/shopam-logo.png" alt="ShopAm Logo" width={100} height={100} className="object-contain" />
-            </div>
           </div>
-
-          {/* Desktop Back Button */}
-          <Link
-            href="/"
-            className="hidden lg:inline-flex items-center gap-2 text-gray-600 hover:text-[#FA3728] transition-colors mb-8"
-          >
-            <ArrowLeft size={20} />
-            <span>Back to Home</span>
-          </Link>
 
           {/* Form Header */}
           <div className="mb-8">
@@ -182,7 +166,7 @@ export default function UserSignInPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="Enter your email"
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none transition-all text-gray-900"
+                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] outline-none transition-all text-gray-900"
                 />
               </div>
             </div>
@@ -200,7 +184,7 @@ export default function UserSignInPage() {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="Enter your password"
-                  className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] focus:border-transparent outline-none transition-all text-gray-900"
+                  className="w-full pl-12 pr-12 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] outline-none transition-all text-gray-900"
                 />
                 <button
                   type="button"
@@ -213,14 +197,7 @@ export default function UserSignInPage() {
             </div>
 
             {/* Forgot Password */}
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 text-[#FA3728] border-gray-300 rounded focus:ring-[#FA3728]"
-                />
-                <span className="text-gray-600">Remember me</span>
-              </label>
+            <div className="flex justify-end text-sm mt-2">
               <Link href="/auth/forgot-password" className="text-[#FA3728] hover:underline font-medium">
                 Forgot password?
               </Link>
@@ -271,7 +248,7 @@ export default function UserSignInPage() {
             </div>
 
             {/* Sign Up Link */}
-            <p className="text-center text-gray-600">
+            <p className="text-center text-sm text-gray-600">
               Don't have an account?{' '}
               <Link href="/auth/user-signup" className="text-[#FA3728] hover:underline font-semibold">
                 Create Account

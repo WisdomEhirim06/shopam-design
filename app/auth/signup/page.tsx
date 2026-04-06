@@ -221,9 +221,9 @@ export default function VendorSignUpPage() {
         <div className="w-full max-w-md">
           {/* Mobile Header */}
           {currentStep === 'personal' && (
-            <div className="lg:hidden mb-2">
-              <Link href="/" className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-[#FA3728] transition-colors">
-                <ArrowLeft size={20} />
+            <div className="lg:hidden mb-12 flex justify-center w-full relative">
+              <Link href="/">
+                <img src="/images/black-logo.png" alt="ShopAm Logo" width="120" height="40" className="object-contain" />
               </Link>
             </div>
           )}
@@ -257,7 +257,7 @@ export default function VendorSignUpPage() {
                       required
                       value={personalData.username}
                       onChange={(e) => setPersonalData({ ...personalData, username: e.target.value })}
-                      className="w-full px-4 py-3 !border-2 !border-gray-200 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
+                      className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
                     />
                   </div>
 
@@ -269,7 +269,7 @@ export default function VendorSignUpPage() {
                       required
                       value={personalData.email}
                       onChange={(e) => setPersonalData({ ...personalData, email: e.target.value })}
-                      className="w-full px-4 py-3 !border-2 !border-gray-200 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
+                      className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
                     />
                   </div>
 
@@ -281,7 +281,7 @@ export default function VendorSignUpPage() {
                       required
                       value={personalData.phone}
                       onChange={(e) => setPersonalData({ ...personalData, phone: e.target.value })}
-                      className="w-full px-4 py-3 !border-2 !border-gray-200 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
+                      className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
                     />
                   </div>
 
@@ -295,7 +295,7 @@ export default function VendorSignUpPage() {
                         required
                         value={personalData.password}
                         onChange={(e) => setPersonalData({ ...personalData, password: e.target.value })}
-                        className="w-full pl-4 pr-12 py-3 !border-2 !border-gray-200 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
+                        className="w-full pl-4 pr-12 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
                       />
                       <button
                         type="button"
@@ -316,7 +316,7 @@ export default function VendorSignUpPage() {
                         required
                         value={personalData.confirmPassword}
                         onChange={(e) => setPersonalData({ ...personalData, confirmPassword: e.target.value })}
-                        className="w-full pl-4 pr-12 py-3 !border-2 !border-gray-200 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
+                        className="w-full pl-4 pr-12 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
                       />
                       <button
                         type="button"
@@ -379,7 +379,7 @@ export default function VendorSignUpPage() {
                     <select
                       value={businessData.business_category}
                       onChange={(e) => setBusinessData({ ...businessData, business_category: e.target.value as BusinessCategory })}
-                      className="w-full px-4 py-3 !border-2 !border-gray-200 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900 appearance-none bg-no-repeat bg-right"
+                      className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900 appearance-none bg-no-repeat bg-right"
                       style={{ backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpolyline points=%226 9 12 15 18 9%22%3E%3C/polyline%3E%3C/svg%3E")', backgroundPosition: 'calc(100% - 1rem) center', backgroundSize: '1.2em 1.2em' }}
                     >
                       {businessCategories.map((cat) => (
@@ -397,7 +397,7 @@ export default function VendorSignUpPage() {
                       type="text"
                       value={businessData.cac_registration}
                       onChange={(e) => setBusinessData({ ...businessData, cac_registration: e.target.value })}
-                      className="w-full px-4 py-3 !border-2 !border-gray-200 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
+                      className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
                     />
                   </div>
 
@@ -408,7 +408,7 @@ export default function VendorSignUpPage() {
                       type="text"
                       value={businessData.tin}
                       onChange={(e) => setBusinessData({ ...businessData, tin: e.target.value })}
-                      className="w-full px-4 py-3 !border-2 !border-gray-200 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
+                      className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
                     />
                     <p className="text-xs text-gray-500 mt-2">
                       CAC and TIN are optional but help build trust with customers
