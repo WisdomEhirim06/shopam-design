@@ -145,8 +145,8 @@ export default function VendorSignInPage() {
             transition={{ delay: 0.3 }}
           >
             <div className="mb-8">
-              <h2 className="text-3xl font-bold mb-2 theme-text-primary">Sign In</h2>
-              <p className="theme-text-secondary">
+              <h2 className="text-3xl font-bold mb-2 text-gray-900">Sign In</h2>
+              <p className="text-gray-500">
                 Welcome back! Please enter your credentials
               </p>
             </div>
@@ -154,21 +154,21 @@ export default function VendorSignInPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium mb-2 theme-text-primary">
+                <label className="block text-sm font-medium mb-2 text-gray-900">
                   Email
                 </label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="theme-input w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-[#FA3728] outline-none transition-colors bg-white text-gray-900"
                   required
                 />
               </div>
 
               {/* Password */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium theme-text-primary">
+                <label className="block text-sm font-medium text-gray-900">
                   Password
                 </label>
                 <div className="relative">
@@ -176,13 +176,13 @@ export default function VendorSignInPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="theme-input w-full pl-4 pr-12 py-3 border-2 border-gray-300 rounded-xl focus:border-[#FA3728] outline-none transition-colors"
+                    className="w-full pl-4 pr-12 py-3 border-2 border-gray-300 rounded-xl focus:border-[#FA3728] outline-none transition-colors bg-white text-gray-900"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 theme-text-secondary hover:opacity-80 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:opacity-80 transition-colors"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -229,7 +229,7 @@ export default function VendorSignInPage() {
             </div>
 
             {/* Sign Up Link */}
-            <p className="text-center text-sm theme-text-secondary mt-6">
+            <p className="text-center text-sm text-gray-500 mt-6">
               New to ShopAm?{' '}
               <Link href="/auth/signup" className="text-[#FA3728] hover:underline font-semibold">
                 Create Vendor Account
@@ -237,10 +237,10 @@ export default function VendorSignInPage() {
             </p>
 
             {/* Footer */}
-            <div className="mt-8 pt-6 border-t border-primary text-center text-sm theme-text-secondary" style={{ borderColor: 'var(--border-primary)' }}>
+            <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
               <p>
                 Need help?{' '}
-                <a href="#" className="theme-red hover:underline">Contact Support</a>
+                <a href="#" className="text-[#FA3728] hover:underline">Contact Support</a>
               </p>
             </div>
           </motion.div>

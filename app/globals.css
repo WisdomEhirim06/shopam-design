@@ -7,6 +7,24 @@
   --shopam-red: #FA3728;
   --charcoal: #0A0A0A;
   --pitch: #000000;
+
+  /* Default to light theme so pages without data-theme render correctly */
+  --bg-primary: #F8F9FA;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #FFFFFF;
+  --bg-hover: rgba(0, 0, 0, 0.03);
+  --text-primary: #1F2937;
+  --text-secondary: #6B7280;
+  --text-tertiary: #9CA3AF;
+  --border-primary: #D1D5DB;
+  --border-secondary: rgba(0, 0, 0, 0.05);
+  --glass-bg: #FFFFFF;
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --card-bg: #FFFFFF;
+  --input-bg: #FFFFFF;
+  --primary-red: #FA3728;
+  --primary-red-light: rgba(250, 55, 40, 0.08);
+  --primary-red-glow: 0 0 12px rgba(250, 55, 40, 0.15);
 }
 
 /* Dark Mode (Default) */
