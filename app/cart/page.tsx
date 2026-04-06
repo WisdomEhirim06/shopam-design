@@ -7,12 +7,9 @@ import {
   Trash2,
   Plus,
   Minus,
-  ShoppingBag,
-  Heart,
-  ArrowRight,
+  MessageCircle,
   ArrowLeft,
-  MoreVertical,
-  Star,
+  ShoppingBag,
 } from 'lucide-react';
 
 interface CartItem {
@@ -23,6 +20,7 @@ interface CartItem {
     avatar: string;
     rating: number;
     reviews: number;
+    location?: string;
   };
   price: number;
   quantity: number;
@@ -40,6 +38,7 @@ export default function CartPage() {
         avatar: '/api/placeholder/50/50',
         rating: 4.9,
         reviews: 4600,
+        location: 'Lagos, Nigeria',
       },
       price: 28000,
       quantity: 1,
@@ -54,6 +53,7 @@ export default function CartPage() {
         avatar: '/api/placeholder/50/50',
         rating: 4.8,
         reviews: 2300,
+        location: 'Abuja, Nigeria',
       },
       price: 15000,
       quantity: 2,
@@ -61,22 +61,7 @@ export default function CartPage() {
     },
   ]);
 
-  const recentlyViewed = [
-    {
-      id: '1',
-      name: 'Smart Watch Series 5',
-      vendor: 'Electronics Plus',
-      price: 45000,
-      image: '/api/placeholder/200/200',
-    },
-    {
-      id: '2',
-      name: 'Leather Handbag',
-      vendor: 'Fashion Corner',
-      price: 32000,
-      image: '/api/placeholder/200/200',
-    },
-  ];
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const updateQuantity = (id: string, change: number) => {
     setCartItems(
@@ -90,12 +75,36 @@ export default function CartPage() {
 
   const removeItem = (id: string) => {
     setCartItems(cartItems.filter((item) => item.id !== id));
+    setSelectedItems(selectedItems.filter((selectedId) => selectedId !== id));
   };
 
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const toggleSelectItem = (id: string) => {
+    setSelectedItems((prev) =>
+      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
+    );
+  };
+
+  const selectAll = () => {
+    if (selectedItems.length === cartItems.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(cartItems.map((item) => item.id));
+    }
+  };
+
+  const toggleSelectVendor = (vendorName: string, items: CartItem[]) => {
+    const vendorItemIds = items.map((item) => item.id);
+    const allSelected = vendorItemIds.every((id) => selectedItems.includes(id));
+    
+    if (allSelected) {
+      setSelectedItems((prev) => prev.filter((id) => !vendorItemIds.includes(id)));
+    } else {
+      setSelectedItems((prev) => {
+        const newSelection = new Set([...prev, ...vendorItemIds]);
+        return Array.from(newSelection);
+      });
+    }
+  };
 
   // Group cart items by vendor
   const groupedItems = cartItems.reduce((groups, item) => {
@@ -111,22 +120,31 @@ export default function CartPage() {
   }, {} as Record<string, { vendor: any, items: CartItem[] }>);
 
   const vendorGroups = Object.values(groupedItems);
+  
+  const selectedSubtotal = cartItems
+    .filter((item) => selectedItems.includes(item.id))
+    .reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 pb-36">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link
               href="/explore"
-              className="flex items-center gap-2 text-gray-700 hover:text-[#FA3728] transition-colors"
+              className="flex items-center gap-2 text-gray-900 hover:text-[#FA3728] transition-colors"
             >
-              <ArrowLeft size={20} />
-              <span className="font-medium hidden sm:inline">Continue Shopping</span>
+              <ArrowLeft size={24} />
+              <span className="font-bold text-xl hidden sm:inline">My Cart</span>
             </Link>
-            <h1 className="text-xl font-bold text-gray-900">Cart ({cartItems.length} items)</h1>
-            <div className="w-24"></div>
+            <h1 className="text-xl font-bold text-gray-900 sm:hidden">My Cart</h1>
+            <button
+              onClick={selectAll}
+              className="text-[#FA3728] font-medium"
+            >
+              Select All ({cartItems.length})
+            </button>
           </div>
         </div>
       </header>
@@ -146,7 +164,6 @@ export default function CartPage() {
                 className="inline-flex items-center gap-2 px-6 py-3 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-semibold transition-all shadow-md"
               >
                 Start Shopping
-                <ArrowRight size={20} />
               </Link>
             </div>
           ) : (
@@ -154,159 +171,137 @@ export default function CartPage() {
             vendorGroups.map((group, groupIndex) => {
               const groupSubtotal = group.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
               const vendorSlug = group.vendor.name.toLowerCase().replace(/\s+/g, '-');
+              const vendorItemIds = group.items.map((item) => item.id);
+              const isVendorSelected = vendorItemIds.every((id) => selectedItems.includes(id));
+
               return (
                 <motion.div
                   key={group.vendor.name}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: groupIndex * 0.1 }}
-                  className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                  className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
                 >
                   {/* Vendor Header */}
-                  <div className="p-3 sm:p-4 border-b border-gray-100 flex items-center justify-between">
+                  <div className="p-4 border-b border-gray-100 flex items-center gap-4">
+                    <input
+                      type="checkbox"
+                      checked={isVendorSelected}
+                      onChange={() => toggleSelectVendor(group.vendor.name, group.items)}
+                      className="w-5 h-5 border-gray-300 rounded text-[#FA3728] focus:ring-[#FA3728] cursor-pointer"
+                    />
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#FA3728]/10 flex items-center justify-center text-[#FA3728] font-bold text-sm">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center text-white font-bold text-lg">
                         {group.vendor.name[0]}
                       </div>
-                      <h3 className="font-bold text-gray-900 leading-tight text-sm sm:text-base">
-                        {group.vendor.name}
-                      </h3>
+                      <div>
+                        <h3 className="font-bold text-gray-900 leading-tight">
+                          {group.vendor.name}
+                        </h3>
+                        {group.vendor.location && (
+                          <p className="text-sm text-gray-500">{group.vendor.location}</p>
+                        )}
+                      </div>
                     </div>
-                    <Link
-                      href={`/chats/${vendorSlug}`}
-                      className="inline-flex items-center justify-center px-4 py-1.5 sm:px-6 sm:py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white text-xs sm:text-sm font-semibold rounded-full md:rounded-xl transition-colors shadow-sm"
-                    >
-                      Order
-                    </Link>
                   </div>
 
                   {/* Vendor Items */}
                   <div className="divide-y divide-gray-50">
-                    {group.items.map((item, index) => (
-                      <div key={item.id} className="p-3 sm:p-4 flex flex-row gap-3 sm:gap-4">
+                    {group.items.map((item) => (
+                      <div key={item.id} className="p-4 flex flex-row items-center gap-4">
+                        {/* Item Checkbox */}
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.includes(item.id)}
+                          onChange={() => toggleSelectItem(item.id)}
+                          className="w-5 h-5 border-gray-300 rounded text-[#FA3728] focus:ring-[#FA3728] cursor-pointer"
+                        />
+                        
                         {/* Product Image */}
-                        <Link
-                          href={`/products/${item.id}`}
-                          className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg sm:rounded-xl overflow-hidden group block"
-                        >
-                          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 group-hover:scale-105 transition-transform"></div>
-                        </Link>
+                        <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-xl overflow-hidden block">
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        </div>
 
                         {/* Product Details */}
-                        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <Link href={`/products/${item.id}`}>
-                                <h4 className="font-semibold text-gray-900 hover:text-[#FA3728] transition-colors truncate text-sm sm:text-base">
-                                  {item.name}
-                                </h4>
-                              </Link>
-                            </div>
-                            <button onClick={() => removeItem(item.id)} className="text-gray-400 hover:text-[#FA3728] transition-colors flex-shrink-0 p-1">
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-gray-900 line-clamp-2 mb-1">
+                            {item.name}
+                          </h4>
+                          <p className="font-bold text-[#FA3728]">₦{item.price.toLocaleString()}</p>
                           
-                          {/* Price & Quantity Row */}
-                          <div className="flex items-center justify-between mt-2">
-                             <p className="font-bold text-[#FA3728] text-sm sm:text-base">₦{item.price.toLocaleString()}</p>
-                             
+                          {/* Controls Row */}
+                          <div className="flex items-center justify-between mt-3">
                              {/* Quantity Controls */}
-                            <div className="flex items-center justify-between w-24 sm:w-28 bg-gray-50 rounded-full px-2 py-1.5 border border-gray-100">
+                            <div className="flex items-center bg-gray-50 rounded-full px-2 py-1 border border-gray-100">
                               <button
                                 onClick={() => updateQuantity(item.id, -1)}
-                                className="w-6 h-6 sm:w-8 sm:h-8 flex flex-shrink-0 items-center justify-center text-gray-600 hover:bg-white rounded-full transition-colors shadow-sm"
+                                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-white rounded-full transition-colors"
                               >
-                                <Minus size={14} />
+                                <Minus size={16} />
                               </button>
-                              <span className="font-semibold text-gray-900 w-6 text-center text-sm bg-transparent">
+                              <span className="font-semibold text-gray-900 w-8 text-center bg-transparent">
                                 {item.quantity}
                               </span>
                               <button
                                 onClick={() => updateQuantity(item.id, 1)}
-                                className="w-6 h-6 sm:w-8 sm:h-8 flex flex-shrink-0 items-center justify-center text-gray-600 hover:bg-white rounded-full transition-colors shadow-sm"
+                                className="w-8 h-8 flex items-center justify-center text-[#FA3728] bg-[#FA3728]/10 hover:bg-[#FA3728]/20 rounded-full transition-colors"
                               >
-                                <Plus size={14} />
+                                <Plus size={16} />
                               </button>
                             </div>
+                            
+                            <button onClick={() => removeItem(item.id)} className="text-[#FA3728] p-2 hover:bg-[#FA3728]/10 rounded-full transition-colors">
+                              <Trash2 size={20} />
+                            </button>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
                   
-                  {/* Vendor Subtotal */}
-                  <div className="p-3 sm:p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
-                     <span className="text-gray-500 text-sm font-medium">Subtotal</span>
-                     <span className="font-bold text-gray-900">₦{groupSubtotal.toLocaleString()}</span>
+                  {/* Vendor Subtotal & Order */}
+                  <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+                     <div>
+                       <span className="block text-gray-500 text-sm mb-1">Subtotal</span>
+                       <span className="font-bold text-gray-900 text-lg">₦{groupSubtotal.toLocaleString()}</span>
+                     </div>
+                     <Link
+                       href={`/chats/${vendorSlug}`}
+                       className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#FA3728]/20 hover:bg-[#FA3728]/30 text-[#FA3728] font-semibold rounded-full transition-colors"
+                     >
+                       <MessageCircle size={18} />
+                       Order via Chat
+                     </Link>
                   </div>
                 </motion.div>
               );
             })
           )}
-          
-          {/* Bottom Total & Order All */}
-          {cartItems.length > 0 && (
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between p-6 gap-4 border-t border-gray-200">
-              <div className="flex flex-col sm:items-start items-center w-full sm:w-auto">
-                <span className="text-gray-500 text-sm font-medium">Total</span>
-                <span className="text-2xl font-bold text-[#FA3728]">₦{subtotal.toLocaleString()}</span>
-              </div>
-              <Link
-                href="/chats"
-                className="w-full sm:w-auto px-12 py-4 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-xl font-bold text-lg text-center transition-all shadow-md hover:shadow-lg"
-              >
-                Order All
-              </Link>
-            </div>
-          )}
         </div>
-
-        {/* Recently Viewed */}
-        {recentlyViewed.length > 0 && (
-          <div className="mt-16">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Recently viewed</h2>
-              <Link
-                href="/explore"
-                className="flex items-center gap-2 text-[#FA3728] hover:text-[#E31B23] font-medium transition-colors"
-              >
-                View all
-                <ArrowRight size={18} />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {recentlyViewed.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group border border-gray-100"
-                >
-                  <Link href={`/products/${product.id}`} className="block">
-                    <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
-                      <button className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Heart size={18} className="text-gray-700" />
-                      </button>
-                    </div>
-                    <div className="p-4">
-                      <p className="text-xs text-gray-500 mb-1">{product.vendor}</p>
-                      <h3 className="font-semibold text-gray-900 text-sm mb-2 line-clamp-2 group-hover:text-[#FA3728] transition-colors">
-                        {product.name}
-                      </h3>
-                      <p className="text-lg font-bold text-[#FA3728]">
-                        ₦{product.price.toLocaleString()}
-                      </p>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
+      
+      {/* Fixed Bottom Total Bar */}
+      {cartItems.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-gray-600 text-sm font-medium">
+                {selectedItems.length} of {cartItems.length} selected
+              </span>
+              <span className="text-2xl font-bold text-gray-900">
+                Total = ₦{selectedSubtotal.toLocaleString()}
+              </span>
+            </div>
+            <button
+              disabled={selectedItems.length === 0}
+              className="w-full py-3.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-xl font-bold text-lg text-center transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md"
+            >
+              <MessageCircle size={22} />
+              Order Selected via Chat
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

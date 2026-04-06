@@ -11,7 +11,9 @@ import {
   Users,
   ShoppingCart,
   CheckCircle,
+  MessageCircle,
 } from 'lucide-react';
+import ProfileButton from '../components/ProfileButton';
 
 export default function VendorsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -154,11 +156,10 @@ export default function VendorsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center">
-                <span className="text-white font-bold text-lg">S</span>
+            <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+              <div className="relative flex items-center justify-center">
+                <img src="/images/black-logo.png" alt="ShopAm Logo" width={100} height={100} />
               </div>
-              <span className="text-xl font-bold text-gray-900 hidden sm:inline">ShopAm</span>
             </Link>
 
             {/* Search Bar */}
@@ -176,28 +177,23 @@ export default function VendorsPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <Link
                 href="/cart"
-                className="relative p-2 hover:bg-gray-100 rounded-full transition-colors hidden sm:block"
+                className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
               >
-                <ShoppingCart size={24} className="text-gray-700" />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FA3728] text-white text-xs flex items-center justify-center rounded-full">
+                <ShoppingCart size={20} className="text-gray-700" />
+                <span className="absolute top-0 right-0 w-4 h-4 bg-[#FA3728] text-white text-[10px] flex items-center justify-center rounded-full font-bold">
                   3
                 </span>
               </Link>
               <Link
-                href="/auth/signin"
-                className="px-4 py-2 text-gray-700 hover:text-[#FA3728] transition-colors font-medium hidden md:block"
-              >
-                Sign In
+                href="/chats"
+                className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
+               >
+                <MessageCircle size={20} className="text-gray-700" />
               </Link>
-              <Link
-                href="/auth/signup"
-                className="px-4 py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-semibold transition-all hidden md:block"
-              >
-                Sign Up
-              </Link>
+              <ProfileButton />
             </div>
           </div>
 

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { productsService, categoriesService, cartService, authService } from '@/lib/api';
 import type { Product, Category } from '@/lib/api';
+import ProfileButton from '../components/ProfileButton';
 
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -182,7 +183,7 @@ export default function ExplorePage() {
                 <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
-                  placeholder="Search products..."
+                  placeholder="Search Products"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -193,53 +194,31 @@ export default function ExplorePage() {
                       handleSearch(searchQuery);
                     }
                   }}
-                  className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2 sm:py-3 text-sm sm:text-base rounded-full border border-gray-200 focus:border-[#FA3728] focus:ring-2 focus:ring-[#FA3728]/20 outline-none transition-all"
+                  className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2 sm:py-3 text-sm rounded-full border border-gray-300 focus:border-[#FA3728] focus:ring-2 focus:ring-[#FA3728]/20 outline-none transition-all"
                 />
               </div>
             </div>
 
             {/* Action Buttons - RESPONSIVE */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <Link
                 href="/cart"
-                className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
               >
                 <ShoppingCart size={20} className="text-gray-700" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FA3728] text-white text-[10px] flex items-center justify-center rounded-full font-bold">
+                  <span className="absolute top-0 right-0 w-4 h-4 bg-[#FA3728] text-white text-[10px] flex items-center justify-center rounded-full font-bold">
                     {cartCount}
                   </span>
                 )}
               </Link>
               <Link
                 href="/chats"
-                className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
               >
                 <MessageCircle size={20} className="text-gray-700" />
               </Link>
-              {authService.isAuthenticated() ? (
-                <Link
-                  href="/dashboard"
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm text-gray-700 hover:text-[#FA3728] transition-colors font-medium hidden md:block"
-                >
-                  Dashboard
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    href="/auth/user-signin"
-                    className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm text-gray-700 hover:text-[#FA3728] transition-colors font-medium hidden md:block"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href="/auth/user-signup"
-                    className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-semibold transition-all hidden sm:block"
-                  >
-                    Sign Up
-                  </Link>
-                </>
-              )}
+              <ProfileButton />
             </div>
           </div>
 
