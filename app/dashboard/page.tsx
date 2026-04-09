@@ -1,176 +1,167 @@
 'use client';
 
-import MetricCard from '../components/MetricCard';
-import SalesChart from '../components/SalesChart';
-import ProductTable from '../components/ProductTable';
 import { motion } from 'framer-motion';
+import { ArrowUpRight, DollarSign, ShoppingBag, Package } from 'lucide-react';
+import Link from 'next/link';
 
-// Sample data for sales charts
-const salesData = [
-  { name: 'Jan', value: 12000 },
-  { name: 'Feb', value: 15000 },
-  { name: 'Mar', value: 18000 },
-  { name: 'Apr', value: 22000 },
-  { name: 'May', value: 25300 },
-];
-
-const revenueData = [
-  { name: 'Jan', value: 8000 },
-  { name: 'Feb', value: 11000 },
-  { name: 'Mar', value: 14000 },
-  { name: 'Apr', value: 19000 },
-  { name: 'May', value: 23000 },
-];
-
-// Sample product data
-const topProducts = [
-  {
-    id: '1',
-    name: 'African Print Dress',
-    image: '/products/dress.jpg',
-    category: 'Dress',
-    activeProducts: 10,
-    sales: 380,
-    stock: 15,
-    status: 'Active',
-  },
-  {
-    id: '2',
-    name: 'Pattern Basket Set',
-    image: '/products/basket.jpg',
-    category: 'Home Decor',
-    activeProducts: 8,
-    sales: 256,
-    stock: 23,
-    status: 'Active',
-  },
-  {
-    id: '3',
-    name: 'Ankara Headwrap',
-    image: '/products/headwrap.jpg',
-    category: 'Accessories',
-    activeProducts: 15,
-    sales: 198,
-    stock: 42,
-    status: 'Active',
-  },
-  {
-    id: '4',
-    name: 'Kente Cloth Scarf',
-    image: '/products/scarf.jpg',
-    category: 'Accessories',
-    activeProducts: 12,
-    sales: 167,
-    stock: 18,
-    status: 'Active',
-  },
-];
-
-export default function Dashboard() {
+export default function DashboardHome() {
   return (
-    <div className="space-y-8">
-      {/* Page Header */}
+    <div className="px-4 py-2 md:p-8 space-y-6 max-w-lg mx-auto md:max-w-none">
+      {/* Welcome Header */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        className="mb-6 md:mb-8"
       >
-        <h1 className="text-3xl font-bold mb-2">Overview</h1>
-        <p className="text-gray-400">Welcome back, Sarah! Here's what's happening with your store today.</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2">
+          Hello, Sarah <span className="text-2xl">👋</span>
+        </h1>
+        <p className="text-gray-500 text-sm md:text-base mt-1">Here's your store overview</p>
       </motion.div>
 
-      {/* Metric Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title="Total Sales"
-          value="$25,300"
-          change="+12% this month"
-          changeType="positive"
-          subtitle="+106%"
-          variant="crimson"
-          delay={0}
-        />
-        
-        <MetricCard
-          title="Total Orders"
-          value="458"
-          change="+8% this month"
-          changeType="positive"
-          subtitle="+26"
-          variant="dark"
-          delay={0.1}
-        />
-        
-        <MetricCard
-          title="African Pattern Basket Set"
-          value="120"
-          subtitle="In sold"
-          badge={{ text: 'Selling', variant: 'danger' }}
-          variant="dark"
-          delay={0.2}
-        />
-        
-        <MetricCard
-          title="Atinuke Cloth Scarf"
-          value="$4,150"
-          subtitle="Due Tomorrow"
-          badge={{ text: 'Due Tomorrow', variant: 'danger' }}
-          variant="dark"
-          delay={0.3}
-        />
-      </div>
+      {/* Stats Cards */}
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Total Sales */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white rounded-2xl p-5 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-4 flex-1"
+        >
+          <div className="w-12 h-12 bg-red-50 text-[#FA3728] rounded-xl flex items-center justify-center flex-shrink-0">
+            <DollarSign size={24} />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-medium text-gray-500 mb-0.5">Total Sales</p>
+            <div className="flex items-end justify-between">
+              <p className="text-2xl font-bold text-gray-900 border-none">₦425,300</p>
+              <div className="flex items-center text-xs font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">
+                <ArrowUpRight size={14} />
+                +12%
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
-      {/* Sales Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SalesChart
-          title="Sales Over Time"
-          data={salesData}
-          delay={0.4}
-        />
-        
-        <SalesChart
-          title="Revenue Trend"
-          data={revenueData}
-          delay={0.5}
-        />
-      </div>
+        {/* Orders */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white rounded-2xl p-5 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-4 flex-1"
+        >
+          <div className="w-12 h-12 bg-red-50 text-[#FA3728] rounded-xl flex items-center justify-center flex-shrink-0">
+            <ShoppingBag size={24} />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-medium text-gray-500 mb-0.5">Orders</p>
+            <div className="flex items-end justify-between">
+              <p className="text-2xl font-bold text-gray-900">58</p>
+              <div className="flex items-center text-xs font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">
+                <ArrowUpRight size={14} />
+                +8%
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
-      {/* Top Performing Products Table */}
-      <ProductTable products={topProducts} />
+        {/* Products */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-2xl p-5 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-4 flex-1"
+        >
+          <div className="w-12 h-12 bg-red-50 text-[#FA3728] rounded-xl flex items-center justify-center flex-shrink-0">
+            <Package size={24} />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-medium text-gray-500 mb-0.5">Products</p>
+            <div className="flex items-end justify-between">
+              <p className="text-2xl font-bold text-gray-900">12</p>
+              <span className="text-xs font-medium text-gray-500">Active</span>
+            </div>
+          </div>
+        </motion.div>
+      </div>
 
       {/* Recent Orders Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.4 }}
-        className="glass border-white/10 rounded-xl p-6"
+        transition={{ delay: 0.4 }}
+        className="mt-8"
       >
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold">Recent Orders</h3>
-          <button className="text-crimson hover:text-crimson/80 text-sm font-medium transition-colors">
-            View All
-          </button>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base md:text-lg font-bold text-gray-900">Recent Orders</h2>
+          <Link href="/dashboard/orders" className="text-[#FA3728] text-sm font-medium hover:underline">
+            View all
+          </Link>
         </div>
 
-        <div className="space-y-4">
-          {[1, 2, 3].map((_, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-crimson/20 to-orange-500/20"></div>
-                <div>
-                  <p className="font-medium">African Print Dress</p>
-                  <p className="text-sm text-gray-400">Order #3609</p>
+        <div className="space-y-3">
+          {/* Order 1 */}
+          <Link href="/dashboard/orders" className="block bg-white rounded-2xl p-4 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:border-red-100 hover:shadow-md transition-all">
+            <div className="flex gap-4">
+              <div className="w-12 h-12 rounded-full bg-[#FA3728] text-white flex items-center justify-center font-bold flex-shrink-0">
+                M
+              </div>
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <div className="flex items-center justify-between mb-0.5">
+                  <h3 className="font-semibold text-gray-900 truncate pr-4 text-sm md:text-base">Mama Nkechi Kitchen</h3>
+                  <span className="font-bold text-gray-900 text-sm md:text-base">₦3,500</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500 truncate">Jollof Rice Platter × 1</p>
+                  <span className="text-[10px] font-bold text-[#FA3728] bg-red-50 px-2 py-0.5 rounded-full">
+                    Pending
+                  </span>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="font-medium">$78</p>
-                <p className="text-sm text-gray-400">2 hours ago</p>
+            </div>
+          </Link>
+
+          {/* Order 2 */}
+          <Link href="/dashboard/orders" className="block bg-white rounded-2xl p-4 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:border-red-100 hover:shadow-md transition-all">
+            <div className="flex gap-4">
+              <div className="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold flex-shrink-0">
+                A
+              </div>
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <div className="flex items-center justify-between mb-0.5">
+                  <h3 className="font-semibold text-gray-900 truncate pr-4 text-sm md:text-base">Adaeze M.</h3>
+                  <span className="font-bold text-gray-900 text-sm md:text-base">₦28,000</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500 truncate">African Print Dress × 1</p>
+                  <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                    Confirmed
+                  </span>
+                </div>
               </div>
             </div>
-          ))}
+          </Link>
+
+          {/* Order 3 */}
+          <Link href="/dashboard/orders" className="block bg-white rounded-2xl p-4 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:border-red-100 hover:shadow-md transition-all">
+            <div className="flex gap-4">
+              <div className="w-12 h-12 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold flex-shrink-0">
+                T
+              </div>
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <div className="flex items-center justify-between mb-0.5">
+                  <h3 className="font-semibold text-gray-900 truncate pr-4 text-sm md:text-base">Tunde K.</h3>
+                  <span className="font-bold text-gray-900 text-sm md:text-base">₦25,000</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500 truncate">Basket Set × 2</p>
+                  <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full">
+                    Completed
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Link>
         </div>
       </motion.div>
     </div>

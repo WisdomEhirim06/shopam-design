@@ -1,24 +1,22 @@
 'use client';
 
-import { Home, Package, ShoppingBag, CreditCard, Settings } from 'lucide-react';
+import { Home, Package, MessageSquare, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
-
-const navItems = [
-  { href: '/dashboard', icon: Home, label: 'Home' },
-  { href: '/dashboard/products', icon: Package, label: 'Products' },
-  { href: '/dashboard/orders', icon: ShoppingBag, label: 'Orders' },
-  { href: '/dashboard/bank-details', icon: CreditCard, label: 'Bank' },
-  { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
-];
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
 
+  const navItems = [
+    { href: '/dashboard', icon: Home, label: 'Home' },
+    { href: '/dashboard/products', icon: Package, label: 'Products' },
+    { href: '/dashboard/orders', icon: MessageSquare, label: 'Orders' },
+    { href: '/dashboard/profile', icon: User, label: 'Profile' },
+  ];
+
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 theme-modal border-t border-primary safe-area-bottom" style={{ borderColor: 'var(--border-primary)' }}>
-      <div className="flex items-center justify-around px-2 py-2">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+      <div className="flex items-center justify-around px-2 py-3">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -27,43 +25,28 @@ export default function MobileBottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="relative flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all"
+              className="relative flex flex-col items-center gap-1 w-16"
             >
-              {isActive && (
-                <motion.div
-                  layoutId="mobile-nav-active"
-                  className="absolute inset-0 rounded-lg"
-                  style={{ backgroundColor: 'var(--primary-red-light)' }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                />
+              {isActive && item.label === 'Orders' && (
+                <span className="absolute -top-1 right-2 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-[#FA3728] rounded-full">
+                  3
+                </span>
               )}
               <Icon
                 size={22}
-                className={`relative z-10 ${isActive ? 'theme-red' : 'theme-text-secondary'}`}
-                style={isActive ? { color: 'var(--primary-red)' } : {}}
+                className={`transition-colors ${isActive ? 'text-[#FA3728]' : 'text-gray-400'}`}
+                strokeWidth={isActive ? 2.5 : 2}
               />
               <span
-                className={`text-xs font-medium relative z-10 ${
-                  isActive ? 'theme-red' : 'theme-text-secondary'
+                className={`text-[10px] font-medium transition-colors mt-0.5 ${
+                  isActive ? 'text-[#FA3728]' : 'text-gray-400'
                 }`}
-                style={isActive ? { color: 'var(--primary-red)' } : {}}
               >
                 {item.label}
               </span>
             </Link>
           );
         })}
-      </div>
-
-      {/* Need Help Button */}
-      <div className="px-4 pb-3">
-        <button
-          className="w-full py-3 rounded-lg font-medium text-white text-sm flex items-center justify-center gap-2"
-          style={{ backgroundColor: 'var(--primary-red)' }}
-        >
-          <span>🆘</span>
-          Need Help
-        </button>
       </div>
     </div>
   );
