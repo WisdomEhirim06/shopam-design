@@ -62,7 +62,7 @@ export default function UserSignInPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
+    <div data-theme="light" className="min-h-screen flex bg-white">
       {/* Left Side - Red Brand Section */}
       <div className="hidden lg:flex flex-col lg:w-1/2 bg-gradient-to-br from-[#FA3728] to-[#E31B23] relative overflow-hidden">
         {/* Decorative Elements */}
@@ -127,8 +127,8 @@ export default function UserSignInPage() {
       </div>
 
       {/* Right Side - Sign In Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-white">
-        <div className="w-full max-w-md">
+      <div className="flex-1 w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-12 bg-white">
+        <div className="w-full max-w-md mx-auto">
           {/* Mobile Header */}
           <div className="lg:hidden mb-12 flex justify-center w-full relative">
             <Link href="/">

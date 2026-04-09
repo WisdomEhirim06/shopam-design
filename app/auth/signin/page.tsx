@@ -130,8 +130,8 @@ export default function VendorSignInPage() {
       </div>
 
       {/* Right Side - Sign In Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 bg-white">
-        <div className="w-full max-w-md">
+      <div className="flex-1 w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-12 bg-white">
+        <div className="w-full max-w-md mx-auto">
           {/* Mobile Header */}
           <div className="lg:hidden mb-12 flex justify-center w-full relative">
             <Link href="/">
@@ -216,31 +216,17 @@ export default function VendorSignInPage() {
               </button>
             </form>
 
-            {/* Divider */}
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-primary" style={{ borderColor: 'var(--border-primary)' }}></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 theme-text-secondary" style={{ backgroundColor: 'var(--bg-primary)' }}>
-                  Don't have an account?
-                </span>
-              </div>
-            </div>
-
-            {/* Sign Up Link */}
-            <p className="text-center text-sm text-gray-500 mt-6">
-              New to ShopAm?{' '}
-              <Link href="/auth/signup" className="text-[#FA3728] hover:underline font-semibold">
-                Create Vendor Account
-              </Link>
-            </p>
-
-            {/* Footer */}
-            <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
+            {/* Footer Links */}
+            <div className="mt-10 pt-6 border-t border-gray-100 flex flex-col items-center gap-4 text-sm text-gray-500">
+              <p>
+                New to ShopAm?{' '}
+                <Link href="/auth/signup" className="text-[#FA3728] hover:underline font-semibold text-base">
+                  Create Vendor Account
+                </Link>
+              </p>
               <p>
                 Need help?{' '}
-                <a href="#" className="text-[#FA3728] hover:underline">Contact Support</a>
+                <a href="#" className="text-[#FA3728] hover:underline font-medium">Contact Support</a>
               </p>
             </div>
           </motion.div>

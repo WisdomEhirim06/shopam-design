@@ -195,11 +195,11 @@ export default function CartPage() {
                         {group.vendor.name[0]}
                       </div>
                       <div>
-                        <h3 className="font-bold text-gray-900 leading-tight">
+                        <h3 className="font-semibold text-gray-800 leading-tight">
                           {group.vendor.name}
                         </h3>
                         {group.vendor.location && (
-                          <p className="text-sm text-gray-500">{group.vendor.location}</p>
+                          <p className="text-xs text-gray-500">{group.vendor.location}</p>
                         )}
                       </div>
                     </div>
@@ -224,10 +224,10 @@ export default function CartPage() {
 
                         {/* Product Details */}
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-gray-900 line-clamp-2 mb-1">
+                          <h4 className="font-medium text-sm text-gray-800 line-clamp-2 mb-1">
                             {item.name}
                           </h4>
-                          <p className="font-bold text-[#FA3728]">₦{item.price.toLocaleString()}</p>
+                          <p className="font-semibold text-sm text-[#FA3728]">₦{item.price.toLocaleString()}</p>
                           
                           {/* Controls Row */}
                           <div className="flex items-center justify-between mt-3">
@@ -261,17 +261,17 @@ export default function CartPage() {
                   
                   {/* Vendor Subtotal & Order */}
                   <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
-                     <div>
-                       <span className="block text-gray-500 text-sm mb-1">Subtotal</span>
-                       <span className="font-bold text-gray-900 text-lg">₦{groupSubtotal.toLocaleString()}</span>
-                     </div>
-                     <Link
-                       href={`/chats/${vendorSlug}`}
-                       className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#FA3728]/20 hover:bg-[#FA3728]/30 text-[#FA3728] font-semibold rounded-full transition-colors"
-                     >
-                       <MessageCircle size={18} />
-                       Order via Chat
-                     </Link>
+                    <div>
+                      <span className="block text-gray-500 text-xs mb-0.5">Subtotal</span>
+                      <span className="font-semibold text-gray-900 text-base">₦{groupSubtotal.toLocaleString()}</span>
+                    </div>
+                    <Link
+                      href={`/chats/${vendorSlug}`}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FA3728]/10 hover:bg-[#FA3728]/20 text-[#FA3728] font-medium text-sm rounded-full transition-colors"
+                    >
+                      <MessageCircle size={16} />
+                      Order via Chat
+                    </Link>
                   </div>
                 </motion.div>
               );
@@ -282,22 +282,22 @@ export default function CartPage() {
       
       {/* Fixed Bottom Total Bar */}
       {cartItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40">
-          <div className="max-w-3xl mx-auto">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-600 text-sm font-medium">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 sm:p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40">
+          <div className="max-w-3xl mx-auto flex flex-row items-center justify-between gap-4">
+            <div className="flex flex-col">
+              <span className="text-gray-500 text-xs font-medium">
                 {selectedItems.length} of {cartItems.length} selected
               </span>
-              <span className="text-2xl font-bold text-gray-900">
-                Total = ₦{selectedSubtotal.toLocaleString()}
+              <span className="text-lg sm:text-xl font-bold text-gray-900">
+                Total: ₦{selectedSubtotal.toLocaleString()}
               </span>
             </div>
             <button
               disabled={selectedItems.length === 0}
-              className="w-full py-3.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-xl font-bold text-lg text-center transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md"
+              className="flex-1 sm:flex-none sm:px-8 py-2.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-xl font-semibold text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm whitespace-nowrap"
             >
-              <MessageCircle size={22} />
-              Order Selected via Chat
+              <MessageCircle size={18} />
+              Order Selected
             </button>
           </div>
         </div>

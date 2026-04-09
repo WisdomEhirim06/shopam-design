@@ -217,8 +217,8 @@ export default function VendorSignUpPage() {
       </div>
 
       {/* Right Side - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 overflow-y-auto bg-white">
-        <div className="w-full max-w-md">
+      <div className="flex-1 w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-12 overflow-y-auto bg-white">
+        <div className="w-full max-w-md mx-auto">
           {/* Mobile Header */}
           {currentStep === 'personal' && (
             <div className="lg:hidden mb-12 flex justify-center w-full relative">
@@ -338,10 +338,9 @@ export default function VendorSignUpPage() {
                     setError('');
                     setCurrentStep('business');
                   }}
-                  className="w-full mt-6 py-3 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-lg font-semibold flex items-center justify-center gap-2"
+                  className="w-full mt-6 py-3 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-lg font-semibold"
                 >
                   Continue
-                  <ArrowRight size={20} />
                 </button>
 
                 <p className="text-center text-gray-600 text-sm mt-4">
@@ -416,19 +415,13 @@ export default function VendorSignUpPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-3 mt-8 pb-8">
-                  <button
-                    onClick={() => setCurrentStep('personal')}
-                    className="flex-1 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-all text-lg"
-                  >
-                    Back
-                  </button>
+                <div className="mt-8 pb-8">
                   <button
                     onClick={handleSubmit}
                     disabled={isSubmitting}
-                    className="flex-1 py-4 bg-gradient-to-r from-[#FA3728] to-[#E31B23] hover:shadow-lg transform hover:-translate-y-0.5 text-white rounded-xl font-bold transition-all disabled:opacity-50 text-lg"
+                    className="w-full py-4 bg-gradient-to-r from-[#FA3728] to-[#E31B23] hover:shadow-lg transform hover:-translate-y-0.5 text-white rounded-xl font-bold transition-all disabled:opacity-50 text-lg"
                   >
-                    {isSubmitting ? 'Finishing...' : 'Finish'}
+                    {isSubmitting ? 'Creating Store...' : 'Launch My Store'}
                   </button>
                 </div>
               </motion.div>
