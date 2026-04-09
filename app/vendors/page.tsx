@@ -8,19 +8,35 @@ import {
   Star,
   MapPin,
   Package,
-  Users,
   ShoppingCart,
   CheckCircle,
   MessageCircle,
 } from 'lucide-react';
 import ProfileButton from '../components/ProfileButton';
 
+interface ShopProduct {
+  name: string;
+  color: string;
+}
+
+interface Vendor {
+  id: number;
+  name: string;
+  bio: string;
+  category: string;
+  rating: number;
+  reviews: number;
+  products: number;
+  location: string;
+  verified: boolean;
+  responseTime: string;
+  shopProducts: ShopProduct[];
+}
+
 export default function VendorsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [followedVendors, setFollowedVendors] = useState<number[]>([]);
 
-  // Categories
   const categories = [
     'All',
     'Fashion',
@@ -34,114 +50,110 @@ export default function VendorsPage() {
     'Tech',
   ];
 
-  // Sample vendors
-  const vendors = [
+  const vendors: Vendor[] = [
     {
       id: 1,
       name: "Sarah's Fashion",
-      avatar: '/api/placeholder/200/200',
-      cover: '/api/placeholder/600/200',
       bio: 'Authentic African fashion and accessories',
       category: 'Fashion',
       rating: 4.9,
       reviews: 234,
-      followers: 2340,
       products: 45,
       location: 'Lagos, Nigeria',
       verified: true,
       responseTime: '< 1 hour',
+      shopProducts: [
+        { name: 'Ankara Dress', color: 'bg-orange-100' },
+        { name: 'Print Scarf', color: 'bg-yellow-100' },
+        { name: 'Ankara Bag', color: 'bg-red-100' },
+      ],
     },
     {
       id: 2,
       name: 'TechHub Nigeria',
-      avatar: '/api/placeholder/200/200',
-      cover: '/api/placeholder/600/200',
       bio: 'Your trusted source for gadgets and electronics',
       category: 'Electronics',
       rating: 4.8,
       reviews: 567,
-      followers: 5670,
       products: 128,
       location: 'Abuja, Nigeria',
       verified: true,
       responseTime: '< 2 hours',
+      shopProducts: [
+        { name: 'Earbuds', color: 'bg-blue-100' },
+        { name: 'Charger', color: 'bg-indigo-100' },
+        { name: 'Phone Case', color: 'bg-sky-100' },
+      ],
     },
     {
       id: 3,
       name: 'Kiara Takeaway',
-      avatar: '/api/placeholder/200/200',
-      cover: '/api/placeholder/600/200',
       bio: 'Delicious meals delivered to your doorstep',
       category: 'Food & Drinks',
       rating: 5.0,
       reviews: 1240,
-      followers: 12400,
       products: 67,
       location: 'Port Harcourt, Nigeria',
       verified: true,
       responseTime: '< 30 mins',
+      shopProducts: [
+        { name: 'Jollof Rice', color: 'bg-red-100' },
+        { name: 'Puff Puff', color: 'bg-amber-100' },
+        { name: 'Chapman', color: 'bg-pink-100' },
+      ],
     },
     {
       id: 4,
       name: 'Book Zone',
-      avatar: '/api/placeholder/200/200',
-      cover: '/api/placeholder/600/200',
       bio: 'Wide selection of books across all genres',
       category: 'Books',
       rating: 4.7,
       reviews: 345,
-      followers: 890,
       products: 234,
       location: 'Ibadan, Nigeria',
       verified: false,
       responseTime: '< 3 hours',
+      shopProducts: [
+        { name: 'Fiction', color: 'bg-green-100' },
+        { name: 'Self Help', color: 'bg-teal-100' },
+        { name: 'Academic', color: 'bg-emerald-100' },
+      ],
     },
     {
       id: 5,
       name: 'BeautyPlus NG',
-      avatar: '/api/placeholder/200/200',
-      cover: '/api/placeholder/600/200',
       bio: 'Premium beauty products and cosmetics',
       category: 'Beauty',
       rating: 4.8,
       reviews: 678,
-      followers: 4560,
       products: 156,
       location: 'Lagos, Nigeria',
       verified: true,
       responseTime: '< 1 hour',
+      shopProducts: [
+        { name: 'Lipstick', color: 'bg-rose-100' },
+        { name: 'Foundation', color: 'bg-orange-100' },
+        { name: 'Serum', color: 'bg-purple-100' },
+      ],
     },
     {
       id: 6,
       name: 'Home & Office NG',
-      avatar: '/api/placeholder/200/200',
-      cover: '/api/placeholder/600/200',
-      bio: 'Furniture and office supplies',
+      bio: 'Furniture and office supplies for every need',
       category: 'Home & Office',
       rating: 4.6,
       reviews: 234,
-      followers: 1230,
       products: 89,
       location: 'Lagos, Nigeria',
       verified: true,
       responseTime: '< 2 hours',
+      shopProducts: [
+        { name: 'Desk Chair', color: 'bg-gray-100' },
+        { name: 'Table Lamp', color: 'bg-yellow-100' },
+        { name: 'Bookshelf', color: 'bg-stone-100' },
+      ],
     },
   ];
-
-  const handleFollow = (vendorId: number) => {
-    // Check if user is authenticated
-    const isAuthenticated = false; // Replace with actual auth check
-
-    if (!isAuthenticated) {
-      // Redirect to signup
-      window.location.href = '/auth/signup';
-      return;
-    }
-
-    setFollowedVendors((prev) =>
-      prev.includes(vendorId) ? prev.filter((id) => id !== vendorId) : [...prev, vendorId]
-    );
-  };
 
   const filteredVendors = vendors.filter(
     (vendor) =>
@@ -191,7 +203,7 @@ export default function VendorsPage() {
               <Link
                 href="/chats"
                 className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
-               >
+              >
                 <MessageCircle size={20} className="text-gray-700" />
               </Link>
               <ProfileButton />
@@ -228,14 +240,14 @@ export default function VendorsPage() {
           {/* Page Header */}
           <div className="mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-              Discover Vendors
+              Discover Shops
             </h1>
             <p className="text-lg text-gray-600">
-              Browse and follow your favorite shops and sellers
+              Browse shops and find what you need
             </p>
           </div>
 
-          {/* Categories Filter - FULLY RESPONSIVE */}
+          {/* Categories Filter */}
           <div className="mb-8 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
             <div className="flex gap-2 sm:gap-3 min-w-max">
               {categories.map((category) => (
@@ -245,7 +257,7 @@ export default function VendorsPage() {
                   className={`px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-medium whitespace-nowrap transition-all ${
                     selectedCategory === category
                       ? 'bg-[#FA3728] text-white shadow-lg'
-                      : 'bg-white text-gray-700 hover:shadow-md border border-gray-200'
+                      : 'bg-white text-gray-700 border border-gray-200'
                   }`}
                 >
                   {category}
@@ -256,11 +268,10 @@ export default function VendorsPage() {
 
           {/* Results Count */}
           <p className="text-gray-600 mb-6">
-            <span className="font-semibold text-gray-900">{filteredVendors.length}</span> vendors
-            found
+            <span className="font-semibold text-gray-900">{filteredVendors.length}</span> shops found
           </p>
 
-          {/* Vendors Grid - SIMPLIFIED */}
+          {/* Vendors Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredVendors.map((vendor, index) => (
               <motion.div
@@ -268,56 +279,67 @@ export default function VendorsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all border border-gray-100"
+                className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100"
               >
-                {/* Vendor Picture & Name */}
-                <div className="flex items-start gap-4 mb-4">
-                  {/* Avatar */}
-                  <div className="relative flex-shrink-0">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center text-white text-2xl font-bold shadow-md">
-                      {vendor.name[0]}
-                    </div>
-                    {vendor.verified && (
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
-                        <CheckCircle size={12} className="text-white fill-white" />
+                {/* Shop product thumbnails — click to visit shop */}
+                <Link href={`/vendors/${vendor.id}`} className="block">
+                  <div className="grid grid-cols-3 h-24">
+                    {vendor.shopProducts.map((p, i) => (
+                      <div
+                        key={i}
+                        className={`${p.color} flex items-center justify-center`}
+                      >
+                        <span className="text-[10px] text-gray-500 font-medium text-center px-1 leading-tight">
+                          {p.name}
+                        </span>
                       </div>
-                    )}
+                    ))}
+                  </div>
+                </Link>
+
+                {/* Vendor info */}
+                <div className="p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="relative flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center text-white text-base font-bold">
+                        {vendor.name[0]}
+                      </div>
+                      {vendor.verified && (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                          <CheckCircle size={9} className="text-white fill-white" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-900 text-sm truncate">{vendor.name}</h3>
+                      <p className="text-xs text-gray-500">{vendor.category}</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star size={12} className="text-amber-400 fill-amber-400" />
+                      <span className="text-xs font-semibold text-gray-700">{vendor.rating}</span>
+                    </div>
                   </div>
 
-                  {/* Name */}
-                  <div className="flex-1 min-w-0">
-                    <Link href={`/vendors/${vendor.id}`}>
-                      <h3 className="text-lg font-bold text-gray-900 hover:text-[#FA3728] transition-colors truncate">
-                        {vendor.name}
-                      </h3>
+                  <p className="text-xs text-gray-500 mb-3 line-clamp-2 leading-relaxed">{vendor.bio}</p>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-xs text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <Package size={11} />
+                        {vendor.products} items
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MapPin size={11} />
+                        {vendor.location.split(',')[0]}
+                      </span>
+                    </div>
+                    <Link
+                      href={`/vendors/${vendor.id}`}
+                      className="text-xs font-semibold text-[#FA3728]"
+                    >
+                      Visit Shop →
                     </Link>
-                    <p className="text-sm text-gray-500">{vendor.category}</p>
                   </div>
-                </div>
-
-                {/* Description */}
-                <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
-                  {vendor.bio}
-                </p>
-
-                {/* Actions - Two Buttons */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleFollow(vendor.id)}
-                    className={`flex-1 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                      followedVendors.includes(vendor.id)
-                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        : 'bg-[#FA3728] text-white hover:bg-[#E31B23] shadow-sm'
-                    }`}
-                  >
-                    {followedVendors.includes(vendor.id) ? 'Following' : 'Follow'}
-                  </button>
-                  <Link
-                    href={`/vendors/${vendor.id}`}
-                    className="flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-lg font-semibold text-sm text-gray-700 hover:border-[#FA3728] hover:text-[#FA3728] transition-all text-center"
-                  >
-                    View Shop
-                  </Link>
                 </div>
               </motion.div>
             ))}
@@ -326,7 +348,7 @@ export default function VendorsPage() {
           {/* Load More */}
           <div className="text-center mt-12">
             <button className="px-8 py-3 bg-white border border-gray-200 hover:border-[#FA3728] rounded-full font-semibold transition-all">
-              Load More Vendors
+              Load More Shops
             </button>
           </div>
         </div>
