@@ -29,12 +29,12 @@ export default function ProfileButton() {
         aria-label="Profile"
       >
         {isAuthenticated && userInitial ? (
-          <div className="w-8 h-8 rounded-full bg-[#FA3728] text-white flex items-center justify-center text-sm font-bold ring-2 ring-[#FA3728] ring-offset-2">
+          <div className="w-8 h-8 rounded-full bg-[#FA3728] text-white flex items-center justify-center text-sm font-bold">
             {userInitial}
           </div>
         ) : (
-          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center ring-2 ring-[#FA3728] ring-offset-2">
-            <User size={16} className="text-gray-600" />
+          <div className="w-8 h-8 rounded-full bg-[#FA3728] text-white flex items-center justify-center text-sm font-bold">
+            W
           </div>
         )}
       </button>

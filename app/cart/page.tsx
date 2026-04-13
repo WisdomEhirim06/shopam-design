@@ -61,7 +61,7 @@ export default function CartPage() {
     },
   ]);
 
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
 
   const updateQuantity = (id: string, change: number) => {
     setCartItems(
@@ -75,35 +75,14 @@ export default function CartPage() {
 
   const removeItem = (id: string) => {
     setCartItems(cartItems.filter((item) => item.id !== id));
-    setSelectedItems(selectedItems.filter((selectedId) => selectedId !== id));
   };
 
-  const toggleSelectItem = (id: string) => {
-    setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
+  const toggleSelectVendor = (vendorName: string) => {
+    setSelectedVendors((prev) => 
+      prev.includes(vendorName) 
+        ? prev.filter((name) => name !== vendorName) 
+        : [...prev, vendorName]
     );
-  };
-
-  const selectAll = () => {
-    if (selectedItems.length === cartItems.length) {
-      setSelectedItems([]);
-    } else {
-      setSelectedItems(cartItems.map((item) => item.id));
-    }
-  };
-
-  const toggleSelectVendor = (vendorName: string, items: CartItem[]) => {
-    const vendorItemIds = items.map((item) => item.id);
-    const allSelected = vendorItemIds.every((id) => selectedItems.includes(id));
-    
-    if (allSelected) {
-      setSelectedItems((prev) => prev.filter((id) => !vendorItemIds.includes(id)));
-    } else {
-      setSelectedItems((prev) => {
-        const newSelection = new Set([...prev, ...vendorItemIds]);
-        return Array.from(newSelection);
-      });
-    }
   };
 
   // Group cart items by vendor
@@ -120,10 +99,6 @@ export default function CartPage() {
   }, {} as Record<string, { vendor: any, items: CartItem[] }>);
 
   const vendorGroups = Object.values(groupedItems);
-  
-  const selectedSubtotal = cartItems
-    .filter((item) => selectedItems.includes(item.id))
-    .reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-36">
@@ -139,12 +114,6 @@ export default function CartPage() {
               <span className="font-bold text-xl hidden sm:inline">My Cart</span>
             </Link>
             <h1 className="text-xl font-bold text-gray-900 sm:hidden">My Cart</h1>
-            <button
-              onClick={selectAll}
-              className="text-[#FA3728] font-medium"
-            >
-              Select All ({cartItems.length})
-            </button>
           </div>
         </div>
       </header>
@@ -171,8 +140,7 @@ export default function CartPage() {
             vendorGroups.map((group, groupIndex) => {
               const groupSubtotal = group.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
               const vendorSlug = group.vendor.name.toLowerCase().replace(/\s+/g, '-');
-              const vendorItemIds = group.items.map((item) => item.id);
-              const isVendorSelected = vendorItemIds.every((id) => selectedItems.includes(id));
+              const isVendorSelected = selectedVendors.includes(group.vendor.name);
 
               return (
                 <motion.div
@@ -187,7 +155,7 @@ export default function CartPage() {
                     <input
                       type="checkbox"
                       checked={isVendorSelected}
-                      onChange={() => toggleSelectVendor(group.vendor.name, group.items)}
+                      onChange={() => toggleSelectVendor(group.vendor.name)}
                       className="w-5 h-5 border-gray-300 rounded text-[#FA3728] focus:ring-[#FA3728] cursor-pointer"
                     />
                     <div className="flex items-center gap-3">
@@ -209,13 +177,6 @@ export default function CartPage() {
                   <div className="divide-y divide-gray-50">
                     {group.items.map((item) => (
                       <div key={item.id} className="p-4 flex flex-row items-center gap-4">
-                        {/* Item Checkbox */}
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.includes(item.id)}
-                          onChange={() => toggleSelectItem(item.id)}
-                          className="w-5 h-5 border-gray-300 rounded text-[#FA3728] focus:ring-[#FA3728] cursor-pointer"
-                        />
                         
                         {/* Product Image */}
                         <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-xl overflow-hidden block">
@@ -279,29 +240,6 @@ export default function CartPage() {
           )}
         </div>
       </div>
-      
-      {/* Fixed Bottom Total Bar */}
-      {cartItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 sm:p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40">
-          <div className="max-w-3xl mx-auto flex flex-row items-center justify-between gap-4">
-            <div className="flex flex-col">
-              <span className="text-gray-500 text-xs font-medium">
-                {selectedItems.length} of {cartItems.length} selected
-              </span>
-              <span className="text-lg sm:text-xl font-bold text-gray-900">
-                Total: ₦{selectedSubtotal.toLocaleString()}
-              </span>
-            </div>
-            <button
-              disabled={selectedItems.length === 0}
-              className="flex-1 sm:flex-none sm:px-8 py-2.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-xl font-semibold text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm whitespace-nowrap"
-            >
-              <MessageCircle size={18} />
-              Order Selected
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

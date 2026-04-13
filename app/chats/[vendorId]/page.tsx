@@ -15,6 +15,7 @@ type Message = {
     name: string;
     price: number;
     quantity: number;
+    image?: string;
   }[];
   total: number;
   time: string;
@@ -36,6 +37,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
           name: 'Jollof Rice Platter',
           price: 3500,
           quantity: 1,
+          image: 'https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?auto=format&fit=crop&q=80&w=600'
         }
       ],
       total: 3500,
@@ -52,6 +54,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
           name: 'Jollof Rice Platter',
           price: 3500,
           quantity: 1,
+          image: 'https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?auto=format&fit=crop&q=80&w=600'
         }
       ],
       total: 3500,
@@ -112,7 +115,15 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                 <h1 className="text-lg font-bold text-gray-900 leading-tight truncate">
                   {vendorName}
                 </h1>
-                <p className="text-xs text-gray-500 font-medium tracking-wide uppercase">Vendor</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <p className="text-xs text-gray-500 font-medium tracking-wide uppercase">Vendor</p>
+                  <div className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 rounded-full border border-blue-100">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-[8px] font-bold">✓</span>
+                    </div>
+                    <span className="text-[10px] text-blue-600 font-bold uppercase tracking-wide">Verified</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -144,10 +155,20 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                     </span>
                   </div>
 
+                  <div className="mb-3 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 flex items-center justify-center">
+                    <p className="text-xs font-semibold text-amber-800">Awaiting vendor confirmation</p>
+                  </div>
+
                   <div className="space-y-3">
                     {message.items.map((item, index) => (
                       <div key={index} className="flex gap-3 items-center">
-                        <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex-shrink-0"></div>
+                        {item.image ? (
+                          <div className="w-14 h-14 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
+                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex-shrink-0"></div>
+                        )}
                         <div className="flex-1 min-w-0">
                            <h4 className="font-semibold text-gray-900 text-sm truncate">{item.name}</h4>
                            <p className="text-gray-500 text-xs mt-0.5">₦{item.price.toLocaleString()} × {item.quantity}</p>
@@ -162,6 +183,15 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                   <div className="mt-4 pt-3 border-t border-gray-50 flex justify-between items-center">
                      <span className="text-sm text-gray-500 font-medium">Total</span>
                      <span className="font-bold text-[#FA3728]">₦{message.total.toLocaleString()}</span>
+                  </div>
+
+                  <div className="mt-4 flex gap-2 w-full">
+                    <button className="flex-1 py-2.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-xl font-semibold text-sm transition-all shadow-sm">
+                      Proceed to Payment
+                    </button>
+                    <button className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl font-semibold text-sm transition-all border border-gray-200">
+                      Cancel
+                    </button>
                   </div>
                   
                   <div className="mt-2 text-right">

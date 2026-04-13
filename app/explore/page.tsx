@@ -165,29 +165,51 @@ export default function ExplorePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Fixed Top Navigation - IMPROVED RESPONSIVE */}
+      {/* Fixed Top Navigation - IMPROVED */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20">
-            {/* Logo */}
-            {/* Logo - Larger */}
-            <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-              <div className="relative flex items-center justify-center">
-                <img src="/images/black-logo.png" alt="ShopAm Logo" width={100} height={100} />
-              </div>
-            </Link>
+          <div className="flex flex-col gap-3 py-3">
+            {/* Top Row: Logo & Action Icons */}
+            <div className="flex items-center justify-between">
+              <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+                <div className="relative flex items-center justify-center">
+                  <img src="/images/black-logo.png" alt="ShopAm Logo" width={100} height={100} />
+                </div>
+              </Link>
 
-            {/* Search Bar - BETTER MOBILE */}
-            <div className="flex-1 min-w-0 mx-2 sm:mx-4">
+              {/* Action Buttons - Gap reduced */}
+              <div className="flex items-center gap-0 flex-shrink-0">
+                <Link
+                  href="/cart"
+                  className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
+                >
+                  <ShoppingCart size={20} className="text-gray-700" />
+                  {cartCount > 0 && (
+                    <span className="absolute top-0 right-0 w-4 h-4 bg-[#FA3728] text-white text-[10px] flex items-center justify-center rounded-full font-bold">
+                      {cartCount}
+                    </span>
+                  )}
+                </Link>
+                <Link
+                  href="/chats"
+                  className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
+                >
+                  <MessageCircle size={20} className="text-gray-700" />
+                </Link>
+                <ProfileButton />
+              </div>
+            </div>
+
+            {/* Middle Row: Full Width Search Bar */}
+            <div className="w-full">
               <div className="relative">
-                <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
                   placeholder="Search Products"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
-                    // Debounce search - you can add lodash debounce here
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -195,35 +217,13 @@ export default function ExplorePage() {
                     }
                   }}
                   style={{ border: '2px solid #D1D5DB', backgroundColor: '#fff', color: '#111827' }}
-                  className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2 sm:py-2.5 text-sm rounded-full outline-none transition-all focus:!border-[#FA3728]"
+                  className="w-full pl-12 pr-4 py-2.5 text-sm rounded-full outline-none transition-all focus:!border-[#FA3728]"
                 />
               </div>
             </div>
-
-            {/* Action Buttons - RESPONSIVE */}
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              <Link
-                href="/cart"
-                className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
-              >
-                <ShoppingCart size={20} className="text-gray-700" />
-                {cartCount > 0 && (
-                  <span className="absolute top-0 right-0 w-4 h-4 bg-[#FA3728] text-white text-[10px] flex items-center justify-center rounded-full font-bold">
-                    {cartCount}
-                  </span>
-                )}
-              </Link>
-              <Link
-                href="/chats"
-                className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
-              >
-                <MessageCircle size={20} className="text-gray-700" />
-              </Link>
-              <ProfileButton />
-            </div>
           </div>
 
-          {/* Secondary Nav - Explore Tabs - BETTER MOBILE */}
+          {/* Secondary Nav - Explore Tabs */}
           <div className="flex items-center gap-4 sm:gap-8 pb-3 overflow-x-auto scrollbar-hide">
             <Link
               href="/explore"
@@ -247,8 +247,8 @@ export default function ExplorePage() {
         </div>
       </nav>
 
-      {/* Main Content - MORE TOP SPACE */}
-      <div className="pt-36 sm:pt-40 pb-12">
+      {/* Main Content - ADJUSTED TOP SPACE for thicker nav */}
+      <div className="pt-48 sm:pt-52 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Filter Bar */}
           <div className="flex items-center justify-between mb-6">

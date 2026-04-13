@@ -26,7 +26,7 @@ export default function UserSignInPage() {
     try {
       // Real API call
       const response = await authService.login({
-        username: formData.email, // Backend accepts email as username
+        email: formData.email, // Backend accepts email as username
         password: formData.password,
       });
 
