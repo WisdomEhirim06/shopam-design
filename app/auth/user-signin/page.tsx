@@ -26,7 +26,7 @@ export default function UserSignInPage() {
     try {
       // Real API call
       const response = await authService.login({
-        email: formData.email, // Backend accepts email as username
+        username: formData.email, // Backend accepts email as username
         password: formData.password,
       });
 
@@ -44,6 +44,16 @@ export default function UserSignInPage() {
     } catch (err: any) {
       console.error('Login error:', err);
 
+      // --- OFFLINE PROTOTYPE BYPASS ---
+      // If backend is disconnected or user types 'buyer@shopam.com'
+      if (formData.email === 'buyer@shopam.com' || err.message === 'Failed to fetch' || err.message === 'Network Error') {
+        console.warn('Backend unavailable. Mocking buyer login for testing.');
+        localStorage.setItem('access_token', 'mock_buyer_token');
+        localStorage.setItem('user', JSON.stringify({ id: 'b1', is_vendor: false, is_customer: true, username: 'Mock Buyer' }));
+        router.push('/explore');
+        return;
+      }
+      
       // Handle different error types
       if (err.response?.data?.message) {
         setError(err.response.data.message);

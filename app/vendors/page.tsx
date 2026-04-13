@@ -349,7 +349,7 @@ export default function VendorsPage() {
 
           {/* Load More */}
           <div className="text-center mt-12">
-            <button className="px-8 py-3 bg-white border border-gray-200 hover:border-[#FA3728] rounded-full font-semibold transition-all">
+            <button className="px-8 py-3 bg-white text-gray-900 border border-gray-200 hover:border-[#FA3728] rounded-full font-semibold transition-all">
               Load More Shops
             </button>
           </div>

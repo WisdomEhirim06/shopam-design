@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect, use } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, MapPin, Truck } from 'lucide-react';
+import { authService } from '@/lib/api';
 
 type Message = {
   id: number;
@@ -18,6 +19,9 @@ type Message = {
     image?: string;
   }[];
   total: number;
+  shippingFee?: number;
+  deliveryOption?: string;
+  address?: string;
   time: string;
   text?: string;
 };
@@ -62,7 +66,16 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
     }
   ]);
   const [newMessage, setNewMessage] = useState('');
+  const [isVendor, setIsVendor] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsVendor(authService.getCurrentUser()?.is_vendor || false);
+  }, []);
+
+  const updateMessageState = (msgId: number, newStatus: string, updates: Partial<Message> = {}) => {
+    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, status: newStatus, ...updates } : m));
+  };
 
   // Format the mock vendor name based on URL slug
   const vendorName = vendorId.split('-').map(word => 
@@ -150,13 +163,11 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                        </div>
                        <span className="font-semibold text-gray-900 text-sm">{message.vendor}</span>
                     </div>
-                    <span className="px-3 py-1 bg-[#FA3728]/10 text-[#FA3728] text-xs font-bold rounded-full">
+                    <span className={`px-3 py-1 text-xs font-bold rounded-full ${
+                      message.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-[#FA3728]/10 text-[#FA3728]'
+                    }`}>
                       {message.status}
                     </span>
-                  </div>
-
-                  <div className="mb-3 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 flex items-center justify-center">
-                    <p className="text-xs font-semibold text-amber-800">Awaiting vendor confirmation</p>
                   </div>
 
                   <div className="space-y-3">
@@ -180,19 +191,115 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                     ))}
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-gray-50 flex justify-between items-center">
-                     <span className="text-sm text-gray-500 font-medium">Total</span>
-                     <span className="font-bold text-[#FA3728]">₦{message.total.toLocaleString()}</span>
+                  <div className="mt-4 pt-3 border-t border-gray-50 flex flex-col gap-1">
+                     <div className="flex justify-between items-center text-sm text-gray-500">
+                       <span>Subtotal</span>
+                       <span>₦{(message.items.reduce((s,i) => s + (i.price*i.quantity), 0)).toLocaleString()}</span>
+                     </div>
+                     {message.shippingFee !== undefined && (
+                       <div className="flex justify-between items-center text-sm text-gray-500">
+                         <span>Shipping Fee</span>
+                         <span>₦{message.shippingFee.toLocaleString()}</span>
+                       </div>
+                     )}
+                     <div className="flex justify-between items-center mt-1">
+                       <span className="text-sm font-medium">Total</span>
+                       <span className="font-bold text-[#FA3728]">₦{message.total.toLocaleString()}</span>
+                     </div>
                   </div>
 
-                  <div className="mt-4 flex gap-2 w-full">
-                    <button className="flex-1 py-2.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-xl font-semibold text-sm transition-all shadow-sm">
-                      Proceed to Payment
-                    </button>
-                    <button className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl font-semibold text-sm transition-all border border-gray-200">
-                      Cancel
-                    </button>
-                  </div>
+                  {/* Flow States */}
+                  {message.status === 'Pending' && (
+                    <div className="mt-4">
+                      {isVendor ? (
+                        <div className="flex gap-2 w-full flex-col sm:flex-row">
+                          <button onClick={() => updateMessageState(message.id, 'Accepted')} className="flex-1 py-2 bg-[#FA3728] text-white rounded-xl text-sm font-semibold shadow-sm hover:bg-[#E31B23]">Accept</button>
+                          <button className="flex-1 py-2 bg-amber-500 text-white rounded-xl text-sm font-semibold shadow-sm hover:bg-amber-600">Modify</button>
+                          <button className="flex-1 py-2 bg-gray-50 text-gray-700 rounded-xl text-sm font-semibold border hover:bg-gray-100">Decline</button>
+                        </div>
+                      ) : (
+                        <div className="px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 flex items-center justify-center">
+                          <p className="text-xs font-semibold text-amber-800">Awaiting vendor confirmation</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {message.status === 'Accepted' && (
+                    <div className="mt-4">
+                      {isVendor ? (
+                        <div className="px-3 py-2 bg-blue-50 rounded-lg border border-blue-100 flex items-center justify-center">
+                          <p className="text-xs font-semibold text-blue-800">Awaiting buyer delivery details</p>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                          <p className="text-xs font-semibold mb-2 text-gray-700">Select fulfillment method</p>
+                          <div className="flex gap-2 mb-3">
+                            <button className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#FA3728] text-white rounded-md text-xs font-semibold"><Truck size={14}/> Delivery</button>
+                            <button className="flex-1 flex items-center justify-center gap-1.5 py-2 border border-gray-200 bg-white text-gray-700 rounded-md text-xs font-semibold"><MapPin size={14}/> Pickup</button>
+                          </div>
+                          <input type="text" id={`address-${message.id}`} placeholder="Enter delivery address" className="w-full text-sm p-2.5 rounded-md border border-gray-300 mb-3 outline-none focus:border-[#FA3728] text-gray-900" />
+                          <button onClick={() => {
+                            const address = (document.getElementById(`address-${message.id}`) as HTMLInputElement)?.value;
+                            updateMessageState(message.id, 'Delivery Details Set', { deliveryOption: 'Delivery', address });
+                          }} className="w-full py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-sm font-semibold transition-colors">Submit Details</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {message.status === 'Delivery Details Set' && (
+                    <div className="mt-4">
+                      {isVendor ? (
+                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                          <div className="mb-3 text-xs text-gray-600 bg-white p-2 rounded border border-gray-100">
+                            <span className="font-semibold text-gray-800">Delivery Address:</span><br/>
+                            {message.address || 'User Address'}
+                          </div>
+                          <p className="text-xs font-semibold mb-2 text-gray-700">Set shipping fee:</p>
+                          <input type="number" id={`fee-${message.id}`} placeholder="Enter shipping fee (₦)" className="w-full text-sm p-2.5 rounded-md border border-gray-300 mb-3 outline-none focus:border-[#FA3728] text-gray-900" />
+                          <button onClick={() => {
+                            const fee = parseInt((document.getElementById(`fee-${message.id}`) as HTMLInputElement)?.value || '0');
+                            updateMessageState(message.id, 'Shipping Fee Set', { shippingFee: fee, total: message.total + fee });
+                          }} className="w-full py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-lg text-sm font-semibold transition-colors">Set Shipping Fee</button>
+                        </div>
+                      ) : (
+                        <div className="px-3 py-2 bg-blue-50 rounded-lg border border-blue-100 flex items-center justify-center text-center">
+                          <p className="text-xs font-semibold text-blue-800">Awaiting shipping fee calculation from vendor</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {message.status === 'Shipping Fee Set' && (
+                    <div className="mt-4">
+                      {isVendor ? (
+                        <div className="px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 flex items-center justify-center">
+                          <p className="text-xs font-semibold text-amber-800">Awaiting payment from buyer</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2 w-full">
+                          <button onClick={() => updateMessageState(message.id, 'Paid')} className="w-full py-2.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-xl font-semibold text-sm transition-all shadow-sm">
+                            Proceed to Pay
+                          </button>
+                          <button className="w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl font-semibold text-sm transition-all border border-gray-200">
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {message.status === 'Paid' && (
+                    <div className="mt-4 px-3 py-3 bg-emerald-50 rounded-xl border border-emerald-100 flex flex-col items-center justify-center">
+                      <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-1">
+                        <span className="font-bold">✓</span>
+                      </div>
+                      <p className="text-sm font-bold text-emerald-800">
+                        {isVendor ? 'Successful Payment' : 'Payment Sent'}
+                      </p>
+                    </div>
+                  )}
                   
                   <div className="mt-2 text-right">
                      <span className="text-[10px] text-gray-400">{message.time}</span>

@@ -255,7 +255,7 @@ export default function ExplorePage() {
             <div className="flex items-center gap-4 overflow-x-auto pb-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:border-[#FA3728] transition-colors whitespace-nowrap"
+                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-900 border border-gray-200 rounded-lg hover:border-[#FA3728] transition-colors whitespace-nowrap"
               >
                 <SlidersHorizontal size={18} />
                 <span className="font-medium">Filters</span>
@@ -264,7 +264,7 @@ export default function ExplorePage() {
               <select
                 value={sortBy}
                 onChange={(e) => handleSortChange(e.target.value)}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-lg font-medium outline-none hover:border-[#FA3728] transition-colors"
+                className="px-4 py-2 bg-white text-gray-900 border border-gray-200 rounded-lg font-medium outline-none hover:border-[#FA3728] transition-colors"
               >
                 <option value="popular">Most Popular</option>
                 <option value="newest">Newest First</option>
@@ -278,20 +278,33 @@ export default function ExplorePage() {
             </p>
           </div>
 
-          {/* Categories Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
-            {categories.map((category) => (
+          {/* Categories Filter */}
+          <div className="mb-8 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex gap-2 sm:gap-3 min-w-max">
               <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`p-4 rounded-xl text-center transition-all ${selectedCategory === category.id
-                  ? 'bg-[#FA3728] text-white shadow-lg'
-                  : 'bg-white text-gray-700 hover:shadow-md'
-                  }`}
+                onClick={() => setSelectedCategory(null)}
+                className={`px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-medium whitespace-nowrap transition-all ${
+                  selectedCategory === null
+                    ? 'bg-[#FA3728] text-white shadow-lg'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:border-[#FA3728]'
+                }`}
               >
-                <p className="font-semibold text-sm">{category.name}</p>
+                All Categories
               </button>
-            ))}
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-medium whitespace-nowrap transition-all ${
+                    selectedCategory === category.id
+                      ? 'bg-[#FA3728] text-white shadow-lg'
+                      : 'bg-white text-gray-700 border border-gray-200 hover:border-[#FA3728]'
+                  }`}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Filters Panel */}
@@ -399,7 +412,7 @@ export default function ExplorePage() {
               <p className="text-gray-600 text-lg">No products found</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
               {products.map((product, index) => (
                 <motion.div
                   key={product.id}
