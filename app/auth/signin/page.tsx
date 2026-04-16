@@ -47,7 +47,7 @@ export default function VendorSignInPage() {
 
       // --- OFFLINE PROTOTYPE BYPASS ---
       // If backend is disconnected or user types 'vendor@shopam.com'
-      if (formData.email === 'vendor@shopam.com' || err.message === 'Failed to fetch' || err.message === 'Network Error') {
+      if (formData.email === 'vendor@shopam.com' || err.message === 'Failed to fetch' || err.message === 'Network Error' || String(err.message).toLowerCase().includes('timeout')) {
         console.warn('Backend unavailable. Mocking vendor login for testing.');
         localStorage.setItem('access_token', 'mock_vendor_token');
         localStorage.setItem('user', JSON.stringify({ id: 'v1', is_vendor: true, username: 'Mock Vendor' }));

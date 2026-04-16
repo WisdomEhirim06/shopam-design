@@ -117,9 +117,26 @@ export default function VendorSignUpPage() {
       }
 
       setIsSubmitting(false);
-      setCurrentStep('success');
+      
+      // Auto-login and redirect instead of going to 'success' step
+      // Mock saving tokens and logging in
+      localStorage.setItem('access_token', userResponse.access || 'mock_vendor_token');
+      localStorage.setItem('user', JSON.stringify({ ...userResponse.user, is_vendor: true }));
+      
+      router.push('/dashboard');
     } catch (err: any) {
       console.error('Registration error:', err);
+      
+      // --- OFFLINE PROTOTYPE BYPASS ---
+      if (err.message === 'Failed to fetch' || err.message === 'Network Error' || String(err.message).toLowerCase().includes('timeout')) {
+        console.warn('Backend unavailable. Mocking vendor registration for testing.');
+        localStorage.setItem('access_token', 'mock_vendor_token');
+        localStorage.setItem('user', JSON.stringify({ id: 'v1', is_vendor: true, username: personalData.username }));
+        setIsSubmitting(false);
+        router.push('/dashboard');
+        return;
+      }
+
       setIsSubmitting(false);
 
       if (err.response?.data?.username) {

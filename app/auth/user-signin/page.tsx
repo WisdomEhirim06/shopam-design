@@ -4,12 +4,16 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, Shield, Zap, ShoppingBag } from 'lucide-react';
 import { authService } from '@/lib/api';
+import { Suspense } from 'react';
 
-export default function UserSignInPage() {
+function UserSignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get('redirect') || '/explore';
+
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -40,17 +44,17 @@ export default function UserSignInPage() {
       }
 
       // Redirect to explore page after successful login
-      router.push('/explore');
+      router.push(returnUrl);
     } catch (err: any) {
       console.error('Login error:', err);
 
       // --- OFFLINE PROTOTYPE BYPASS ---
       // If backend is disconnected or user types 'buyer@shopam.com'
-      if (formData.email === 'buyer@shopam.com' || err.message === 'Failed to fetch' || err.message === 'Network Error') {
+      if (formData.email === 'buyer@shopam.com' || err.message === 'Failed to fetch' || err.message === 'Network Error' || String(err.message).toLowerCase().includes('timeout')) {
         console.warn('Backend unavailable. Mocking buyer login for testing.');
         localStorage.setItem('access_token', 'mock_buyer_token');
         localStorage.setItem('user', JSON.stringify({ id: 'b1', is_vendor: false, is_customer: true, username: 'Mock Buyer' }));
-        router.push('/explore');
+        router.push(returnUrl);
         return;
       }
       
@@ -276,5 +280,13 @@ export default function UserSignInPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function UserSignInPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <UserSignInForm />
+    </Suspense>
   );
 }
