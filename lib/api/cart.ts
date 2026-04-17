@@ -16,13 +16,11 @@ export const cartService = {
   },
 
   /**
-   * Get cart items
+   * Helper to get all cart items as a flat list if needed
    */
   async getCartItems(): Promise<CartItem[]> {
-    const response = await apiClient.get<CartItem[]>(
-      API_ENDPOINTS.CART_ITEMS.LIST
-    );
-    return response.data;
+    const cart = await this.getCart();
+    return cart.subcarts.flatMap(subcart => subcart.items);
   },
 
   /**
@@ -30,7 +28,7 @@ export const cartService = {
    */
   async addToCart(data: AddToCartRequest): Promise<CartItem> {
     const response = await apiClient.post<CartItem>(
-      API_ENDPOINTS.CART_ITEMS.ADD,
+      API_ENDPOINTS.CART.ADD,
       data
     );
     return response.data;
@@ -40,11 +38,11 @@ export const cartService = {
    * Update cart item (quantity or add-ons)
    */
   async updateCartItem(
-    id: number,
+    id: string,
     data: UpdateCartItemRequest
   ): Promise<CartItem> {
     const response = await apiClient.patch<CartItem>(
-      API_ENDPOINTS.CART_ITEMS.UPDATE(id),
+      API_ENDPOINTS.CART.ITEM_DETAIL(id),
       data
     );
     return response.data;
@@ -53,16 +51,15 @@ export const cartService = {
   /**
    * Remove item from cart
    */
-  async removeFromCart(id: number): Promise<void> {
-    await apiClient.delete(API_ENDPOINTS.CART_ITEMS.DELETE(id));
+  async removeFromCart(id: string): Promise<void> {
+    await apiClient.delete(API_ENDPOINTS.CART.ITEM_DETAIL(id));
   },
 
   /**
    * Clear entire cart
    */
   async clearCart(): Promise<void> {
-    const items = await this.getCartItems();
-    await Promise.all(items.map((item) => this.removeFromCart(item.id)));
+    await apiClient.delete(API_ENDPOINTS.CART.CLEAR);
   },
 
   /**
@@ -70,13 +67,17 @@ export const cartService = {
    */
   async getCartItemCount(): Promise<number> {
     const cart = await this.getCart();
-    return cart.items.reduce((sum, item) => sum + item.quantity, 0);
+    return cart.subcarts.reduce(
+      (total, subcart) => 
+        total + subcart.items.reduce((sum, item) => sum + item.quantity, 0), 
+      0
+    );
   },
 
   /**
    * Update item quantity
    */
-  async updateQuantity(id: number, quantity: number): Promise<CartItem> {
+  async updateQuantity(id: string, quantity: number): Promise<CartItem> {
     return this.updateCartItem(id, { quantity });
   },
 };

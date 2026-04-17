@@ -73,79 +73,84 @@ export default function VendorSignInPage() {
   };
 
   return (
-    <div data-theme="light" className="min-h-screen flex bg-gray-50">
+    <div data-theme="light" className="h-screen flex overflow-hidden bg-gray-50">
       {/* Left Side - Brand Section */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden" style={{ backgroundColor: 'var(--primary-red)' }}>
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}></div>
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#8B0000]">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <Image 
+            src="/images/hero-man-shopping.JPG" 
+            alt="Vendors background" 
+            fill 
+            className="object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#800000] via-[#A50F15] to-[#800000] opacity-90 mix-blend-multiply"></div>
         </div>
 
-        {/* Content - CENTERED */}
-        <div className="relative z-10 flex flex-col justify-center items-center text-center p-12 text-white w-full">
+        {/* Content - Aligned with Form */}
+        <div className="relative z-10 flex flex-col justify-center items-start p-16 text-white w-full">
+          {/* Logo - Top */}
+          <Link href="/auth" className="absolute top-10 left-12">
+            <Image 
+              src="/images/logo.png" 
+              alt="ShopAm Logo" 
+              width={90} 
+              height={28} 
+              className="object-contain brightness-0 invert" 
+            />
+          </Link>
+
           {/* Main Content */}
-          <div className="space-y-8 max-w-md">
+          <div className="space-y-6 max-w-sm">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <h2 className="text-5xl font-bold mb-4 leading-tight">
+              <h2 className="text-3xl font-bold mb-2 leading-tight">
                 Welcome Back!
               </h2>
-              <p className="text-xl opacity-90 font-light">
-                Sign in to manage your store
+              <p className="text-base opacity-85 font-light">
+                Securely manage your store and reach more customers today.
               </p>
             </motion.div>
 
             {/* Stats */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="grid grid-cols-2 gap-4"
+              className="grid grid-cols-2 gap-4 pt-4"
             >
               {[
-                { value: '10,000+', label: 'Active Vendors' },
-                { value: '50,000+', label: 'Products Listed' },
-                { value: '₦5M+', label: 'Daily Sales' },
-                { value: '24/7', label: 'Support' },
+                { value: '15k+', label: 'Trusted Vendors' },
+                { value: '1M+', label: 'Monthly Traffic' },
+                { value: '₦10M+', label: 'Vendor Payouts' },
+                { value: 'Swift', label: 'Payments' },
               ].map((stat, index) => (
-                <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <p className="text-2xl font-bold mb-1">{stat.value}</p>
-                  <p className="text-xs opacity-90">{stat.label}</p>
+                <div key={index} className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-colors">
+                  <p className="text-xl font-bold mb-0.5">{stat.value}</p>
+                  <p className="text-[10px] uppercase tracking-wider opacity-75 font-semibold">{stat.label}</p>
                 </div>
               ))}
             </motion.div>
           </div>
 
-          {/* Logo - Top */}
-          <Link href="/auth" className="absolute top-8 left-8 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
-              <span className="font-bold text-lg" style={{ color: 'var(--primary-red)' }}>SA</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">ShopAm</h1>
-              <p className="text-xs opacity-90">Vendor Dashboard</p>
-            </div>
-          </Link>
-
           {/* Footer - Bottom */}
-          <div className="absolute bottom-8 opacity-75">
+          <div className="absolute bottom-12 left-16 opacity-60">
             <p className="text-sm">© 2026 ShopAm. All rights reserved.</p>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Sign In Form */}
-      <div className="flex-1 w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-12 bg-white">
-        <div className="w-full max-w-md mx-auto">
+      {/* Right Side - Sign In Form Container */}
+      <div className="flex-1 w-full lg:w-1/2 overflow-y-auto bg-white">
+        <div className="min-h-full w-full flex flex-col items-center justify-start lg:justify-center py-12 lg:py-20 px-6 sm:px-10 lg:px-12">
+          <div className="w-full max-w-md mx-auto">
           {/* Mobile Header */}
-          <div className="lg:hidden mb-12 flex justify-center w-full relative">
+          <div className="lg:hidden mb-6 flex justify-center w-full relative">
             <Link href="/">
-              <Image src="/images/black-logo.png" alt="ShopAm Logo" width={120} height={40} className="object-contain" />
+              <Image src="/images/black-logo.png" alt="ShopAm Logo" width={140} height={42} className="object-contain" />
             </Link>
           </div>
 
@@ -154,9 +159,9 @@ export default function VendorSignInPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold mb-2 text-gray-900">Sign In</h2>
-              <p className="text-gray-500">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold mb-1 text-gray-900">Sign In</h2>
+              <p className="text-sm text-gray-500">
                 Welcome back! Please enter your credentials
               </p>
             </div>
@@ -243,5 +248,6 @@ export default function VendorSignInPage() {
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }

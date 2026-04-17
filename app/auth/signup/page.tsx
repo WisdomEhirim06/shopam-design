@@ -17,6 +17,7 @@ import {
   Phone,
 } from 'lucide-react';
 import { authService } from '@/lib/api';
+import Image from 'next/image';
 
 type Step = 'personal' | 'business' | 'success';
 type BusinessCategory = 'retail' | 'wholesale' | 'service' | 'food' | 'fashion' | 'tech' | 'beauty' | 'electronics' | 'other';
@@ -41,7 +42,9 @@ export default function VendorSignUpPage() {
   });
 
   const [businessData, setBusinessData] = useState({
+    business_name: '',
     business_category: 'retail' as BusinessCategory,
+    business_address: '',
     cac_registration: '',
     tin: '',
   });
@@ -81,48 +84,25 @@ export default function VendorSignUpPage() {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Register user account first
-      const userResponse = await authService.registerUser({
-        username: personalData.username,
+      // Register as vendor directly using the unified endpoint
+      const response = await authService.registerVendor({
         email: personalData.email,
         password: personalData.password,
+        first_name: personalData.first_name,
+        last_name: personalData.last_name,
         phone: personalData.phone,
-        first_name: personalData.first_name || undefined,
-        last_name: personalData.last_name || undefined,
-      });
-
-      console.log('User created:', userResponse.user);
-
-      // Step 2: Register as vendor
-      const vendorPayload = {
-        user: userResponse.user.id,
+        business_name: businessData.business_name,
         business_category: businessData.business_category,
+        business_address: businessData.business_address,
         cac_registration: businessData.cac_registration || undefined,
         tin: businessData.tin || undefined,
-        password: personalData.password,
-      };
-
-      const vendorResponse = await fetch('https://shopam.onrender.com/api/accounts/vendor/register/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${userResponse.access}`,
-        },
-        body: JSON.stringify(vendorPayload),
       });
 
-      if (!vendorResponse.ok) {
-        const errorData = await vendorResponse.json();
-        throw new Error(errorData.message || 'Vendor registration failed');
-      }
+      console.log('Vendor account created:', response.user);
 
       setIsSubmitting(false);
       
-      // Auto-login and redirect instead of going to 'success' step
-      // Mock saving tokens and logging in
-      localStorage.setItem('access_token', userResponse.access || 'mock_vendor_token');
-      localStorage.setItem('user', JSON.stringify({ ...userResponse.user, is_vendor: true }));
-      
+      // Tokens and user are already stored by authService.registerVendor
       router.push('/dashboard');
     } catch (err: any) {
       console.error('Registration error:', err);
@@ -131,7 +111,7 @@ export default function VendorSignUpPage() {
       if (err.message === 'Failed to fetch' || err.message === 'Network Error' || String(err.message).toLowerCase().includes('timeout')) {
         console.warn('Backend unavailable. Mocking vendor registration for testing.');
         localStorage.setItem('access_token', 'mock_vendor_token');
-        localStorage.setItem('user', JSON.stringify({ id: 'v1', is_vendor: true, username: personalData.username }));
+        localStorage.setItem('user', JSON.stringify({ id: 'v1', is_vendor: true, first_name: personalData.first_name }));
         setIsSubmitting(false);
         router.push('/dashboard');
         return;
@@ -139,12 +119,12 @@ export default function VendorSignUpPage() {
 
       setIsSubmitting(false);
 
-      if (err.response?.data?.username) {
-        setError(`Username: ${err.response.data.username[0]}`);
-      } else if (err.response?.data?.email) {
-        setError(`Email: ${err.response.data.email[0]}`);
-      } else if (err.response?.data?.phone) {
-        setError(`Phone: ${err.response.data.phone[0]}`);
+      if (err.response?.data) {
+        // Handle field-specific errors from backend
+        const errors = err.response.data;
+        const firstErrorKey = Object.keys(errors)[0];
+        const firstError = Array.isArray(errors[firstErrorKey]) ? errors[firstErrorKey][0] : errors[firstErrorKey];
+        setError(`${firstErrorKey}: ${firstError}`);
       } else if (err.message) {
         setError(err.message);
       } else {
@@ -165,82 +145,67 @@ export default function VendorSignUpPage() {
   const currentStepIndex = steps.findIndex((s) => s.key === currentStep);
 
   return (
-    <div className="min-h-screen flex">
+    <div className="h-screen flex overflow-hidden">
       {/* Left Side - Brand Section */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#FA3728] to-[#E31B23] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}></div>
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#8B0000]">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <Image 
+            src="/images/hero-shopping.jpg" 
+            alt="Vendors background" 
+            fill 
+            className="object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#800000] via-[#A50F15] to-[#800000] opacity-90 mix-blend-multiply"></div>
         </div>
 
-        <div className="relative z-10 flex flex-col justify-between p-12 text-white">
-          <div>
-            <Link href="/" className="flex items-center gap-3 mb-8">
-              <div className="flex items-center justify-center">
-                <img src="/images/shopam-logo.png" width={100} height={100}></img>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold">ShopAm</h1>
-                <p className="text-sm opacity-90">Vendor Registration</p>
-              </div>
-            </Link>
-          </div>
+        {/* Content - Aligned with Form */}
+        <div className="relative z-10 flex flex-col justify-center items-start p-10 text-white w-full">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="max-w-md"
+          >
+            {/* Logo and Registration Text */}
+            <div className="mb-8">
+              <Image 
+                src="/images/logo.png" 
+                alt="ShopAm Logo" 
+                width={110} 
+                height={36} 
+                className="object-contain brightness-0 invert" 
+              />
+              <p className="mt-3 text-xs font-semibold tracking-widest uppercase opacity-70">
+                Vendor Registration
+              </p>
+            </div>
 
-          <div className="space-y-8">
-            <h2 className="text-5xl font-bold leading-tight">
-              Sell Smarter.<br />
-              Serve Better.
+            <h2 className="text-4xl xl:text-5xl font-bold mb-6 leading-tight">
+              Sell Smarter.<br />Serve Better.
             </h2>
-            <p className="text-xl opacity-90">
-              Join thousands of successful vendors on ShopAm
+            <p className="text-lg opacity-90 font-light leading-relaxed">
+              Join thousands of successful vendors on<br />
+              <span className="font-semibold">ShopAm</span> and grow your business today.
             </p>
+          </motion.div>
 
-            {/* Progress Steps */}
-            {currentStep !== 'success' && (
-              <div className="space-y-4 pt-8">
-                {steps.map((step, index) => {
-                  const Icon = step.icon;
-                  const isActive = step.key === currentStep;
-                  const isCompleted = index < currentStepIndex;
-
-                  return (
-                    <div
-                      key={step.key}
-                      className={`flex items-center gap-4 ${isActive ? 'opacity-100' : isCompleted ? 'opacity-75' : 'opacity-40'
-                        }`}
-                    >
-                      <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${isActive ? 'bg-white text-[#FA3728]' : 'bg-white/10'
-                          }`}
-                      >
-                        {isCompleted ? <CheckCircle size={20} /> : <Icon size={20} />}
-                      </div>
-                      <div>
-                        <p className={`font-semibold ${isActive ? 'text-lg' : ''}`}>
-                          {step.label}
-                        </p>
-                        <p className="text-sm opacity-75">Step {index + 1} of 2</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+          {/* Footer - Aligned Bottom */}
+          <div className="absolute bottom-12 left-16 opacity-60">
+            <p className="text-sm">© 2026 ShopAm. All rights reserved.</p>
           </div>
-
-          <p className="text-sm opacity-75">© 2026 ShopAm. All rights reserved.</p>
         </div>
       </div>
 
-      {/* Right Side - Form */}
-      <div className="flex-1 w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-12 overflow-y-auto bg-white">
-        <div className="w-full max-w-md mx-auto">
+      {/* Right Side - Form Container */}
+      <div className="flex-1 w-full lg:w-1/2 overflow-y-auto bg-white">
+        <div className="min-h-full w-full flex flex-col items-center justify-start lg:justify-center py-12 lg:py-20 px-6 sm:px-10 lg:px-12">
+          <div className="w-full max-w-md mx-auto">
           {/* Mobile Header */}
           {currentStep === 'personal' && (
-            <div className="lg:hidden mb-12 flex justify-center w-full relative">
+            <div className="lg:hidden mb-6 flex justify-center w-full relative">
               <Link href="/">
-                <img src="/images/black-logo.png" alt="ShopAm Logo" width="120" height="40" className="object-contain" />
+                <Image src="/images/black-logo.png" alt="ShopAm Logo" width={110} height={36} className="object-contain" />
               </Link>
             </div>
           )}
@@ -254,9 +219,9 @@ export default function VendorSignUpPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <div className="mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Personal Information</h2>
-                  <p className="text-gray-600">Create your vendor account</p>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-1">Personal Information</h2>
+                  <p className="text-sm text-gray-600">Create your vendor account</p>
                 </div>
 
                 {error && (
@@ -266,16 +231,28 @@ export default function VendorSignUpPage() {
                 )}
 
                 <div className="space-y-4">
-                  {/* Username */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Username *</label>
-                    <input
-                      type="text"
-                      required
-                      value={personalData.username}
-                      onChange={(e) => setPersonalData({ ...personalData, username: e.target.value })}
-                      className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
-                    />
+                  {/* Name Row */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={personalData.first_name}
+                        onChange={(e) => setPersonalData({ ...personalData, first_name: e.target.value })}
+                        className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={personalData.last_name}
+                        onChange={(e) => setPersonalData({ ...personalData, last_name: e.target.value })}
+                        className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
+                      />
+                    </div>
                   </div>
 
                   {/* Email */}
@@ -348,7 +325,7 @@ export default function VendorSignUpPage() {
 
                 <button
                   onClick={() => {
-                    if (!personalData.username || !personalData.email || !personalData.phone || !personalData.password || !personalData.confirmPassword) {
+                    if (!personalData.first_name || !personalData.last_name || !personalData.email || !personalData.phone || !personalData.password || !personalData.confirmPassword) {
                       setError('Please fill in all required fields');
                       return;
                     }
@@ -389,9 +366,22 @@ export default function VendorSignUpPage() {
                 )}
 
                 <div className="space-y-4">
+                  {/* Business Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Business Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={businessData.business_name}
+                      onChange={(e) => setBusinessData({ ...businessData, business_name: e.target.value })}
+                      placeholder="e.g. Acme Stores"
+                      className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
+                    />
+                  </div>
+
                   {/* Business Category */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Business Category *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Store Category *</label>
                     <select
                       value={businessData.business_category}
                       onChange={(e) => setBusinessData({ ...businessData, business_category: e.target.value as BusinessCategory })}
@@ -406,29 +396,39 @@ export default function VendorSignUpPage() {
                     </select>
                   </div>
 
-                  {/* CAC Registration */}
+                  {/* Business Address */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">CAC Number <span className="text-gray-400 font-normal">(Optional)</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Business Address *</label>
                     <input
                       type="text"
-                      value={businessData.cac_registration}
-                      onChange={(e) => setBusinessData({ ...businessData, cac_registration: e.target.value })}
+                      required
+                      value={businessData.business_address}
+                      onChange={(e) => setBusinessData({ ...businessData, business_address: e.target.value })}
+                      placeholder="Full physical address"
                       className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
                     />
                   </div>
 
-                  {/* TIN */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">TIN <span className="text-gray-400 font-normal">(Optional)</span></label>
-                    <input
-                      type="text"
-                      value={businessData.tin}
-                      onChange={(e) => setBusinessData({ ...businessData, tin: e.target.value })}
-                      className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
-                    />
-                    <p className="text-xs text-gray-500 mt-2">
-                      CAC and TIN are optional but help build trust with customers
-                    </p>
+                  {/* CAC Registration */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">CAC <span className="text-gray-400 font-normal">(Opt)</span></label>
+                      <input
+                        type="text"
+                        value={businessData.cac_registration}
+                        onChange={(e) => setBusinessData({ ...businessData, cac_registration: e.target.value })}
+                        className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">TIN <span className="text-gray-400 font-normal">(Opt)</span></label>
+                      <input
+                        type="text"
+                        value={businessData.tin}
+                        onChange={(e) => setBusinessData({ ...businessData, tin: e.target.value })}
+                        className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -469,6 +469,7 @@ export default function VendorSignUpPage() {
               </motion.div>
             )}
           </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>

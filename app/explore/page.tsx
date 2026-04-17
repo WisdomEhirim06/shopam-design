@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   SlidersHorizontal,
@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Loader2,
   MessageCircle,
+  Check,
 } from 'lucide-react';
 import { productsService, categoriesService, cartService, authService } from '@/lib/api';
 import type { Product, Category } from '@/lib/api';
@@ -20,11 +21,11 @@ import ProfileButton from '../components/ProfileButton';
 
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState('All');
-  const [sortBy, setSortBy] = useState('popular');
+  const [sortBy, setSortBy] = useState('newest');
   const [showFilters, setShowFilters] = useState(false);
-  const [activeView, setActiveView] = useState<'home' | 'products'>('home');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // API State
   const [products, setProducts] = useState<Product[]>([]);
@@ -45,7 +46,7 @@ export default function ExplorePage() {
   // Fetch products when filters change
   useEffect(() => {
     loadProducts();
-  }, [selectedCategory, sortBy, searchQuery, page]);
+  }, [selectedCategories, sortBy, searchQuery, page]);
 
   const loadCategories = async () => {
     try {
@@ -66,8 +67,8 @@ export default function ExplorePage() {
         page_size: 20,
       };
 
-      if (selectedCategory) {
-        filters.category = selectedCategory;
+      if (selectedCategories.length > 0) {
+        filters.categories = selectedCategories.join(',');
       }
 
       if (searchQuery) {
@@ -86,7 +87,7 @@ export default function ExplorePage() {
           filters.ordering = '-created_at';
           break;
         default:
-          filters.ordering = '-created_at'; // Default to newest
+          filters.ordering = '-created_at';
       }
 
       const response = await productsService.getProducts(filters);
@@ -110,8 +111,7 @@ export default function ExplorePage() {
   const loadCartCount = async () => {
     try {
       if (authService.isAuthenticated()) {
-        const cart = await cartService.getCart();
-        const count = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+        const count = await cartService.getCartItemCount();
         setCartCount(count);
       }
     } catch (err) {
@@ -124,9 +124,13 @@ export default function ExplorePage() {
     setPage(1); // Reset to first page
   };
 
-  const handleCategoryChange = (categoryId: number | null) => {
-    setSelectedCategory(categoryId);
-    setPage(1); // Reset to first page
+  const toggleCategory = (categoryName: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(categoryName)
+        ? prev.filter(c => c !== categoryName)
+        : [...prev, categoryName]
+    );
+    setPage(1);
   };
 
   const handleSortChange = (sort: string) => {
@@ -148,7 +152,7 @@ export default function ExplorePage() {
 
     try {
       await cartService.addToCart({
-        product: productId,
+        product_id: productId,
         quantity: 1,
       });
 
@@ -247,30 +251,90 @@ export default function ExplorePage() {
         </div>
       </nav>
 
-      {/* Main Content - ADJUSTED TOP SPACE for thicker nav */}
-      <div className="pt-48 sm:pt-52 pb-12">
+      {/* Main Content - PADDING BALANCED */}
+      <div className="pt-48 pb-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Filter Bar */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4 overflow-x-auto pb-2">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3 relative">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-900 border border-gray-200 rounded-lg hover:border-[#FA3728] transition-colors whitespace-nowrap"
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border transition-all ${
+                  showFilters 
+                    ? 'border-[#FA3728] bg-[#FA3728]/5 text-[#FA3728] shadow-sm' 
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-[#FA3728]/30'
+                }`}
               >
                 <SlidersHorizontal size={18} />
-                <span className="font-medium">Filters</span>
+                <span className="font-bold text-sm">Filters</span>
               </button>
 
-              <select
-                value={sortBy}
-                onChange={(e) => handleSortChange(e.target.value)}
-                className="px-4 py-2 bg-white text-gray-900 border border-gray-200 rounded-lg font-medium outline-none hover:border-[#FA3728] transition-colors"
-              >
-                <option value="popular">Most Popular</option>
-                <option value="newest">Newest First</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-              </select>
+              {/* FLOATING DROPDOWN FILTERS */}
+              <AnimatePresence>
+                {showFilters && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute top-full left-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 z-50 overflow-hidden"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-bold text-gray-900">Categories</h3>
+                      <button 
+                        onClick={() => setSelectedCategories([])}
+                        className="text-[10px] font-bold text-[#FA3728] hover:underline"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+
+                    <div className="space-y-1.5 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
+                      {[
+                        "Food and Drinks",
+                        "Home and Living",
+                        "Beauty, Hair and Personal Care",
+                        "Accessories",
+                        "Women's Fashion",
+                        "Men's Fashion",
+                        "Baby and Kids"
+                      ].map((cat) => (
+                        <label 
+                          key={cat} 
+                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${
+                            selectedCategories.includes(cat)
+                              ? 'bg-[#FA3728]/5 text-[#FA3728]'
+                              : 'hover:bg-gray-50 text-gray-600'
+                          }`}
+                        >
+                          <span className="text-xs font-semibold">{cat}</span>
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                            selectedCategories.includes(cat)
+                              ? 'bg-[#FA3728] border-[#FA3728]'
+                              : 'border-gray-300'
+                          }`}>
+                            {selectedCategories.includes(cat) && <Check size={10} className="text-white" />}
+                          </div>
+                          <input
+                            type="checkbox"
+                            className="hidden"
+                            checked={selectedCategories.includes(cat)}
+                            onChange={() => toggleCategory(cat)}
+                          />
+                        </label>
+                      ))}
+                    </div>
+
+                    <div className="mt-5 pt-4 border-t border-gray-50">
+                      <button
+                        onClick={() => setShowFilters(false)}
+                        className="w-full py-2.5 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-colors"
+                      >
+                        Show Results
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <p className="text-gray-600 text-sm hidden sm:block">
@@ -278,119 +342,9 @@ export default function ExplorePage() {
             </p>
           </div>
 
-          {/* Categories Filter */}
-          <div className="mb-8 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-            <div className="flex gap-2 sm:gap-3 min-w-max">
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className={`px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-medium whitespace-nowrap transition-all ${
-                  selectedCategory === null
-                    ? 'bg-[#FA3728] text-white shadow-lg'
-                    : 'bg-white text-gray-700 border border-gray-200 hover:border-[#FA3728]'
-                }`}
-              >
-                All Categories
-              </button>
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-medium whitespace-nowrap transition-all ${
-                    selectedCategory === category.id
-                      ? 'bg-[#FA3728] text-white shadow-lg'
-                      : 'bg-white text-gray-700 border border-gray-200 hover:border-[#FA3728]'
-                  }`}
-                >
-                  {category.name}
-                </button>
-              ))}
-            </div>
-          </div>
 
-          {/* Filters Panel */}
-          {showFilters && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-white rounded-xl p-6 mb-6 shadow-sm"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-lg">Filters</h3>
-                <button
-                  onClick={() => setShowFilters(false)}
-                  className="p-1 hover:bg-gray-100 rounded-full"
-                >
-                  <X size={20} />
-                </button>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Price Range */}
-                <div>
-                  <label className="block font-semibold mb-3">Price Range</label>
-                  <div className="space-y-2">
-                    {['All', 'Under ₦10,000', '₦10,000 - ₦30,000', '₦30,000 - ₦50,000', 'Over ₦50,000'].map(
-                      (range) => (
-                        <label key={range} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="price"
-                            checked={priceRange === range}
-                            onChange={() => setPriceRange(range)}
-                            className="w-4 h-4 text-[#FA3728] focus:ring-[#FA3728]"
-                          />
-                          <span className="text-gray-700">{range}</span>
-                        </label>
-                      )
-                    )}
-                  </div>
-                </div>
 
-                {/* Rating */}
-                <div>
-                  <label className="block font-semibold mb-3">Rating</label>
-                  <div className="space-y-2">
-                    {[5, 4, 3, 2].map((rating) => (
-                      <label key={rating} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 text-[#FA3728] rounded focus:ring-[#FA3728]"
-                        />
-                        <div className="flex items-center gap-1">
-                          {[...Array(rating)].map((_, i) => (
-                            <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
-                          ))}
-                          <span className="text-gray-700 ml-1">& up</span>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Availability */}
-                <div>
-                  <label className="block font-semibold mb-3">Availability</label>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 text-[#FA3728] rounded focus:ring-[#FA3728]"
-                      />
-                      <span className="text-gray-700">In Stock</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 text-[#FA3728] rounded focus:ring-[#FA3728]"
-                      />
-                      <span className="text-gray-700">On Sale</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
 
           {/* Products Grid */}
           {loading && products.length === 0 ? (
@@ -412,7 +366,7 @@ export default function ExplorePage() {
               <p className="text-gray-600 text-lg">No products found</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-8">
               {products.map((product, index) => (
                 <motion.div
                   key={product.id}

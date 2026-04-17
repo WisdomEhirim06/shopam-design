@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 // Base URL for the API
-export const API_BASE_URL = 'https://shopam.onrender.com';
+export const API_BASE_URL = 'https://api.shopam.net';
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
@@ -46,7 +46,7 @@ apiClient.interceptors.response.use(
         const refreshToken = localStorage.getItem('refresh_token');
         
         if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/api/token/refresh/`, {
+          const response = await axios.post(`${API_BASE_URL}/api/accounts/token/refresh/`, {
             refresh: refreshToken,
           });
 
@@ -63,7 +63,7 @@ apiClient.interceptors.response.use(
         // Refresh failed, redirect to login
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        window.location.href = '/auth/user-signin';
+        window.location.href = '/auth/signin';
         return Promise.reject(refreshError);
       }
     }
@@ -78,11 +78,12 @@ export default apiClient;
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
-    USER_REGISTER: '/api/accounts/user/register/',
-    VENDOR_REGISTER: '/api/accounts/vendor/register/',
+    USER_REGISTER: '/api/accounts/register/customer/',
+    VENDOR_REGISTER: '/api/accounts/register/vendor/',
     LOGIN: '/api/accounts/login/',
     LOGOUT: '/api/accounts/logout/',
     PROFILE: '/api/accounts/profile/',
+    PASSWORD_CHANGE: '/api/accounts/password/change/',
   },
   
   // Products
@@ -103,16 +104,9 @@ export const API_ENDPOINTS = {
   // Cart
   CART: {
     GET: '/api/commercecart/',
-    UPDATE: '/api/commercecart/',
-  },
-  
-  // Cart Items
-  CART_ITEMS: {
-    LIST: '/api/commercecartitems/',
-    ADD: '/api/commercecartitems/',
-    DETAIL: (id: number) => `/api/commercecartitems/${id}/`,
-    UPDATE: (id: number) => `/api/commercecartitems/${id}/`,
-    DELETE: (id: number) => `/api/commercecartitems/${id}/`,
+    ADD: '/api/commercecart/add/',
+    CLEAR: '/api/commercecart/clear/',
+    ITEM_DETAIL: (id: string) => `/api/commercecart/items/${id}/`,
   },
   
   // Orders

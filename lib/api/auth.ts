@@ -5,6 +5,7 @@ import type {
   LoginRequest,
   LoginResponse,
   UserProfile,
+  PasswordChangeRequest,
 } from './types';
 
 export const authService = {
@@ -70,13 +71,25 @@ export const authService = {
    */
   async logout(): Promise<void> {
     try {
-      await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT);
+      const refresh = localStorage.getItem('refresh_token');
+      if (refresh) {
+        await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT, { refresh });
+      } else {
+        await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT);
+      }
     } finally {
       // Clear tokens even if API call fails
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
     }
+  },
+
+  /**
+   * Change user password
+   */
+  async changePassword(data: PasswordChangeRequest): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.AUTH.PASSWORD_CHANGE, data);
   },
 
   /**

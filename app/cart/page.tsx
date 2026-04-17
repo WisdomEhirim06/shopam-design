@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -10,95 +10,170 @@ import {
   MessageCircle,
   ArrowLeft,
   ShoppingBag,
+  Loader2,
 } from 'lucide-react';
+import { cartService } from '@/lib/api/cart';
+import { Cart, SubCart, CartItem } from '@/lib/api/types';
 
-interface CartItem {
-  id: string;
-  name: string;
-  vendor: {
-    name: string;
-    avatar: string;
-    rating: number;
-    reviews: number;
-    location?: string;
-  };
-  price: number;
-  quantity: number;
-  size?: string;
-  image: string;
-}
+const MOCK_CART: Cart = {
+  id: 'mock-cart-id',
+  user: 'mock-user-id',
+  subcarts: [
+    {
+      id: 'subcart-1',
+      vendor_id: 'vendor-1',
+      vendor_name: "Sarah's Fashion",
+      items: [
+        {
+          id: 'item-1',
+          subcart: 'subcart-1',
+          product: 'prod-1',
+          product_details: {
+            id: 'prod-1',
+            name: 'African Print Dress',
+            price: '28000',
+            images: [],
+            stock: 10,
+          } as any,
+          quantity: 1,
+          selected_addons: [],
+          addon_details: [],
+          total_price: '28000'
+        }
+      ]
+    },
+    {
+      id: 'subcart-2',
+      vendor_id: 'vendor-2',
+      vendor_name: 'TechHub Nigeria',
+      items: [
+        {
+          id: 'item-2',
+          subcart: 'subcart-2',
+          product: 'prod-2',
+          product_details: {
+            id: 'prod-2',
+            name: 'Wireless Earbuds Pro',
+            price: '15000',
+            images: [],
+            stock: 50,
+          } as any,
+          quantity: 2,
+          selected_addons: [],
+          addon_details: [],
+          total_price: '30000'
+        }
+      ]
+    }
+  ]
+};
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: '1',
-      name: 'African Print Dress',
-      vendor: {
-        name: "Sarah's Fashion",
-        avatar: '/api/placeholder/50/50',
-        rating: 4.9,
-        reviews: 4600,
-        location: 'Lagos, Nigeria',
-      },
-      price: 28000,
-      quantity: 1,
-      size: '2XL',
-      image: '/api/placeholder/120/120',
-    },
-    {
-      id: '2',
-      name: 'Wireless Earbuds Pro',
-      vendor: {
-        name: 'TechHub Nigeria',
-        avatar: '/api/placeholder/50/50',
-        rating: 4.8,
-        reviews: 2300,
-        location: 'Abuja, Nigeria',
-      },
-      price: 15000,
-      quantity: 2,
-      image: '/api/placeholder/120/120',
-    },
-  ]);
-
+  const [cart, setCart] = useState<Cart | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const updateQuantity = (id: string, change: number) => {
-    setCartItems(
-      cartItems.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item
-      )
-    );
-  };
-
-  const removeItem = (id: string) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
-  };
-
-  const toggleSelectVendor = (vendorName: string) => {
-    setSelectedVendors((prev) => 
-      prev.includes(vendorName) 
-        ? prev.filter((name) => name !== vendorName) 
-        : [...prev, vendorName]
-    );
-  };
-
-  // Group cart items by vendor
-  const groupedItems = cartItems.reduce((groups, item) => {
-    const vendorName = item.vendor.name;
-    if (!groups[vendorName]) {
-      groups[vendorName] = {
-        vendor: item.vendor,
-        items: []
-      };
+  const fetchCart = async () => {
+    try {
+      setIsLoading(true);
+      const data = await cartService.getCart();
+      
+      // If cart is empty, use mock data for testing as requested
+      if (!data.subcarts || data.subcarts.length === 0) {
+        setCart(MOCK_CART);
+      } else {
+        setCart(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch cart:', err);
+      // Fallback to mock data even on error for design testing
+      setCart(MOCK_CART);
+      // setError('Could not load your cart. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-    groups[vendorName].items.push(item);
-    return groups;
-  }, {} as Record<string, { vendor: any, items: CartItem[] }>);
+  };
 
-  const vendorGroups = Object.values(groupedItems);
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
+  const handleUpdateQuantity = async (itemId: string, currentQty: number, change: number) => {
+    const newQty = Math.max(1, currentQty + change);
+    if (newQty === currentQty) return;
+
+    try {
+      // Optimistic update
+      if (cart) {
+        const updatedSubcarts = cart.subcarts.map(sub => ({
+          ...sub,
+          items: sub.items.map(item => 
+            item.id === itemId ? { ...item, quantity: newQty } : item
+          )
+        }));
+        setCart({ ...cart, subcarts: updatedSubcarts });
+      }
+
+      await cartService.updateQuantity(itemId, newQty);
+      // Re-fetch to sync with server (price calculations, etc.)
+      fetchCart();
+    } catch (err) {
+      console.error('Failed to update quantity:', err);
+      fetchCart(); // Rollback on error
+    }
+  };
+
+  const handleRemoveItem = async (itemId: string) => {
+    try {
+      // Optimistic update
+      if (cart) {
+        const updatedSubcarts = cart.subcarts.map(sub => ({
+          ...sub,
+          items: sub.items.filter(item => item.id !== itemId)
+        })).filter(sub => sub.items.length > 0);
+        setCart({ ...cart, subcarts: updatedSubcarts });
+      }
+
+      await cartService.removeFromCart(itemId);
+      fetchCart();
+    } catch (err) {
+      console.error('Failed to remove item:', err);
+      fetchCart();
+    }
+  };
+
+  const toggleSelectVendor = (vendorId: string) => {
+    setSelectedVendors((prev) => 
+      prev.includes(vendorId) 
+        ? prev.filter((id) => id !== vendorId) 
+        : [...prev, vendorId]
+    );
+  };
+
+  const handleClearCart = async () => {
+    if (!confirm('Are you sure you want to clear your entire cart?')) return;
+    try {
+      setIsLoading(true);
+      await cartService.clearCart();
+      await fetchCart();
+    } catch (err) {
+      console.error('Failed to clear cart:', err);
+      setError('Failed to clear cart.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading && !cart) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-10 h-10 text-[#FA3728] animate-spin" />
+      </div>
+    );
+  }
+
+  const hasItems = cart && cart.subcarts.length > 0;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-36">
@@ -114,13 +189,21 @@ export default function CartPage() {
               <span className="font-bold text-xl hidden sm:inline">My Cart</span>
             </Link>
             <h1 className="text-xl font-bold text-gray-900 sm:hidden">My Cart</h1>
+            {hasItems && (
+              <button 
+                onClick={handleClearCart}
+                className="text-sm font-medium text-gray-500 hover:text-[#FA3728] transition-colors"
+              >
+                Clear All
+              </button>
+            )}
           </div>
         </div>
       </header>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
-          {cartItems.length === 0 ? (
+          {!hasItems ? (
             /* Empty Cart State */
             <div className="bg-white rounded-2xl p-12 text-center shadow-sm">
               <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -137,17 +220,17 @@ export default function CartPage() {
             </div>
           ) : (
             /* Grouped Cart Items */
-            vendorGroups.map((group, groupIndex) => {
-              const groupSubtotal = group.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-              const vendorSlug = group.vendor.name.toLowerCase().replace(/\s+/g, '-');
-              const isVendorSelected = selectedVendors.includes(group.vendor.name);
+            cart.subcarts.map((subcart, index) => {
+              const subtotal = subcart.items.reduce((sum, item) => sum + parseFloat(item.total_price), 0);
+              const vendorSlug = subcart.vendor_name.toLowerCase().replace(/\s+/g, '-');
+              const isVendorSelected = selectedVendors.includes(subcart.vendor_id);
 
               return (
                 <motion.div
-                  key={group.vendor.name}
+                  key={subcart.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: groupIndex * 0.1 }}
+                  transition={{ delay: index * 0.1 }}
                   className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
                 >
                   {/* Vendor Header */}
@@ -155,47 +238,46 @@ export default function CartPage() {
                     <input
                       type="checkbox"
                       checked={isVendorSelected}
-                      onChange={() => toggleSelectVendor(group.vendor.name)}
+                      onChange={() => toggleSelectVendor(subcart.vendor_id)}
                       className="w-5 h-5 border-gray-300 rounded text-[#FA3728] focus:ring-[#FA3728] cursor-pointer"
                     />
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center text-white font-bold text-lg">
-                        {group.vendor.name[0]}
+                        {subcart.vendor_name[0]}
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-800 leading-tight">
-                          {group.vendor.name}
+                          {subcart.vendor_name}
                         </h3>
-                        {group.vendor.location && (
-                          <p className="text-xs text-gray-500">{group.vendor.location}</p>
-                        )}
                       </div>
                     </div>
                   </div>
 
                   {/* Vendor Items */}
                   <div className="divide-y divide-gray-50">
-                    {group.items.map((item) => (
+                    {subcart.items.map((item) => (
                       <div key={item.id} className="p-4 flex flex-row items-center gap-4">
                         
                         {/* Product Image */}
                         <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-xl overflow-hidden block">
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <ShoppingBag className="text-gray-400" size={24} />
+                          </div>
                         </div>
 
                         {/* Product Details */}
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-sm text-gray-800 line-clamp-2 mb-1">
-                            {item.name}
+                            {item.product_details.name}
                           </h4>
-                          <p className="font-semibold text-sm text-[#FA3728]">₦{item.price.toLocaleString()}</p>
+                          <p className="font-semibold text-sm text-[#FA3728]">₦{parseFloat(item.total_price).toLocaleString()}</p>
                           
                           {/* Controls Row */}
                           <div className="flex items-center justify-between mt-3">
                              {/* Quantity Controls */}
                             <div className="flex items-center bg-gray-50 rounded-full px-2 py-1 border border-gray-100">
                               <button
-                                onClick={() => updateQuantity(item.id, -1)}
+                                onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
                                 className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-white rounded-full transition-colors"
                               >
                                 <Minus size={16} />
@@ -204,14 +286,14 @@ export default function CartPage() {
                                 {item.quantity}
                               </span>
                               <button
-                                onClick={() => updateQuantity(item.id, 1)}
+                                onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
                                 className="w-8 h-8 flex items-center justify-center text-[#FA3728] bg-[#FA3728]/10 hover:bg-[#FA3728]/20 rounded-full transition-colors"
                               >
                                 <Plus size={16} />
                               </button>
                             </div>
                             
-                            <button onClick={() => removeItem(item.id)} className="text-[#FA3728] p-2 hover:bg-[#FA3728]/10 rounded-full transition-colors">
+                            <button onClick={() => handleRemoveItem(item.id)} className="text-[#FA3728] p-2 hover:bg-[#FA3728]/10 rounded-full transition-colors">
                               <Trash2 size={20} />
                             </button>
                           </div>
@@ -224,7 +306,7 @@ export default function CartPage() {
                   <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
                     <div>
                       <span className="block text-gray-500 text-xs mb-0.5">Subtotal</span>
-                      <span className="font-semibold text-gray-900 text-base">₦{groupSubtotal.toLocaleString()}</span>
+                      <span className="font-semibold text-gray-900 text-base">₦{subtotal.toLocaleString()}</span>
                     </div>
                     <Link
                       href={`/chats/${vendorSlug}`}

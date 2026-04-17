@@ -325,25 +325,23 @@ export default function OrdersPage() {
 
                       {/* Vendor actions — only when Pending */}
                       {msg.orderStatus === 'Pending' && (
-                        <div className="mt-3 flex flex-col gap-1.5">
+                        <div className="mt-3 flex flex-row gap-2">
                           <button
                             onClick={() => handleAccept(selectedOrder.id, msg.id)}
-                            className="w-full py-2 bg-[#FA3728] text-white rounded-xl text-xs font-semibold shadow-sm hover:bg-[#E31B23]"
+                            className="flex-1 py-2 bg-[#FA3728] text-white rounded-xl text-[10px] font-bold shadow-sm hover:bg-[#E31B23] flex items-center justify-center gap-1"
                           >
-                            <Check size={13} className="inline mr-1" strokeWidth={2.5} />
+                            <Check size={12} strokeWidth={3} />
                             Accept
                           </button>
-                          <div className="flex gap-1.5">
-                            <button className="flex-1 py-2 bg-amber-500 text-white rounded-xl text-xs font-semibold shadow-sm hover:bg-amber-600">
-                              Modify
-                            </button>
-                            <button
-                              onClick={() => handleDecline(selectedOrder.id, msg.id)}
-                              className="flex-1 py-2 bg-gray-50 text-gray-700 rounded-xl text-xs font-semibold border hover:bg-gray-100"
-                            >
-                              Decline
-                            </button>
-                          </div>
+                          <button className="flex-1 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-bold shadow-sm hover:bg-amber-600">
+                            Modify
+                          </button>
+                          <button
+                            onClick={() => handleDecline(selectedOrder.id, msg.id)}
+                            className="flex-1 py-2 bg-gray-50 text-gray-700 rounded-xl text-[10px] font-bold border border-gray-200 hover:bg-gray-100"
+                          >
+                            Decline
+                          </button>
                         </div>
                       )}
 

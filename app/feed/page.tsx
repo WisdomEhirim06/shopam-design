@@ -202,8 +202,8 @@ export default function FeedPage() {
       </nav>
 
       {/* Main Content */}
-      <div className="pt-48 sm:pt-52 pb-12">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-4 mb-8">
+      <div className="pt-48 pb-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-4 mb-8">
           <div className="bg-[#FA3728]/5 p-8 rounded-2xl border border-[#FA3728]/20">
             <div className="w-16 h-16 bg-[#FA3728]/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Bookmark size={28} className="text-[#FA3728]" />
@@ -215,7 +215,7 @@ export default function FeedPage() {
           </div>
         </div>
 
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h3 className="font-bold text-gray-900 mb-4 text-lg">Preview</h3>
           {/* Feed Posts */}
           <div className="space-y-4 opacity-80 pointer-events-none">

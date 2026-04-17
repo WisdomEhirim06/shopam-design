@@ -3,8 +3,19 @@
 import { motion } from 'framer-motion';
 import { ArrowUpRight, DollarSign, ShoppingBag, Package } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { authService } from '@/lib/api';
 
 export default function DashboardHome() {
+  const [userName, setUserName] = useState('Sarah');
+
+  useEffect(() => {
+    const user = authService.getCurrentUser();
+    if (user && user.first_name) {
+      setUserName(user.first_name);
+    }
+  }, []);
+
   return (
     <div className="px-4 py-2 md:p-8 space-y-6 max-w-lg mx-auto md:max-w-none">
       {/* Welcome Header */}
@@ -14,7 +25,7 @@ export default function DashboardHome() {
         className="mb-6 md:mb-8"
       >
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2">
-          Hello, Sarah <span className="text-2xl">👋</span>
+          Hello, {userName} <span className="text-2xl">👋</span>
         </h1>
         <p className="text-gray-500 text-sm md:text-base mt-1">Here's your store overview</p>
       </motion.div>

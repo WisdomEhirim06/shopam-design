@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Send, MapPin, Truck, CreditCard, Building2, X, CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, MapPin, Truck, CreditCard, Building2, X, Check, CheckCircle2, Loader2 } from 'lucide-react';
 import { authService } from '@/lib/api';
 
 /* ─────────────── Types ─────────────── */
@@ -428,12 +428,23 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                     {message.status === 'Pending' && (
                       <div className="mt-3">
                         {isVendor ? (
-                          <div className="flex flex-col gap-1.5">
-                            <button onClick={() => updateMsg(message.id, 'Accepted')} className="w-full py-2 bg-[#FA3728] text-white rounded-xl text-xs font-semibold shadow-sm hover:bg-[#E31B23]">Accept</button>
-                            <div className="flex gap-1.5">
-                              <button className="flex-1 py-2 bg-amber-500 text-white rounded-xl text-xs font-semibold shadow-sm hover:bg-amber-600">Modify</button>
-                              <button className="flex-1 py-2 bg-gray-50 text-gray-700 rounded-xl text-xs font-semibold border hover:bg-gray-100">Decline</button>
-                            </div>
+                          <div className="flex flex-row gap-2">
+                            <button
+                              onClick={() => updateMsg(message.id, 'Accepted')}
+                              className="flex-1 py-2 bg-[#FA3728] text-white rounded-xl text-[10px] font-bold shadow-sm hover:bg-[#E31B23] flex items-center justify-center gap-1"
+                            >
+                              <Check size={12} strokeWidth={3} />
+                              Accept
+                            </button>
+                            <button className="flex-1 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-bold shadow-sm hover:bg-amber-600">
+                              Modify
+                            </button>
+                            <button
+                              onClick={() => updateMsg(message.id, 'Declined')}
+                              className="flex-1 py-2 bg-gray-50 text-gray-700 rounded-xl text-[10px] font-bold border border-gray-200 hover:bg-gray-100"
+                            >
+                              Decline
+                            </button>
                           </div>
                         ) : (
                           <div className="px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-center">

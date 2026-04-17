@@ -9,11 +9,18 @@ export interface UserRegister {
 }
 
 export interface VendorRegister {
-  user: string; // UUID
+  email: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+  middle_name?: string;
+  phone_country_code?: string;
+  phone: string;
+  business_name: string;
   business_category: BusinessCategory;
   cac_registration?: string;
   tin?: string;
-  password: string;
+  business_address: string;
 }
 
 export interface LoginRequest {
@@ -75,17 +82,11 @@ export interface ProductCreate {
   images?: File[];
 }
 
-export interface AddOn {
-  id: number;
-  product: string;
-  name: string;
-  price: string;
-  is_available: boolean;
-}
+// No content here, removing duplicate AddOn at previous lines 85-91
 
 // Category Types
 export interface Category {
-  id: number;
+  id: string; // Updated from number to UUID string
   name: string;
   description?: string;
   image?: string;
@@ -93,34 +94,60 @@ export interface Category {
 }
 
 // Cart Types
+export interface SubCart {
+  id: string;
+  vendor_id: string;
+  vendor_name: string;
+  items: CartItem[];
+}
+
 export interface Cart {
   id: string;
   user: string;
-  items: CartItem[];
-  subtotal: string;
-  total: string;
-  created_at: string;
-  updated_at: string;
+  subcarts: SubCart[]; // Updated to match spec
 }
 
 export interface CartItem {
-  id: number;
-  cart: string;
-  product: Product;
+  id: string; // Updated from number to UUID string
+  subcart: string;
+  product: string;
+  product_details: Product;
   quantity: number;
-  selected_addons: AddOn[];
+  selected_addons: string[];
+  addon_details: AddOn[];
+  total_price: string;
+}
+
+export interface AddOn {
+  id: string; // Updated from number to UUID string
+  product_service: string;
+  title: string;
+  description?: string;
   price: string;
+  tax_inclusive: boolean;
+  created_at?: string;
 }
 
 export interface AddToCartRequest {
-  product: string; // UUID
-  quantity: number;
-  selected_addons?: number[]; // Add-on IDs
+  product_id: string; // Per spec field name
+  quantity?: number;
+  addon_ids?: string[]; // Per spec field name
 }
 
 export interface UpdateCartItemRequest {
   quantity?: number;
-  selected_addons?: number[];
+  selected_addons?: string[];
+}
+
+// Auth Request Types
+export interface PasswordChangeRequest {
+  old_password: string;
+  old_password1: string;
+  new_password: string;
+}
+
+export interface TokenBlacklistRequest {
+  refresh: string;
 }
 
 // Order Types
@@ -138,7 +165,7 @@ export interface Order {
 }
 
 export interface OrderItem {
-  id: number;
+  id: string; // Updated to string (UUID)
   order: string;
   product: Product;
   quantity: number;
@@ -172,7 +199,7 @@ export interface Transaction {
 
 // Review Types
 export interface Review {
-  id: number;
+  id: string; // Updated to string (UUID)
   customer: string;
   transaction: string;
   rating: number; // 1-5
@@ -267,7 +294,7 @@ export interface APISuccess<T> {
 
 // Filter & Query Types
 export interface ProductFilters {
-  category?: number;
+  category?: string; // Updated to string (UUID)
   vendor?: string;
   min_price?: number;
   max_price?: number;

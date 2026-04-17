@@ -11,7 +11,10 @@ import {
   ShoppingCart,
   CheckCircle,
   MessageCircle,
+  UserPlus,
+  Heart,
 } from 'lucide-react';
+import { authService } from '@/lib/api';
 import ProfileButton from '../components/ProfileButton';
 
 interface ShopProduct {
@@ -39,15 +42,13 @@ export default function VendorsPage() {
 
   const categories = [
     'All',
-    'Fashion',
-    'Electronics',
     'Food & Drinks',
-    'Beauty',
-    'Home & Office',
-    'Sports',
-    'Books',
-    'Toys',
-    'Tech',
+    'Home & Living',
+    'Beauty, Hair & Personal Care',
+    'Accessories',
+    'Women\'s Fashion',
+    'Men\'s Fashion',
+    'Baby & Kids',
   ];
 
   const vendors: Vendor[] = [
@@ -157,9 +158,18 @@ export default function VendorsPage() {
 
   const filteredVendors = vendors.filter(
     (vendor) =>
-      (selectedCategory === 'All' || vendor.category === selectedCategory) &&
+      (selectedCategory === 'All' || vendor.category.includes(selectedCategory)) &&
       (searchQuery === '' || vendor.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  const handleFollow = (vendorId: number) => {
+    if (!authService.isAuthenticated()) {
+      window.location.href = '/auth/user-signin';
+      return;
+    }
+    // Implement follow logic here
+    alert('Following vendor...');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -237,29 +247,29 @@ export default function VendorsPage() {
       </nav>
 
       {/* Main Content */}
-      <div className="pt-48 sm:pt-52 pb-12">
+      <div className="pt-48 pb-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Page Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
               Discover Shops
             </h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-sm text-gray-500 font-medium">
               Browse shops and find what you need
             </p>
           </div>
 
           {/* Categories Filter */}
           <div className="mb-8 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-            <div className="flex gap-2 sm:gap-3 min-w-max">
+            <div className="flex gap-2 min-w-max">
               {categories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-medium whitespace-nowrap transition-all ${
+                  className={`px-4 py-1.5 text-xs rounded-full font-semibold whitespace-nowrap transition-all ${
                     selectedCategory === category
-                      ? 'bg-[#FA3728] text-white shadow-lg'
-                      : 'bg-white text-gray-700 border border-gray-200'
+                      ? 'bg-[#FA3728] text-white shadow-md'
+                      : 'bg-white text-gray-600 border border-gray-100 hover:border-[#FA3728]/30'
                   }`}
                 >
                   {category}
@@ -274,75 +284,55 @@ export default function VendorsPage() {
           </p>
 
           {/* Vendors Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-8">
             {filteredVendors.map((vendor, index) => (
               <motion.div
                 key={vendor.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.05 }}
+                className="group cursor-pointer p-3 rounded-2xl border border-gray-100/80 hover:border-[#FA3728]/20 transition-all hover:bg-white hover:shadow-xl shadow-sm"
               >
-                {/* Shop product thumbnails — click to visit shop */}
-                <Link href={`/vendors/${vendor.id}`} className="block">
-                  <div className="grid grid-cols-3 h-24">
-                    {vendor.shopProducts.map((p, i) => (
-                      <div
-                        key={i}
-                        className={`${p.color} flex items-center justify-center`}
-                      >
-                        <span className="text-[10px] text-gray-500 font-medium text-center px-1 leading-tight">
-                          {p.name}
-                        </span>
+                <Link href={`/vendors/${vendor.id}`}>
+                  {/* Brand Image Area (STRICT SQUARE) */}
+                  <div className="relative aspect-square rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden mb-3">
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#FA3728]/5 to-transparent flex items-center justify-center">
+                      <span className="text-5xl font-black text-[#FA3728]/10 group-hover:scale-110 transition-transform duration-500">
+                        {vendor.name[0]}
+                      </span>
+                    </div>
+                    {/* Heart/Follow Overlay */}
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleFollow(vendor.id);
+                      }}
+                      className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:scale-110 active:scale-95 transition-all z-10"
+                    >
+                      <Heart size={16} className="text-[#FA3728]" />
+                    </button>
+                  </div>
+
+                  {/* Vendor Info Section */}
+                  <div className="px-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate group-hover:text-[#FA3728] transition-colors">
+                        {vendor.name}
+                      </h3>
+                      <div className="flex items-center gap-1">
+                        <Star size={12} className="text-amber-500 fill-amber-500" />
+                        <span className="text-[10px] sm:text-xs font-bold text-gray-700">{vendor.rating}</span>
                       </div>
-                    ))}
+                    </div>
+                    <p className="text-[10px] sm:text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">
+                      {vendor.category}
+                    </p>
+                    <p className="text-[11px] text-gray-500 line-clamp-2 mb-4 h-8 leading-relaxed">
+                      {vendor.bio}
+                    </p>
                   </div>
                 </Link>
-
-                {/* Vendor info */}
-                <div className="p-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="relative flex-shrink-0">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center text-white text-base font-bold">
-                        {vendor.name[0]}
-                      </div>
-                      {vendor.verified && (
-                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
-                          <CheckCircle size={9} className="text-white fill-white" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 text-sm truncate">{vendor.name}</h3>
-                      <p className="text-xs text-gray-500">{vendor.category}</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star size={12} className="text-amber-400 fill-amber-400" />
-                      <span className="text-xs font-semibold text-gray-700">{vendor.rating}</span>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-gray-500 mb-3 line-clamp-2 leading-relaxed">{vendor.bio}</p>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-xs text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <Package size={11} />
-                        {vendor.products} items
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin size={11} />
-                        {vendor.location.split(',')[0]}
-                      </span>
-                    </div>
-                    <Link
-                      href={`/vendors/${vendor.id}`}
-                      className="text-xs font-semibold text-[#FA3728]"
-                    >
-                      Visit Shop →
-                    </Link>
-                  </div>
-                </div>
               </motion.div>
             ))}
           </div>
