@@ -89,18 +89,19 @@ export const API_ENDPOINTS = {
   // Products
   PRODUCTS: {
     LIST: '/api/commerceproducts/',
+    MY_PRODUCTS: '/api/commercemy-products/',
     DETAIL: (id: string) => `/api/commerceproducts/${id}/`,
     CREATE: '/api/commerceproducts/',
     UPDATE: (id: string) => `/api/commerceproducts/${id}/`,
     DELETE: (id: string) => `/api/commerceproducts/${id}/`,
   },
-  
+
   // Categories
   CATEGORIES: {
     LIST: '/api/commercecategories/',
     DETAIL: (id: number) => `/api/commercecategories/${id}/`,
   },
-  
+
   // Cart
   CART: {
     GET: '/api/commercecart/',
@@ -108,13 +109,18 @@ export const API_ENDPOINTS = {
     CLEAR: '/api/commercecart/clear/',
     ITEM_DETAIL: (id: string) => `/api/commercecart/items/${id}/`,
   },
-  
+
   // Orders
   ORDERS: {
+    VENDOR_LIST: '/api/commercevendor/orders/',
     LIST: '/api/commerceorders/',
-    CREATE: '/api/commerceorders/',
+    PLACE: '/api/commerceorders/place/',
+    FILTER: '/api/commerceorders/filter',
     DETAIL: (id: string) => `/api/commerceorders/${id}/`,
     UPDATE: (id: string) => `/api/commerceorders/${id}/`,
+    VENDOR_REVIEW: (id: string) => `/api/commerceorders/${id}/vendor-review/`,
+    SET_SHIPPING_FEE: (id: string) => `/api/commerceorders/${id}/set-shipping-fee/`,
+    START_DELIVERY: (id: string) => `/api/commerceorders/${id}/start-delivery/`,
   },
   
   // Reviews

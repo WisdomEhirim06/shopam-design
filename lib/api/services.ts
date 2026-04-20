@@ -19,9 +19,16 @@ import type {
 
 // Orders Service
 export const ordersService = {
-  /**
-   * Get user's orders
-   */
+  /** Get the vendor's incoming orders */
+  async getVendorOrders(filters?: OrderFilters): Promise<PaginatedResponse<Order>> {
+    const response = await apiClient.get<PaginatedResponse<Order>>(
+      API_ENDPOINTS.ORDERS.VENDOR_LIST,
+      { params: filters }
+    );
+    return response.data;
+  },
+
+  /** Get all orders (general) */
   async getOrders(filters?: OrderFilters): Promise<PaginatedResponse<Order>> {
     const response = await apiClient.get<PaginatedResponse<Order>>(
       API_ENDPOINTS.ORDERS.LIST,
@@ -30,9 +37,7 @@ export const ordersService = {
     return response.data;
   },
 
-  /**
-   * Get single order
-   */
+  /** Get single order by ID */
   async getOrder(id: string): Promise<Order> {
     const response = await apiClient.get<Order>(
       API_ENDPOINTS.ORDERS.DETAIL(id)
@@ -40,33 +45,33 @@ export const ordersService = {
     return response.data;
   },
 
-  /**
-   * Create order (checkout)
-   */
-  async createOrder(data: CreateOrderRequest): Promise<Order> {
-    const response = await apiClient.post<Order>(
-      API_ENDPOINTS.ORDERS.CREATE,
-      data
-    );
-    return response.data;
+  /** Place a new order (Step 1) */
+  async createOrder(data: CreateOrderRequest): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.ORDERS.PLACE, data);
   },
 
-  /**
-   * Update order status
-   */
+  /** Step 2: Vendor reviews (accepts or proposes changes to) an order */
+  async vendorReview(orderId: string, body?: Record<string, unknown>): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.ORDERS.VENDOR_REVIEW(orderId), body ?? {});
+  },
+
+  /** Step 5: Vendor sets the shipping fee */
+  async setShippingFee(orderId: string, shippingFee: string): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.ORDERS.SET_SHIPPING_FEE(orderId), { shipping_fee: shippingFee });
+  },
+
+  /** Step 7: Vendor marks order as shipped / starts delivery */
+  async startDelivery(orderId: string): Promise<void> {
+    await apiClient.patch(API_ENDPOINTS.ORDERS.START_DELIVERY(orderId));
+  },
+
+  /** Update order fields */
   async updateOrder(id: string, data: Partial<Order>): Promise<Order> {
     const response = await apiClient.patch<Order>(
       API_ENDPOINTS.ORDERS.UPDATE(id),
       data
     );
     return response.data;
-  },
-
-  /**
-   * Cancel order
-   */
-  async cancelOrder(id: string): Promise<Order> {
-    return this.updateOrder(id, { status: 'cancelled' });
   },
 };
 

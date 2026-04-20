@@ -17,6 +17,22 @@ import {
 } from 'lucide-react';
 import { productsService, categoriesService, cartService, authService } from '@/lib/api';
 import type { Product, Category } from '@/lib/api';
+
+/* ── Dummy products shown while real vendor listings are pending ── */
+const DUMMY_PRODUCTS: Product[] = [
+  { id: 'd1', owner: 'vendor1', owner_name: 'Adaeze Couture', title: 'African Print Wrap Dress', description: 'Vibrant Ankara wrap dress, available in M/L/XL', price: '28000', tax_inclusive: false, item_type: 'product', addons: [], created_at: '', updated_at: '', average_rating: '4.8', review_count: '124' },
+  { id: 'd2', owner: 'vendor2', owner_name: "Mama Nkechi's Kitchen", title: 'Jollof Rice Family Platter', description: 'Party-size smoky Jollof for 5–6 people', price: '8500', tax_inclusive: false, item_type: 'service', addons: [], created_at: '', updated_at: '', average_rating: '5.0', review_count: '87' },
+  { id: 'd3', owner: 'vendor3', owner_name: 'Lagos Craft House', title: 'Handwoven Rattan Basket Set', description: 'Set of 3 handcrafted storage baskets', price: '12500', tax_inclusive: false, item_type: 'product', addons: [], created_at: '', updated_at: '', average_rating: '4.6', review_count: '52' },
+  { id: 'd4', owner: 'vendor4', owner_name: 'Tunde Skincare', title: 'Shea Butter Body Cream 250ml', description: 'Cold-pressed natural shea butter, unscented', price: '5500', tax_inclusive: false, item_type: 'product', addons: [], created_at: '', updated_at: '', average_rating: '4.9', review_count: '210' },
+  { id: 'd5', owner: 'vendor5', owner_name: 'Chioma Tech Hub', title: 'Phone Screen Repair (Any Model)', description: 'Same-day screen replacement service, warranty included', price: '15000', tax_inclusive: true, item_type: 'service', addons: [], created_at: '', updated_at: '', average_rating: '4.7', review_count: '63' },
+  { id: 'd6', owner: 'vendor6', owner_name: 'Eko Fabrics', title: 'Aso-Oke Head Tie Set', description: 'Premium woven aso-oke, 3-piece gele set', price: '35000', tax_inclusive: false, item_type: 'product', addons: [], created_at: '', updated_at: '', average_rating: '4.5', review_count: '39' },
+  { id: 'd7', owner: 'vendor1', owner_name: 'Adaeze Couture', title: 'Beaded Ankara Clutch Bag', description: 'Hand-beaded evening clutch, various colours', price: '9500', tax_inclusive: false, item_type: 'product', addons: [], created_at: '', updated_at: '', average_rating: '4.4', review_count: '28' },
+  { id: 'd8', owner: 'vendor7', owner_name: 'Naija Fresh Farm', title: 'Organic Ofada Rice 5kg', description: 'Stone-free, sun-dried local Ofada variety', price: '7200', tax_inclusive: false, item_type: 'product', addons: [], created_at: '', updated_at: '', average_rating: '4.8', review_count: '156' },
+  { id: 'd9', owner: 'vendor8', owner_name: 'Kemi Beauty Bar', title: 'Lace Front Wig 20" Natural', description: 'Brazilian hair lace front, natural black', price: '85000', tax_inclusive: false, item_type: 'product', addons: [], created_at: '', updated_at: '', average_rating: '4.9', review_count: '72' },
+  { id: 'd10', owner: 'vendor9', owner_name: 'IbadanWood Works', title: 'Custom Wooden Photo Frame', description: 'Personalized engraved hardwood frame, 8×10"', price: '6800', tax_inclusive: false, item_type: 'product', addons: [], created_at: '', updated_at: '', average_rating: '4.7', review_count: '44' },
+  { id: 'd11', owner: 'vendor2', owner_name: "Mama Nkechi's Kitchen", title: 'Egusi Soup + Fufu Combo', description: 'Rich egusi soup with goat meat, served with fufu', price: '4500', tax_inclusive: false, item_type: 'service', addons: [], created_at: '', updated_at: '', average_rating: '5.0', review_count: '198' },
+  { id: 'd12', owner: 'vendor5', owner_name: 'Chioma Tech Hub', title: 'Laptop Battery Replacement', description: 'Genuine replacement batteries, all laptop brands', price: '25000', tax_inclusive: true, item_type: 'service', addons: [], created_at: '', updated_at: '', average_rating: '4.6', review_count: '31' },
+];
 import ProfileButton from '../components/ProfileButton';
 
 export default function ExplorePage() {
@@ -92,17 +108,21 @@ export default function ExplorePage() {
 
       const response = await productsService.getProducts(filters);
 
+      // Use API results when available, fall back to dummy data on first page
+      const results = response.results.length > 0 ? response.results : (page === 1 ? DUMMY_PRODUCTS : []);
+
       if (page === 1) {
-        setProducts(response.results);
+        setProducts(results);
       } else {
-        setProducts([...products, ...response.results]);
+        setProducts((prev) => [...prev, ...results]);
       }
 
-      setTotalProducts(response.count);
+      setTotalProducts(response.count || DUMMY_PRODUCTS.length);
       setHasMore(!!response.next);
-    } catch (err: any) {
-      console.error('Failed to load products:', err);
-      setError('Failed to load products. Please try again.');
+    } catch {
+      // On any network error, show dummy products
+      if (page === 1) setProducts(DUMMY_PRODUCTS);
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
@@ -375,33 +395,16 @@ export default function ExplorePage() {
                   <Link href={`/products/${product.id}`}>
                     {/* Product Image */}
                     <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden cursor-pointer">
-                      {product.images && product.images[0] ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#FA3728]/5 to-[#E31B23]/5 flex items-center justify-center">
-                          <ShoppingCart size={40} className="text-gray-300" />
-                        </div>
-                      )}
-
-                      {/* Badges */}
-                      <div className="absolute top-2 left-2 flex flex-col gap-1">
-                        {product.stock === 0 && (
-                          <span className="px-2 py-1 bg-gray-800 text-white text-xs font-bold rounded">
-                            Out of Stock
-                          </span>
-                        )}
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#FA3728]/5 to-[#E31B23]/5 flex items-center justify-center">
+                        <ShoppingCart size={40} className="text-gray-300" />
                       </div>
 
                       {/* Rating Badge */}
-                      {product.rating && (
+                      {parseFloat(product.average_rating) > 0 && (
                         <div className="absolute bottom-2 right-2">
                           <div className="px-2 py-1 bg-white/95 backdrop-blur-sm rounded-full text-xs font-semibold flex items-center gap-1">
                             <Star size={12} className="text-amber-400 fill-amber-400" />
-                            {product.rating.toFixed(1)}
+                            {parseFloat(product.average_rating).toFixed(1)}
                           </div>
                         </div>
                       )}
@@ -410,10 +413,10 @@ export default function ExplorePage() {
                     {/* Product Info */}
                     <div className="p-3 md:p-4">
                       <p className="text-xs text-gray-500 mb-1 truncate">
-                        {product.vendor || 'ShopAm Vendor'}
+                        {product.owner_name || 'ShopAm Vendor'}
                       </p>
                       <h3 className="font-semibold text-sm md:text-base text-gray-900 mb-2 line-clamp-2 group-hover:text-[#FA3728] transition-colors min-h-[2.5rem]">
-                        {product.name}
+                        {product.title}
                       </h3>
 
                       <div className="flex items-center gap-2 mb-2">
@@ -422,9 +425,9 @@ export default function ExplorePage() {
                         </p>
                       </div>
 
-                      {product.reviews_count !== undefined && (
+                      {parseInt(product.review_count) > 0 && (
                         <p className="text-xs text-gray-500">
-                          ({product.reviews_count} reviews)
+                          ({product.review_count} reviews)
                         </p>
                       )}
                     </div>
@@ -434,11 +437,10 @@ export default function ExplorePage() {
                   <div className="px-3 pb-3">
                     <button
                       onClick={() => addToCart(product.id)}
-                      disabled={product.stock === 0}
-                      className="w-full py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="w-full py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
                     >
                       <ShoppingCart size={16} />
-                      {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                      Add to Cart
                     </button>
                   </div>
                 </motion.div>

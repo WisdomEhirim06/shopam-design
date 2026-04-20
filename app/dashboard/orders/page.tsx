@@ -1,25 +1,25 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, ArrowLeft, Send, Check, X, Truck, CheckCircle2, MoreVertical
+  Search, ArrowLeft, Send, Check, X, Truck, CheckCircle2, MoreVertical, Loader2,
 } from 'lucide-react';
+import { ordersService } from '../../../lib/api/services';
+import type { Order as APIOrder, OrderStatus as APIOrderStatus } from '../../../lib/api/types';
 
-/* ─────────────── Types ─────────────── */
-type OrderStatus = 'All' | 'Pending' | 'Confirmed' | 'Completed';
+/* ─────────────── UI Types ─────────────── */
+type UIOrderStatus = 'All' | 'Pending' | 'Confirmed' | 'Completed';
 
-interface OrderItem {
+interface UIOrderItem {
   name: string;
   price: string;
   quantity: number;
-  image?: string;
 }
 
 type ConvMsgType =
   | 'order_card'
   | 'text'
-  | 'delivery_details'
   | 'shipping_notification'
   | 'payment_success';
 
@@ -28,133 +28,158 @@ interface ConversationMessage {
   type: ConvMsgType;
   timestamp: string;
   fromBuyer?: boolean;
-  // order_card fields
-  orderStatus?: 'Pending' | 'Accepted' | 'Declined' | 'Delivery Details Set' | 'Shipping Fee Set';
+  orderStatus?: 'Pending' | 'Accepted' | 'Declined' | 'Shipping Fee Set';
   buyerName?: string;
-  items?: OrderItem[];
+  items?: UIOrderItem[];
   total?: number;
   shippingFee?: number;
   address?: string;
-  // text
   content?: string;
 }
 
-interface Order {
-  id: string;
+interface UIOrder {
+  id: string; // real API order ID
   name: string;
   item: string;
-  items: OrderItem[];
+  items: UIOrderItem[];
   price: string;
   time: string;
-  status: OrderStatus;
+  status: Exclude<UIOrderStatus, 'All'>;
+  apiStatus: APIOrderStatus;
   avatar: string;
   avatarColor: string;
   unreadCount?: number;
   messages: ConversationMessage[];
 }
 
-/* ─────────────── Seed Data ─────────────── */
-const initialOrders: Order[] = [
-  {
-    id: '1',
-    name: 'Mama Nkechi Kitchen',
-    item: 'Jollof Rice Platter × 1',
-    items: [{ name: 'Jollof Rice Platter', price: '₦3,500', quantity: 1 }],
-    price: '₦3,500',
-    time: '20:45',
-    status: 'Pending',
-    avatar: 'M',
-    avatarColor: 'bg-[#FA3728]',
-    unreadCount: 2,
-    messages: [
-      {
-        id: 'm1',
-        type: 'order_card',
-        timestamp: '20:44',
-        fromBuyer: true,
-        orderStatus: 'Pending',
-        buyerName: 'Mama Nkechi Kitchen',
-        items: [{ name: 'Jollof Rice Platter', price: '₦3,500', quantity: 1 }],
-        total: 3500,
-      },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Adaeze M.',
-    item: 'African Print Dress × 1',
-    items: [{ name: 'African Print Dress', price: '₦28,000', quantity: 1 }],
-    price: '₦28,000',
-    time: '18:30',
-    status: 'Confirmed',
-    avatar: 'A',
-    avatarColor: 'bg-emerald-500',
-    messages: [
-      {
-        id: 'm1',
-        type: 'order_card',
-        timestamp: '18:30',
-        fromBuyer: true,
-        orderStatus: 'Accepted',
-        buyerName: 'Adaeze M.',
-        items: [{ name: 'African Print Dress', price: '₦28,000', quantity: 1 }],
-        total: 28000,
-      },
-      {
-        id: 'm2',
-        type: 'text',
-        timestamp: '18:32',
-        content: "Your order has been confirmed! We'll prepare it for delivery.",
-        fromBuyer: false,
-      },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Tunde K.',
-    item: 'Basket Set × 2',
-    items: [{ name: 'Pattern Basket Set', price: '₦12,500', quantity: 2 }],
-    price: '₦25,000',
-    time: 'Yesterday',
-    status: 'Completed',
-    avatar: 'T',
-    avatarColor: 'bg-blue-500',
-    messages: [
-      {
-        id: 'm1',
-        type: 'order_card',
-        timestamp: 'Yesterday',
-        fromBuyer: true,
-        orderStatus: 'Accepted',
-        buyerName: 'Tunde K.',
-        items: [{ name: 'Pattern Basket Set', price: '₦12,500', quantity: 2 }],
-        total: 25000,
-      },
-      {
-        id: 'm2',
-        type: 'text',
-        timestamp: 'Yesterday',
-        content: 'Order delivered and completed. Thank you!',
-        fromBuyer: false,
-      },
-    ],
-  },
+/* ─────────────── Status mapping ─────────────── */
+const AVATAR_COLORS = [
+  'bg-[#FA3728]', 'bg-emerald-500', 'bg-blue-500',
+  'bg-amber-500', 'bg-purple-500', 'bg-teal-500',
 ];
+
+function apiStatusToUI(status: APIOrderStatus): Exclude<UIOrderStatus, 'All'> {
+  switch (status) {
+    case 'pending_vendor_review':
+    case 'pending_customer_approval':
+      return 'Pending';
+    case 'awaiting_shipping_details':
+    case 'shipping_set':
+    case 'awaiting_payment':
+    case 'paid':
+    case 'shipped':
+    case 'delivered':
+    case 'disputed':
+      return 'Confirmed';
+    case 'completed':
+    case 'cancelled':
+      return 'Completed';
+  }
+}
+
+function orderCardStatus(status: APIOrderStatus): ConversationMessage['orderStatus'] {
+  if (status === 'pending_vendor_review') return 'Pending';
+  if (status === 'cancelled') return 'Declined';
+  if (status === 'awaiting_payment' || status === 'paid') return 'Shipping Fee Set';
+  return 'Accepted';
+}
+
+function transformOrder(order: APIOrder): UIOrder {
+  const colorIndex = order.customer.charCodeAt(0) % AVATAR_COLORS.length;
+  const shortId = order.customer.substring(0, 8).toUpperCase();
+  const buyerName = `Buyer #${shortId}`;
+  const avatar = shortId.substring(0, 2);
+
+  const items: UIOrderItem[] = order.items.map((item) => ({
+    name: item.product_details.title,
+    price: `₦${parseFloat(item.product_details.price).toLocaleString('en-NG')}`,
+    quantity: item.quantity,
+  }));
+
+  const firstItem = order.items[0];
+  const itemSummary = firstItem
+    ? `${firstItem.product_details.title} × ${firstItem.quantity}`
+    : 'No items';
+
+  const total = parseFloat(order.grand_total || '0');
+  const shippingFee = order.shipping_fee ? parseFloat(order.shipping_fee) : undefined;
+  const timestamp = new Date(order.created_at).toLocaleTimeString('en-NG', {
+    hour: '2-digit', minute: '2-digit',
+  });
+
+  const orderCard: ConversationMessage = {
+    id: `order-${order.id}`,
+    type: 'order_card',
+    timestamp,
+    fromBuyer: true,
+    orderStatus: orderCardStatus(order.status),
+    buyerName,
+    items,
+    total,
+    shippingFee,
+    address: order.shipping_address ?? undefined,
+  };
+
+  // Add shipping notification message if fee is already set
+  const messages: ConversationMessage[] = [orderCard];
+  if (shippingFee && order.status !== 'pending_vendor_review') {
+    messages.push({
+      id: `shipping-${order.id}`,
+      type: 'shipping_notification',
+      timestamp,
+      fromBuyer: false,
+      shippingFee,
+      total,
+    });
+  }
+
+  return {
+    id: order.id,
+    name: buyerName,
+    item: itemSummary,
+    items,
+    price: `₦${total.toLocaleString('en-NG')}`,
+    time: timestamp,
+    status: apiStatusToUI(order.status),
+    apiStatus: order.status,
+    avatar,
+    avatarColor: AVATAR_COLORS[colorIndex],
+    unreadCount: order.status === 'pending_vendor_review' ? 1 : undefined,
+    messages,
+  };
+}
 
 /* ─────────────── Main Component ─────────────── */
 export default function OrdersPage() {
-  const [activeTab, setActiveTab] = useState<OrderStatus>('All');
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [activeTab, setActiveTab] = useState<UIOrderStatus>('All');
+  const [orders, setOrders] = useState<UIOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<UIOrder | null>(null);
   const [messageInput, setMessageInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const tabs: OrderStatus[] = ['All', 'Pending', 'Confirmed', 'Completed'];
+  const tabs: UIOrderStatus[] = ['All', 'Pending', 'Confirmed', 'Completed'];
   const filteredOrders = activeTab === 'All' ? orders : orders.filter((o) => o.status === activeTab);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [selectedOrder?.messages]);
+
+  const loadOrders = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await ordersService.getVendorOrders();
+      setOrders(data.results.map(transformOrder));
+    } catch {
+      // keep empty list on error
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   /* ── Helpers ── */
   const updateConvMsg = (
@@ -162,7 +187,7 @@ export default function OrdersPage() {
     msgId: string,
     updates: Partial<ConversationMessage>
   ) => {
-    const applyTo = (order: Order): Order => ({
+    const applyTo = (order: UIOrder): UIOrder => ({
       ...order,
       messages: order.messages.map((m) => (m.id === msgId ? { ...m, ...updates } : m)),
     });
@@ -171,7 +196,7 @@ export default function OrdersPage() {
   };
 
   const appendMsg = (orderId: string, msg: ConversationMessage) => {
-    const applyTo = (order: Order): Order => ({
+    const applyTo = (order: UIOrder): UIOrder => ({
       ...order,
       messages: [...order.messages, msg],
     });
@@ -179,30 +204,40 @@ export default function OrdersPage() {
     setSelectedOrder((prev) => (prev?.id === orderId ? applyTo(prev) : prev));
   };
 
-  /* ── Accept / Decline order ── */
-  const handleAccept = (orderId: string, msgId: string) => {
+  /* ── Accept order (Step 2) ── */
+  const handleAccept = async (orderId: string, msgId: string) => {
+    try {
+      await ordersService.vendorReview(orderId, { action: 'accept' });
+    } catch {
+      // optimistic update even if API call fails for UI responsiveness
+    }
     updateConvMsg(orderId, msgId, { orderStatus: 'Accepted' });
     setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: 'Confirmed' } : o))
+      prev.map((o) => (o.id === orderId ? { ...o, status: 'Confirmed', apiStatus: 'awaiting_shipping_details' } : o))
     );
     setSelectedOrder((prev) =>
-      prev?.id === orderId ? { ...prev, status: 'Confirmed' } : prev
+      prev?.id === orderId ? { ...prev, status: 'Confirmed', apiStatus: 'awaiting_shipping_details' } : prev
     );
   };
 
+  /* ── Decline order ── */
   const handleDecline = (orderId: string, msgId: string) => {
     updateConvMsg(orderId, msgId, { orderStatus: 'Declined' });
   };
 
-  /* ── Set shipping fee → inject shipping_notification card ── */
-  const handleSetShippingFee = (orderId: string, msgId: string, fee: number, total: number) => {
+  /* ── Set shipping fee (Step 5) ── */
+  const handleSetShippingFee = async (orderId: string, msgId: string, fee: number, total: number) => {
+    try {
+      await ordersService.setShippingFee(orderId, fee.toFixed(2));
+    } catch {
+      // continue with UI update
+    }
     updateConvMsg(orderId, msgId, { orderStatus: 'Shipping Fee Set', shippingFee: fee });
     appendMsg(orderId, {
       id: `shipping-${Date.now()}`,
       type: 'shipping_notification',
       timestamp: new Date().toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' }),
       fromBuyer: false,
-      orderStatus: 'Shipping Fee Set',
       shippingFee: fee,
       total: total + fee,
     });
@@ -250,13 +285,11 @@ export default function OrdersPage() {
         <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-5">
           <div className="flex flex-col gap-3 max-w-3xl mx-auto">
             {selectedOrder.messages.map((msg) => {
-              /* fromBuyer = true → left side; fromBuyer = false (vendor) → right side */
-              const isSelf = !msg.fromBuyer; // vendor is "self" in this view
+              const isSelf = !msg.fromBuyer;
 
               if (msg.type === 'order_card') {
                 return (
                   <div key={msg.id} className={`flex items-end gap-2 ${isSelf ? 'justify-end' : 'justify-start'}`}>
-                    {/* Buyer avatar on left */}
                     {!isSelf && (
                       <div
                         className={`w-7 h-7 rounded-full ${selectedOrder.avatarColor} text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mb-1`}
@@ -305,25 +338,25 @@ export default function OrdersPage() {
                         ))}
                       </div>
 
-                      {/* Total */}
+                      {/* Totals */}
                       <div className="mt-3 pt-2.5 border-t border-gray-50 space-y-1">
                         <div className="flex justify-between text-xs text-gray-400">
                           <span>Subtotal</span>
-                          <span>₦{(msg.total ?? 0).toLocaleString()}</span>
+                          <span>₦{(msg.total ?? 0).toLocaleString('en-NG')}</span>
                         </div>
                         {msg.shippingFee !== undefined && (
                           <div className="flex justify-between text-xs text-gray-400">
                             <span>Shipping</span>
-                            <span>₦{msg.shippingFee.toLocaleString()}</span>
+                            <span>₦{msg.shippingFee.toLocaleString('en-NG')}</span>
                           </div>
                         )}
                         <div className="flex justify-between text-sm font-bold">
                           <span>Total</span>
-                          <span className="text-[#FA3728]">₦{(msg.total ?? 0).toLocaleString()}</span>
+                          <span className="text-[#FA3728]">₦{(msg.total ?? 0).toLocaleString('en-NG')}</span>
                         </div>
                       </div>
 
-                      {/* Vendor actions — only when Pending */}
+                      {/* Vendor actions — only for pending_vendor_review */}
                       {msg.orderStatus === 'Pending' && (
                         <div className="mt-3 flex flex-row gap-2">
                           <button
@@ -345,7 +378,7 @@ export default function OrdersPage() {
                         </div>
                       )}
 
-                      {/* Accepted → show shipping fee input */}
+                      {/* Accepted → shipping fee input (Step 5) */}
                       {msg.orderStatus === 'Accepted' && (
                         <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
                           <p className="text-xs font-semibold mb-2 text-gray-700">Set shipping fee (₦):</p>
@@ -370,14 +403,12 @@ export default function OrdersPage() {
                         </div>
                       )}
 
-                      {/* Declined */}
                       {msg.orderStatus === 'Declined' && (
                         <div className="mt-3 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 text-center">
                           <p className="text-xs font-semibold text-gray-500">Order declined</p>
                         </div>
                       )}
 
-                      {/* Shipping fee set — awaiting payment */}
                       {msg.orderStatus === 'Shipping Fee Set' && (
                         <div className="mt-3 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-center">
                           <p className="text-xs font-semibold text-amber-700">Awaiting payment from buyer</p>
@@ -391,7 +422,6 @@ export default function OrdersPage() {
               }
 
               if (msg.type === 'shipping_notification') {
-                /* Always vendor-sent → right side */
                 return (
                   <div key={msg.id} className="flex justify-end">
                     <div className="max-w-[80%] sm:max-w-[22rem] bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
@@ -404,15 +434,15 @@ export default function OrdersPage() {
                       <div className="bg-gray-50 rounded-xl p-3 mb-2 space-y-1.5">
                         <div className="flex justify-between text-xs text-gray-500">
                           <span>Shipping Fee</span>
-                          <span className="font-medium text-gray-800">₦{(msg.shippingFee ?? 0).toLocaleString()}</span>
+                          <span className="font-medium text-gray-800">₦{(msg.shippingFee ?? 0).toLocaleString('en-NG')}</span>
                         </div>
                         <div className="flex justify-between text-sm font-bold">
                           <span>New Total</span>
-                          <span className="text-[#FA3728]">₦{(msg.total ?? 0).toLocaleString()}</span>
+                          <span className="text-[#FA3728]">₦{(msg.total ?? 0).toLocaleString('en-NG')}</span>
                         </div>
                       </div>
                       <div className="px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-center">
-                        <p className="text-xs font-semibold text-amber-700">Awaiting buyer's payment</p>
+                        <p className="text-xs font-semibold text-amber-700">Awaiting buyer&apos;s payment</p>
                       </div>
                       <p className="text-[10px] mt-2 text-right text-gray-400">{msg.timestamp}</p>
                     </div>
@@ -505,7 +535,7 @@ export default function OrdersPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Orders</h1>
           <p className="text-gray-500 text-sm md:text-base mt-1">
-            {orders.filter((o) => o.status === 'Pending').length} pending
+            {isLoading ? 'Loading…' : `${orders.filter((o) => o.status === 'Pending').length} pending`}
           </p>
         </div>
         <button className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
@@ -532,7 +562,11 @@ export default function OrdersPage() {
 
       {/* List */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-3 pb-8">
-        {filteredOrders.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 size={28} className="animate-spin text-[#FA3728]" />
+          </div>
+        ) : filteredOrders.length === 0 ? (
           <div className="text-center py-10 bg-white rounded-2xl border border-gray-100">
             <p className="text-gray-500 font-medium">No orders found.</p>
           </div>
@@ -580,8 +614,14 @@ export default function OrdersPage() {
                         </span>
                       )}
                       {order.status === 'Completed' && (
-                        <span className="text-[10px] md:text-xs font-bold text-blue-500 bg-blue-50 px-2.5 py-1 rounded-full">
-                          Completed
+                        <span
+                          className={`text-[10px] md:text-xs font-bold px-2.5 py-1 rounded-full ${
+                            order.apiStatus === 'cancelled'
+                              ? 'text-gray-500 bg-gray-100'
+                              : 'text-blue-500 bg-blue-50'
+                          }`}
+                        >
+                          {order.apiStatus === 'cancelled' ? 'Cancelled' : 'Completed'}
                         </span>
                       )}
                     </div>

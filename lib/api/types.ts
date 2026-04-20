@@ -56,37 +56,46 @@ export type BusinessCategory =
   | 'electronics'
   | 'other';
 
-// Product Types
-export interface Product {
+// Product Types (matches API ProductService schema)
+export type ItemType = 'product' | 'service';
+
+export interface ProductService {
   id: string;
-  vendor: string;
-  category: number;
-  name: string;
-  description: string;
+  owner: string;
+  owner_name: string;
+  title: string;
+  description?: string;
   price: string;
-  stock: number;
-  images?: string[];
-  is_active: boolean;
-  rating?: number;
-  reviews_count?: number;
+  tax_inclusive: boolean;
+  item_type: ItemType;
+  addons: AddOn[];
   created_at: string;
   updated_at: string;
+  average_rating: string;
+  review_count: string;
 }
 
-export interface ProductCreate {
-  category: number;
-  name: string;
-  description: string;
+// Backward-compat alias
+export type Product = ProductService;
+
+export interface ProductServiceCreate {
+  title: string;
+  description?: string;
   price: string;
-  stock: number;
+  tax_inclusive?: boolean;
+  item_type: ItemType;
+  // Included for UI and future backend support (API accepts but currently ignores these)
+  stock?: number;
+  category?: string;
   images?: File[];
 }
 
-// No content here, removing duplicate AddOn at previous lines 85-91
+// Backward-compat alias
+export type ProductCreate = ProductServiceCreate;
 
 // Category Types
 export interface Category {
-  id: string; // Updated from number to UUID string
+  id: string;
   name: string;
   description?: string;
   image?: string;
@@ -150,32 +159,60 @@ export interface TokenBlacklistRequest {
   refresh: string;
 }
 
-// Order Types
-export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+// Order Types (matches API Order schema)
+export type OrderStatus =
+  | 'pending_vendor_review'
+  | 'pending_customer_approval'
+  | 'awaiting_shipping_details'
+  | 'shipping_set'
+  | 'awaiting_payment'
+  | 'paid'
+  | 'shipped'
+  | 'delivered'
+  | 'disputed'
+  | 'completed'
+  | 'cancelled';
+
+export type ShippingType = 'pickup' | 'delivery';
 
 export interface Order {
   id: string;
-  user: string;
+  customer: string;
+  vendor: string;
+  vendor_name: string;
   status: OrderStatus;
+  shipping_type: ShippingType | null;
+  shipping_address: string | null;
+  shipping_fee: string;
+  grand_total: string;
   items: OrderItem[];
-  total_price: string;
-  shipping_address: string;
+  confirmation_code: string;
+  delivery_proof_image: string | null;
+  delivered_at: string | null;
   created_at: string;
-  updated_at: string;
 }
 
 export interface OrderItem {
-  id: string; // Updated to string (UUID)
-  order: string;
-  product: Product;
+  id: string;
+  product: string;
+  product_details: ProductService;
   quantity: number;
-  price: string;
-  selected_addons: AddOn[];
+  vendor_proposed_quantity: number | null;
+  active_quantity: string;
+  selected_addons: string[];
+  addon_details: AddOn[];
+  total_price: string;
 }
 
 export interface CreateOrderRequest {
-  shipping_address: string;
-  payment_method?: string;
+  target_type: 'cart' | 'subcart' | 'item';
+  target_id: string;
+}
+
+export interface OrderFilters {
+  status?: OrderStatus;
+  page?: number;
+  page_size?: number;
 }
 
 // Transaction Types
@@ -301,12 +338,6 @@ export interface ProductFilters {
   search?: string;
   is_active?: boolean;
   ordering?: 'price' | '-price' | 'created_at' | '-created_at' | 'name';
-  page?: number;
-  page_size?: number;
-}
-
-export interface OrderFilters {
-  status?: OrderStatus;
   page?: number;
   page_size?: number;
 }
