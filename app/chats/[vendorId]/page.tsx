@@ -238,12 +238,12 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
             <Link href="/chats" className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors text-gray-700">
               <ArrowLeft size={20} />
             </Link>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#FA3728]/10 flex items-center justify-center text-[#FA3728] font-bold">
+            <Link href={`/vendors/${vendorId}`} className="flex items-center gap-3 group">
+              <div className="w-10 h-10 rounded-full bg-[#FA3728]/10 flex items-center justify-center text-[#FA3728] font-bold group-hover:bg-[#FA3728]/20 transition-colors">
                 {vendorInitials}
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900 leading-tight truncate">{vendorName}</h1>
+                <h1 className="text-lg font-bold text-gray-900 leading-tight truncate group-hover:text-[#FA3728] transition-colors">{vendorName}</h1>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <p className="text-xs text-gray-500 font-medium tracking-wide uppercase">Vendor</p>
                   <div className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 rounded-full border border-blue-100">
@@ -252,9 +252,10 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                     </div>
                     <span className="text-[10px] text-blue-600 font-bold uppercase tracking-wide">Verified</span>
                   </div>
+                  <div className="text-gray-300 ml-1 group-hover:text-[#FA3728] transition-colors">›</div>
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </header>
@@ -369,14 +370,9 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                 ) : (
                   /* ── Order Card ── */
                   <div className="max-w-[80%] sm:max-w-[22rem] bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                    {/* Card header */}
+                    {/* Card header - REDESIGNED */}
                     <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-gray-50">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-[#FA3728]/10 text-[#FA3728] flex items-center justify-center text-[10px] font-bold">
-                          {vendorInitials}
-                        </div>
-                        <span className="font-semibold text-gray-900 text-xs">{message.vendor}</span>
-                      </div>
+                      <span className="font-bold text-gray-900 text-xs">Order Summary</span>
                       <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full ${
                         message.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-[#FA3728]/10 text-[#FA3728]'
                       }`}>
@@ -406,21 +402,21 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                       ))}
                     </div>
 
-                    {/* Totals */}
+                    {/* Totals - ACCESSIBILITY IMPROVED */}
                     <div className="mt-3 pt-2.5 border-t border-gray-50 space-y-1">
-                      <div className="flex justify-between text-xs text-gray-400">
+                      <div className="flex justify-between text-xs text-gray-600">
                         <span>Subtotal</span>
                         <span>₦{message.items.reduce((s, i) => s + i.price * i.quantity, 0).toLocaleString()}</span>
                       </div>
                       {message.shippingFee !== undefined && (
-                        <div className="flex justify-between text-xs text-gray-400">
+                        <div className="flex justify-between text-xs text-gray-600">
                           <span>Shipping</span>
                           <span>₦{message.shippingFee.toLocaleString()}</span>
                         </div>
                       )}
-                      <div className="flex justify-between text-sm font-bold">
-                        <span>Total</span>
-                        <span className="text-[#FA3728]">₦{message.total.toLocaleString()}</span>
+                      <div className="flex justify-between text-sm font-bold pt-0.5">
+                        <span className="text-gray-900">Total</span>
+                        <span className="text-gray-900">₦{message.total.toLocaleString()}</span>
                       </div>
                     </div>
 
@@ -447,8 +443,8 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                             </button>
                           </div>
                         ) : (
-                          <div className="px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-center">
-                            <p className="text-xs font-semibold text-amber-800">Awaiting vendor confirmation</p>
+                          <div className="px-3 py-3.5 bg-amber-50 rounded-lg border border-amber-100 text-center">
+                            <p className="text-xs font-semibold text-amber-800 tracking-tight">Awaiting vendor confirmation</p>
                           </div>
                         )}
                       </div>
@@ -546,11 +542,11 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
         </div>
       </main>
 
-      {/* ── Input ── */}
-      <footer className="bg-white border-t border-gray-100 p-3 sm:p-4 flex-shrink-0 shadow-[0_-4px_10px_rgba(0,0,0,0.02)] z-10">
-        <div className="max-w-3xl mx-auto">
-          <form onSubmit={handleSendMessage} className="flex items-end gap-2">
-            <div className="flex-1 bg-gray-50 border border-gray-200 rounded-3xl overflow-hidden focus-within:border-[#FA3728] focus-within:ring-1 focus-within:ring-[#FA3728] transition-all">
+      {/* ── Anchored Message Input ── */}
+      <footer className="bg-white border-t border-gray-100 flex-shrink-0 z-20 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] pb-[env(safe-area-inset-bottom)]">
+        <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3">
+          <form onSubmit={handleSendMessage} className="flex items-center gap-1.5">
+            <div className="flex-1 bg-gray-50 border border-gray-200 rounded-[24px] overflow-hidden focus-within:border-[#FA3728] focus-within:ring-1 focus-within:ring-[#FA3728]/20 transition-all">
               <textarea
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
@@ -558,17 +554,17 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); }
                 }}
                 placeholder="Type a message..."
-                className="w-full bg-transparent px-5 py-3.5 outline-none resize-none max-h-32 text-sm text-gray-800 placeholder-gray-400"
+                className="w-full bg-transparent px-5 py-3 outline-none resize-none max-h-32 text-[15px] leading-relaxed text-gray-800 placeholder-gray-400"
                 rows={1}
-                style={{ minHeight: '52px' }}
+                style={{ minHeight: '40px' }}
               />
             </div>
             <button
               type="submit"
               disabled={!newMessage.trim()}
-              className="w-[52px] h-[52px] bg-[#FA3728] text-white rounded-full flex items-center justify-center flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#E31B23] transition-colors"
+              className="w-10 h-10 bg-[#FA3728] text-white rounded-full flex items-center justify-center flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#E31B23] transition-all active:scale-90 shadow-sm"
             >
-              <Send size={20} className="ml-1" />
+              <Send size={16} className="translate-x-[1px] translate-y-[-1px]" />
             </button>
           </form>
         </div>

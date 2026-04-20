@@ -132,15 +132,15 @@ export default function VendorShopPage({ params }: { params: Promise<{ vendorId:
             <p className="text-sm text-gray-700 mb-3 font-medium leading-relaxed max-w-xl">{MOCK_VENDOR.bio}</p>
             
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-1">
-                 <a href={`tel:${MOCK_VENDOR.phone.replace(/\\s/g, '')}`} className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-[#FA3728] transition-colors font-semibold">
+                 <a href={`tel:${MOCK_VENDOR.phone.replace(/\s/g, '')}`} className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-[#FA3728] transition-colors font-semibold py-1 rounded-sm">
                     <Phone size={14} className="text-[#FA3728]" /> {MOCK_VENDOR.phone}
                  </a>
-                 <a href={`mailto:${MOCK_VENDOR.email}`} className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-[#FA3728] transition-colors font-semibold">
-                    <Mail size={14} className="text-[#FA3728]" /> Email
+                 <a href={`mailto:${MOCK_VENDOR.email}`} className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-[#FA3728] transition-colors font-semibold py-1 rounded-sm">
+                    <Mail size={14} className="text-[#FA3728]" /> {MOCK_VENDOR.email}
                  </a>
-                 <div className="flex items-center gap-1.5 text-xs text-gray-600 font-semibold">
+                 <a href={`https://maps.google.com/?q=${MOCK_VENDOR.location}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-[#FA3728] transition-colors font-semibold py-1 rounded-sm">
                     <MapPin size={14} className="text-[#FA3728]" /> {toTitleCase(MOCK_VENDOR.location)}
-                 </div>
+                 </a>
             </div>
           </div>
         </div>
@@ -197,29 +197,30 @@ export default function VendorShopPage({ params }: { params: Promise<{ vendorId:
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-gray-100 transition-all duration-200 group flex flex-col h-full"
               >
-                <div className="relative aspect-[4/3] w-full bg-gray-50">
+                <div className="relative aspect-[4/3] w-full bg-gray-50 flex items-center justify-center">
                   <img 
                     src={product.image} 
                     alt={product.name} 
                     className="w-full h-full object-contain mix-blend-multiply group-hover:scale-[1.02] transition-transform duration-300 p-3 sm:p-5"
-                    onError={(e) => { e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f3f4f6" width="200" height="200"/%3E%3C/svg%3E' }}
+                    onError={(e) => { e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100%25" height="100%25" viewBox="0 0 24 24" fill="none" stroke="%239ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"%3E%3Crect x="3" y="3" width="18" height="18" rx="2" ry="2"/%3E%3Ccircle cx="8.5" cy="8.5" r="1.5"/%3E%3Cpolyline points="21 15 16 10 5 21"/%3E%3C/svg%3E'; e.currentTarget.className = 'w-1/3 h-1/3 object-contain opacity-40'; }}
                   />
                 </div>
 
-                <div className="p-3 sm:p-4 flex flex-col flex-grow bg-white border-t border-gray-50/50 relative">
-                  <h3 className="font-semibold text-xs sm:text-sm text-gray-800 mb-1 line-clamp-2 leading-snug pr-8">{toTitleCase(product.name)}</h3>
+                <div className="p-3 sm:p-4 flex flex-col flex-grow bg-white border-t border-gray-50/50">
+                  <h3 className="font-semibold text-xs sm:text-sm text-gray-800 mb-1 line-clamp-2 leading-snug">{product.name}</h3>
                   <p className="text-[10px] sm:text-xs text-gray-500 mb-2 line-clamp-2">{product.description}</p>
-                  <div className="mt-auto pt-1">
-                     <span className="font-extrabold text-sm sm:text-[15px] text-[#FA3728]">₦{product.price.toLocaleString()}</span>
+                  
+                  {/* Footer Layout with Flexbox */}
+                  <div className="mt-auto pt-2 flex justify-between items-center bg-white z-10 gap-2">
+                     <span className="font-extrabold text-sm sm:text-[15px] text-[#FA3728] truncate pr-1">₦{product.price.toLocaleString()}</span>
+                     <button 
+                       className="w-8 h-8 rounded-full bg-[#FA3728] text-white flex items-center justify-center shadow-sm hover:bg-[#E31B23] active:scale-95 transition-all duration-200 flex-shrink-0"
+                       onClick={(e) => { e.preventDefault(); console.log('Added to cart'); }}
+                       aria-label="Add to cart"
+                     >
+                       <Plus size={16} strokeWidth={2.5} />
+                     </button>
                   </div>
-
-                  <button 
-                    className="absolute bottom-3 right-3 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FA3728] text-white flex items-center justify-center shadow-md hover:bg-[#E31B23] active:scale-95 transition-all duration-200"
-                    onClick={(e) => { e.preventDefault(); console.log('Added to cart'); }}
-                    aria-label="Add to cart"
-                  >
-                    <Plus size={18} strokeWidth={2.5} />
-                  </button>
                 </div>
               </motion.div>
             ))}
@@ -237,6 +238,17 @@ export default function VendorShopPage({ params }: { params: Promise<{ vendorId:
         </div>
         
       </div>
+
+      {/* Floating Return to Chat Button */}
+      <Link
+        href={`/chats/${vendorId}`}
+        className="fixed bottom-6 right-6 bg-[#FA3728] text-white px-5 py-3 sm:py-3.5 rounded-full flex items-center justify-center gap-2.5 shadow-lg hover:shadow-xl hover:bg-[#E31B23] hover:-translate-y-1 transition-all z-50 font-bold group"
+        style={{ borderRadius: '9999px' }}
+      >
+        <MessageCircle size={20} className="group-hover:scale-110 transition-transform" />
+        <span className="hidden sm:inline">Message {shopName}</span>
+        <span className="sm:hidden">Message</span>
+      </Link>
     </div>
   );
 }

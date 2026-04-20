@@ -16,11 +16,11 @@ export default function ChatsListPage() {
       time: "20:51"
     },
     {
-      id: "naturalglow-skincare",
-      vendor: "NaturalGlow Skincare",
+      id: "gadget-hub",
+      vendor: "Gadget Hub",
       avatarBg: "bg-blue-100",
       avatarText: "text-blue-600",
-      initials: "N",
+      initials: "G",
       lastMessage: "Order — pending",
       time: "20:51"
     }

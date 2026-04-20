@@ -268,7 +268,7 @@ export default function CartPage() {
                         {/* Product Details */}
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-sm text-gray-800 line-clamp-2 mb-1">
-                            {item.product_details.name}
+                            {item.product_details.title}
                           </h4>
                           <p className="font-semibold text-sm text-[#FA3728]">₦{parseFloat(item.total_price).toLocaleString()}</p>
                           
