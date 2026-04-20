@@ -215,8 +215,8 @@ export default function VendorsPage() {
                   placeholder="Search vendors by name or category..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ border: '2px solid #D1D5DB', backgroundColor: '#fff', color: '#111827' }}
-                  className="w-full pl-12 pr-4 py-2.5 text-sm rounded-full outline-none transition-all focus:!border-[#FA3728]"
+                  style={{ border: '1px solid #D1D5DB', backgroundColor: '#fff', color: '#111827' }}
+                  className="w-full pl-12 pr-4 py-2.5 text-sm rounded-full outline-none transition-all focus:!border-[#FA3728] placeholder:text-gray-400/60"
                 />
               </div>
             </div>
@@ -238,7 +238,7 @@ export default function VendorsPage() {
             </Link>
             <Link
               href="/vendors"
-              className="text-[#FA3728] border-b-2 border-[#FA3728] font-semibold pb-1 whitespace-nowrap"
+              className="text-[#FA3728] border-b border-[#FA3728]/70 font-semibold pb-1 whitespace-nowrap"
             >
               Vendors
             </Link>
@@ -266,11 +266,10 @@ export default function VendorsPage() {
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-1.5 text-xs rounded-full font-semibold whitespace-nowrap transition-all ${
-                    selectedCategory === category
+                  className={`px-4 py-1.5 text-xs rounded-full font-semibold whitespace-nowrap transition-all ${selectedCategory === category
                       ? 'bg-[#FA3728] text-white shadow-md'
                       : 'bg-white text-gray-600 border border-gray-100 hover:border-[#FA3728]/30'
-                  }`}
+                    }`}
                 >
                   {category}
                 </button>
@@ -302,7 +301,7 @@ export default function VendorsPage() {
                       </span>
                     </div>
                     {/* Heart/Follow Overlay */}
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();

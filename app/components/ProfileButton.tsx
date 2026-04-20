@@ -17,14 +17,14 @@ export default function ProfileButton() {
       const firstPart = (user.first_name || user.username || '');
       const firstInitial = firstPart.charAt(0);
       let lastInitial = (user.last_name || '').charAt(0);
-      
+
       if (!lastInitial && firstPart.includes(' ')) {
         const parts = firstPart.trim().split(/\s+/);
         if (parts.length > 1) {
           lastInitial = parts[parts.length - 1].charAt(0);
         }
       }
-      
+
       setUserInitial(`${firstInitial}${lastInitial}`.toUpperCase().trim());
     }
   }, []);

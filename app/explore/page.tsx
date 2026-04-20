@@ -220,8 +220,8 @@ export default function ExplorePage() {
                       handleSearch(searchQuery);
                     }
                   }}
-                  style={{ border: '2px solid #D1D5DB', backgroundColor: '#fff', color: '#111827' }}
-                  className="w-full pl-12 pr-4 py-2.5 text-sm rounded-full outline-none transition-all focus:!border-[#FA3728]"
+                  style={{ border: '1px solid #D1D5DB', backgroundColor: '#fff', color: '#111827' }}
+                  className="w-full pl-12 pr-4 py-2.5 text-sm rounded-full outline-none transition-all focus:!border-[#FA3728] placeholder:text-gray-400/60"
                 />
               </div>
             </div>
@@ -231,7 +231,7 @@ export default function ExplorePage() {
           <div className="flex items-center gap-4 sm:gap-8 pb-3 overflow-x-auto scrollbar-hide">
             <Link
               href="/explore"
-              className="text-[#FA3728] border-b-2 border-[#FA3728] font-semibold pb-1 whitespace-nowrap text-sm sm:text-base"
+              className="text-[#FA3728] border-b border-[#FA3728]/70 font-semibold pb-1 whitespace-nowrap text-sm sm:text-base"
             >
               Products
             </Link>
@@ -259,11 +259,10 @@ export default function ExplorePage() {
             <div className="flex items-center gap-3 relative">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border transition-all ${
-                  showFilters 
-                    ? 'border-[#FA3728] bg-[#FA3728]/5 text-[#FA3728] shadow-sm' 
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border transition-all ${showFilters
+                    ? 'border-[#FA3728] bg-[#FA3728]/5 text-[#FA3728] shadow-sm'
                     : 'border-gray-200 bg-white text-gray-700 hover:border-[#FA3728]/30'
-                }`}
+                  }`}
               >
                 <SlidersHorizontal size={18} />
                 <span className="font-bold text-sm">Filters</span>
@@ -280,7 +279,7 @@ export default function ExplorePage() {
                   >
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-bold text-gray-900">Categories</h3>
-                      <button 
+                      <button
                         onClick={() => setSelectedCategories([])}
                         className="text-[10px] font-bold text-[#FA3728] hover:underline"
                       >
@@ -298,20 +297,18 @@ export default function ExplorePage() {
                         "Men's Fashion",
                         "Baby and Kids"
                       ].map((cat) => (
-                        <label 
-                          key={cat} 
-                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${
-                            selectedCategories.includes(cat)
+                        <label
+                          key={cat}
+                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${selectedCategories.includes(cat)
                               ? 'bg-[#FA3728]/5 text-[#FA3728]'
                               : 'hover:bg-gray-50 text-gray-600'
-                          }`}
+                            }`}
                         >
                           <span className="text-xs font-semibold">{cat}</span>
-                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                            selectedCategories.includes(cat)
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedCategories.includes(cat)
                               ? 'bg-[#FA3728] border-[#FA3728]'
                               : 'border-gray-300'
-                          }`}>
+                            }`}>
                             {selectedCategories.includes(cat) && <Check size={10} className="text-white" />}
                           </div>
                           <input
