@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
-// Base URL for the API
-export const API_BASE_URL = 'https://api.shopam.net';
+// Base URL for the API — empty string routes through Next.js rewrites (/api/* → https://api.shopam.net/api/*)
+export const API_BASE_URL = '';
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
@@ -17,11 +17,11 @@ apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // Get token from localStorage
     const token = localStorage.getItem('access_token');
-    
+
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return config;
   },
   (error: AxiosError) => {
@@ -44,9 +44,9 @@ apiClient.interceptors.response.use(
       try {
         // Try to refresh token
         const refreshToken = localStorage.getItem('refresh_token');
-        
+
         if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/api/accounts/token/refresh/`, {
+          const response = await axios.post(`/api/accounts/token/refresh/`, {
             refresh: refreshToken,
           });
 
@@ -83,9 +83,15 @@ export const API_ENDPOINTS = {
     LOGIN: '/api/accounts/login/',
     LOGOUT: '/api/accounts/logout/',
     PROFILE: '/api/accounts/profile/',
+    PROFILE_UPDATE: '/api/accounts/profile/update/',
+    PROFILE_DEACTIVATE: '/api/accounts/profile/deactivate/',
     PASSWORD_CHANGE: '/api/accounts/password/change/',
+    FORGOT_PASSWORD: '/api/accounts/password/forgot/',
+    RESET_PASSWORD: '/api/accounts/password/reset',
+    VERIFY_EMAIL: '/api/accounts/verify-email',
+    TOKEN_REFRESH: '/api/accounts/token/refresh/',
   },
-  
+
   // Products
   PRODUCTS: {
     LIST: '/api/commerceproducts/',
@@ -116,13 +122,46 @@ export const API_ENDPOINTS = {
     LIST: '/api/commerceorders/',
     PLACE: '/api/commerceorders/place/',
     FILTER: '/api/commerceorders/filter',
+    HISTORY: '/api/commerceorders/history/',
     DETAIL: (id: string) => `/api/commerceorders/${id}/`,
     UPDATE: (id: string) => `/api/commerceorders/${id}/`,
     VENDOR_REVIEW: (id: string) => `/api/commerceorders/${id}/vendor-review/`,
+    CUSTOMER_APPROVE: (id: string) => `/api/commerceorders/${id}/customer-approve/`,
+    SET_SHIPPING: (id: string) => `/api/commerceorders/${id}/set-shipping/`,
     SET_SHIPPING_FEE: (id: string) => `/api/commerceorders/${id}/set-shipping-fee/`,
+    PAYMENT_DECISION: (id: string) => `/api/commerceorders/${id}/payment-decision/`,
     START_DELIVERY: (id: string) => `/api/commerceorders/${id}/start-delivery/`,
+    CONFIRM_HANDOVER: (id: string) => `/api/commerceorders/${id}/confirm-handover/`,
+    RAISE_DISPUTE: (id: string) => `/api/commerceorders/${id}/dispute/`,
   },
-  
+
+  // Payments (Monnify)
+  PAYMENTS: {
+    INIT: '/api/payments/checkout/init/',
+    DIRECT_CHARGE: '/api/payments/direct-charge/',
+    BANK_TRANSFER: '/api/payments/bank-transfer/',
+    AUTHORIZE_OTP: '/api/payments/authorize-otp/',
+    HISTORY: '/api/payments/history/',
+    PENDING: '/api/payments/pending/',
+    STATUS: (txRef: string) => `/api/payments/status/${txRef}/`,
+    DETAIL: (txRef: string) => `/api/payments/detail/${txRef}/`,
+  },
+
+  // Notifications
+  NOTIFICATIONS: {
+    LIST: '/api/notifications/notifications/',
+    DETAIL: (id: number) => `/api/notifications/notifications/${id}/`,
+    MARK_READ: (id: number) => `/api/notifications/notifications/${id}/mark_read/`,
+    MARK_ALL_READ: '/api/notifications/notifications/mark_all_read/',
+  },
+
+  // Messages / DM
+  MESSAGES: {
+    LIST: '/api/posts/messages/',
+    THREAD: '/api/posts/messages/thread/',
+    DETAIL: (id: string) => `/api/posts/messages/${id}/`,
+  },
+
   // Reviews
   REVIEWS: {
     LIST: '/api/commercereviews/',
@@ -131,7 +170,7 @@ export const API_ENDPOINTS = {
     UPDATE: (id: number) => `/api/commercereviews/${id}/`,
     DELETE: (id: number) => `/api/commercereviews/${id}/`,
   },
-  
+
   // Social - Posts
   POSTS: {
     LIST: '/api/socialposts/',
@@ -140,13 +179,13 @@ export const API_ENDPOINTS = {
     UPDATE: (id: number) => `/api/socialposts/${id}/`,
     DELETE: (id: number) => `/api/socialposts/${id}/`,
   },
-  
+
   // Social - Likes
   LIKES: {
     CREATE: '/api/sociallikes/',
     DELETE: (id: number) => `/api/sociallikes/${id}/`,
   },
-  
+
   // Social - Comments
   COMMENTS: {
     LIST: '/api/socialcomments/',
@@ -154,13 +193,13 @@ export const API_ENDPOINTS = {
     UPDATE: (id: number) => `/api/socialcomments/${id}/`,
     DELETE: (id: number) => `/api/socialcomments/${id}/`,
   },
-  
+
   // Social - Follows
   FOLLOWS: {
     CREATE: '/api/socialfollows/',
     DELETE: (id: number) => `/api/socialfollows/${id}/`,
   },
-  
+
   // Transactions
   TRANSACTIONS: {
     LIST: '/api/commercetransactions/',

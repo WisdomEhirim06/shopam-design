@@ -383,66 +383,63 @@ export default function ExplorePage() {
               <p className="text-gray-600 text-lg">No products found</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
               {products.map((product, index) => (
                 <motion.div
                   key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group"
+                  className="group cursor-pointer p-2.5 sm:p-3 rounded-2xl border border-gray-100/80 hover:border-[#FA3728]/20 transition-all hover:bg-white hover:shadow-xl shadow-sm bg-white"
                 >
                   <Link href={`/products/${product.id}`}>
-                    {/* Product Image */}
-                    <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden cursor-pointer">
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#FA3728]/5 to-[#E31B23]/5 flex items-center justify-center">
-                        <ShoppingCart size={40} className="text-gray-300" />
+                    {/* Product Image Area (STRICT SQUARE) */}
+                    <div className="relative aspect-square rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 shadow-sm border border-gray-100 overflow-hidden mb-3">
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#FA3728]/5 to-transparent flex items-center justify-center text-gray-300">
+                        <ShoppingCart size={32} className="opacity-40" />
                       </div>
 
                       {/* Rating Badge */}
                       {parseFloat(product.average_rating) > 0 && (
-                        <div className="absolute bottom-2 right-2">
-                          <div className="px-2 py-1 bg-white/95 backdrop-blur-sm rounded-full text-xs font-semibold flex items-center gap-1">
-                            <Star size={12} className="text-amber-400 fill-amber-400" />
+                        <div className="absolute bottom-2 left-2">
+                          <div className="px-2 py-0.5 bg-white/95 backdrop-blur-sm rounded-full text-[10px] font-bold flex items-center gap-1 shadow-sm border border-gray-50">
+                            <Star size={10} className="text-amber-500 fill-amber-500" />
                             {parseFloat(product.average_rating).toFixed(1)}
                           </div>
                         </div>
                       )}
                     </div>
 
-                    {/* Product Info */}
-                    <div className="p-3 md:p-4">
-                      <p className="text-xs text-gray-500 mb-1 truncate">
+                    {/* Product Info Section */}
+                    <div className="px-1">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <h3 className="font-bold text-gray-900 text-xs sm:text-sm truncate group-hover:text-[#FA3728] transition-colors">
+                          {product.title}
+                        </h3>
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-2 truncate">
                         {product.owner_name || 'ShopAm Vendor'}
                       </p>
-                      <h3 className="font-semibold text-sm md:text-base text-gray-900 mb-2 line-clamp-2 group-hover:text-[#FA3728] transition-colors min-h-[2.5rem]">
-                        {product.title}
-                      </h3>
 
-                      <div className="flex items-center gap-2 mb-2">
-                        <p className="text-lg md:text-xl font-bold text-[#FA3728]">
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="text-sm sm:text-base font-black text-[#FA3728]">
                           ₦{parseFloat(product.price).toLocaleString()}
                         </p>
-                      </div>
 
-                      {parseInt(product.review_count) > 0 && (
-                        <p className="text-xs text-gray-500">
-                          ({product.review_count} reviews)
-                        </p>
-                      )}
+                        {/* Small Add to Cart Icon Button */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            addToCart(product.id);
+                          }}
+                          className="p-1.5 bg-[#FA3728]/10 hover:bg-[#FA3728] text-[#FA3728] hover:text-white rounded-lg transition-colors flex items-center justify-center"
+                        >
+                          <ShoppingCart size={14} />
+                        </button>
+                      </div>
                     </div>
                   </Link>
-
-                  {/* Add to Cart Button */}
-                  <div className="px-3 pb-3">
-                    <button
-                      onClick={() => addToCart(product.id)}
-                      className="w-full py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
-                    >
-                      <ShoppingCart size={16} />
-                      Add to Cart
-                    </button>
-                  </div>
                 </motion.div>
               ))}
             </div>

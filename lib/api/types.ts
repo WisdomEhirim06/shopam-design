@@ -24,8 +24,25 @@ export interface VendorRegister {
 }
 
 export interface LoginRequest {
-  username: string; // Can be username or email
+  email: string;
   password: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  reset_token: string;
+  password: string;
+}
+
+export interface UpdateProfileRequest {
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  username?: string;
 }
 
 export interface LoginResponse {
@@ -346,4 +363,96 @@ export interface PostFilters {
   vendor?: string;
   page?: number;
   page_size?: number;
+}
+
+// Payment Types
+export type PaymentStatus = 'pending' | 'success' | 'failed' | 'cancelled';
+
+export interface Payment {
+  id: string;
+  order: string;
+  amount: string;
+  status: PaymentStatus;
+  tx_ref: string;
+  payment_method: string;
+  created_at: string;
+}
+
+export interface CheckoutInitRequest {
+  order_id: string;
+}
+
+export interface CheckoutInitResponse {
+  checkout_url: string;
+  transaction_reference: string;
+}
+
+export interface DirectCardChargeRequest {
+  transaction_reference: string;
+  number: string;
+  expiryMonth: string;
+  expiryYear: string;
+  cvv: string;
+  pin?: string;
+}
+
+export interface BankTransferInitRequest {
+  transaction_reference: string;
+  bank_code?: string;
+}
+
+export interface OTPAuthorizeRequest {
+  transaction_reference: string;
+  token_id: string;
+  token: string;
+}
+
+// Order flow step types
+export interface SetShippingRequest {
+  shipping_type: 'delivery' | 'pickup';
+  shipping_address?: string;
+}
+
+export interface CustomerApprovalRequest {
+  action: 'accept' | 'reject';
+}
+
+export interface CustomerPaymentDecisionRequest {
+  action: 'pay' | 'cancel';
+}
+
+export interface ConfirmHandoverRequest {
+  code: string;
+}
+
+export interface RaiseDisputeRequest {
+  reason: string;
+}
+
+// Message / Chat Types
+export interface Message {
+  id: string;
+  sender: string;
+  recipient: string;
+  content: string;
+  is_edited: boolean;
+  created_at: string;
+  can_be_edited: string;
+}
+
+export interface SendMessageRequest {
+  recipient: string;
+  content: string;
+}
+
+// Notification Types
+export interface Notification {
+  id: number;
+  recipient: string;
+  actor: UserProfile;
+  verb: string;
+  target_type: string;
+  target_object_id: number | null;
+  is_read: boolean;
+  created_at: string;
 }

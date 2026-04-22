@@ -4,8 +4,9 @@ import { useState, useRef, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Send, MapPin, Truck, CreditCard, Building2, X, Check, CheckCircle2, Loader2 } from 'lucide-react';
-import { authService } from '@/lib/api';
+import { ArrowLeft, Send, MapPin, Truck, CreditCard, Building2, X, Check, CheckCircle2, Loader2, RefreshCcw } from 'lucide-react';
+import { authService, ordersService, messagesService, paymentsService } from '@/lib/api';
+import type { Order } from '@/lib/api';
 
 /* ─────────────── Types ─────────────── */
 type MessageItem = {
@@ -16,7 +17,7 @@ type MessageItem = {
 };
 
 type Message = {
-  id: number;
+  id: string | number;
   type: 'order' | 'text' | 'shipping_notification' | 'payment_success';
   sender: 'user' | 'vendor';
   vendor: string;
@@ -28,6 +29,7 @@ type Message = {
   address?: string;
   time: string;
   text?: string;
+  created_at?: string;
 };
 
 /* ─────────────── Card Input Helpers ─────────────── */
@@ -43,35 +45,19 @@ function formatExpiry(val: string) {
 /* ─────────────── Main Component ─────────────── */
 export default function VendorChatPage({ params }: { params: Promise<{ vendorId: string }> }) {
   const unwrappedParams = use(params);
-  const vendorId = unwrappedParams.vendorId;
+  const orderId = unwrappedParams.vendorId; // The ID is actually the orderId now!
   const router = useRouter();
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      type: 'order',
-      sender: 'user',
-      vendor: 'Mama Nkechi Kitchen',
-      status: 'Pending',
-      items: [
-        {
-          name: 'Jollof Rice Platter',
-          price: 3500,
-          quantity: 1,
-          image: 'https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?auto=format&fit=crop&q=80&w=600'
-        }
-      ],
-      total: 3500,
-      time: '20:44'
-    },
-  ]);
-
+  const [order, setOrder] = useState<Order | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isVendor, setIsVendor] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   /* ── Payment state ── */
-  const [paymentTargetId, setPaymentTargetId] = useState<number | null>(null);
+  const [checkoutId, setCheckoutId] = useState<string>('');
   const [showPaymentSheet, setShowPaymentSheet] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank' | null>(null);
 
@@ -90,12 +76,14 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
-      router.push(`/auth/user-signin?redirect=/chats/${vendorId}`);
+      router.push(`/auth/user-signin?redirect=/chats/${orderId}`);
       return;
     }
-    const currentUser = authService.getCurrentUser();
-    setIsVendor(currentUser?.is_vendor || false);
-  }, [router, vendorId]);
+    const user = authService.getCurrentUser();
+    setCurrentUser(user);
+    setIsVendor(user?.is_vendor || false);
+    refreshOrder();
+  }, [router, orderId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -104,98 +92,219 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
   /* Cleanup countdown on unmount */
   useEffect(() => () => { if (countdownRef.current) clearInterval(countdownRef.current); }, []);
 
-  const vendorName = vendorId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  const vendorInitials = vendorId.charAt(0).toUpperCase();
-
-  const updateMsg = (msgId: number, newStatus: string, updates: Partial<Message> = {}) => {
-    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, status: newStatus, ...updates } : m));
+  const refreshOrder = async () => {
+    try {
+      setIsLoading(true);
+      const fetchedOrder = await ordersService.getOrder(orderId);
+      setOrder(fetchedOrder);
+      
+      // We will also fetch textual thread (between vendor and user).
+      // Find the ID of the other user.
+      const otherUserId = currentUser?.is_vendor ? fetchedOrder.customer : fetchedOrder.vendor;
+      let textThreads: any[] = [];
+      try {
+        if (otherUserId) {
+          textThreads = await messagesService.getThread(otherUserId);
+        }
+      } catch (err) {
+        // Ignored API issue for messages to allow order completion
+      }
+      
+      buildMessagesUI(fetchedOrder, textThreads);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-    setMessages(prev => [...prev, {
-      id: Date.now(),
-      type: 'text',
-      sender: 'user',
-      vendor: vendorName,
+  const buildMessagesUI = (o: Order, textThreads: any[]) => {
+    const systemMsgs: Message[] = [];
+    const vName = o.vendor_name || 'Vendor';
+    
+    // Evaluate logic for status
+    let card1Status = 'Pending'; // 'pending_vendor_review'
+    if (['pending_customer_approval', 'awaiting_shipping_details', 'awaiting_payment', 'paid', 'shipped', 'delivered', 'completed'].includes(o.status)) {
+      card1Status = 'Accepted';
+    }
+    if (o.shipping_address) {
+      card1Status = 'Delivery Details Set';
+    }
+    if (o.status === 'paid' || o.status === 'shipped' || o.status === 'delivered') {
+      card1Status = 'Paid';
+    }
+
+    // Card 1: Order summary
+    systemMsgs.push({
+      id: 'order_card',
+      type: 'order',
+      sender: 'user', // customer sent
+      vendor: vName,
+      status: card1Status,
+      items: o.items.map(i => ({
+        name: i.product_details.title,
+        price: Number(i.product_details.price),
+        quantity: i.quantity,
+        image: (i.product_details as any).images?.[0]?.image
+      })),
+      total: Number(o.grand_total) - Number(o.shipping_fee || 0),
+      shippingFee: o.shipping_fee ? Number(o.shipping_fee) : undefined,
+      time: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      address: o.shipping_address || undefined,
+      created_at: o.created_at,
+    });
+
+    // Card 2: Shipping Notification
+    if (o.shipping_fee && Number(o.shipping_fee) > 0) {
+      let shipStatus = 'Awaiting Payment';
+      if (['paid', 'shipped', 'delivered', 'completed'].includes(o.status)) {
+        shipStatus = 'Paid';
+      }
+      systemMsgs.push({
+        id: 'shipping_card',
+        type: 'shipping_notification',
+        sender: 'vendor',
+        vendor: vName,
+        status: shipStatus,
+        items: [],
+        total: Number(o.grand_total),
+        shippingFee: Number(o.shipping_fee),
+        time: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        created_at: o.created_at, // Use proper timestamp if available
+      });
+    }
+
+    // Card 3: Payment Success
+    if (['paid', 'shipped', 'delivered', 'completed'].includes(o.status)) {
+      systemMsgs.push({
+        id: 'payment_success_card',
+        type: 'payment_success',
+        sender: 'user',
+        vendor: vName,
+        status: 'Paid',
+        items: [],
+        total: 0,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        created_at: new Date().toISOString()
+      });
+    }
+
+    // Append Text Threads
+    const textMsgs: Message[] = textThreads.map(msg => ({
+      id: msg.id,
+      type: 'text' as const,
+      sender: msg.sender_id === currentUser?.id ? 'user' : 'vendor',
+      vendor: vName,
       status: '',
       items: [],
       total: 0,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      text: newMessage
-    }]);
-    setNewMessage('');
+      time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      text: msg.content,
+      created_at: msg.created_at,
+    }));
+
+    // Sort all by time
+    const sorted = [...systemMsgs, ...textMsgs].sort((a, b) => {
+      if (!a.created_at || !b.created_at) return 0;
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
+
+    setMessages(sorted);
   };
 
-  /* ── Shipping fee set → inject notification card from vendor ── */
-  const handleSetShippingFee = (msgId: number, fee: number, total: number) => {
-    updateMsg(msgId, 'Shipping Fee Set', { shippingFee: fee, total: total + fee });
-    setMessages(prev => [...prev, {
-      id: Date.now(),
-      type: 'shipping_notification',
-      sender: 'vendor',
-      vendor: vendorName,
-      status: 'Awaiting Payment',
-      items: [],
-      total: total + fee,
-      shippingFee: fee,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    }]);
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !order) return;
+    try {
+      const otherUserId = isVendor ? order.customer : order.vendor;
+      await messagesService.sendMessage({ recipient: otherUserId, content: newMessage });
+      setNewMessage('');
+      refreshOrder();
+    } catch(e) {
+      console.error(e);
+    }
   };
 
-  /* ── Open payment sheet ── */
-  const openPayment = (msgId: number) => {
-    setPaymentTargetId(msgId);
-    setShowPaymentSheet(true);
-    setPaymentMethod(null);
-    setCardStep(null);
-    setBankStep(null);
+  /* ────────────────────────────────────────────────────────────────────────── */
+  /* API WRAPPERS for Order transitions */
+  /* ────────────────────────────────────────────────────────────────────────── */
+
+  const handleVendorAccept = async () => {
+    try { setIsLoading(true); await ordersService.vendorReview(orderId, { accepted: true }); await refreshOrder(); } catch(e) { console.error(e); setIsLoading(false);}
   };
 
-  /* ── Decline shipping ── */
-  const handleDeclineShipping = (msgId: number) => {
-    updateMsg(msgId, 'Declined');
+  const handleVendorDecline = async () => {
+    try { setIsLoading(true); await ordersService.vendorReview(orderId, { accepted: false, rejection_reason: 'Declined' }); await refreshOrder(); } catch(e) { console.error(e); setIsLoading(false);}
   };
 
-  /* ── Card payment ── */
+  const handleSetDeliveryAddress = async (msgId: string | number) => {
+    const address = (document.getElementById(`address-${msgId}`) as HTMLInputElement)?.value;
+    if (!address) return;
+    try { setIsLoading(true); await ordersService.setShipping(orderId, { shipping_type: 'delivery', shipping_address: address }); await refreshOrder(); } catch(e) { console.error(e); setIsLoading(false);}
+  };
+
+  const handleSetShippingFee = async (msgId: string | number) => {
+    const fee = parseInt((document.getElementById(`fee-${msgId}`) as HTMLInputElement)?.value || '0');
+    if (fee <= 0) return;
+    try { setIsLoading(true); await ordersService.setShippingFee(orderId, fee.toString()); await refreshOrder(); } catch(e) { console.error(e); setIsLoading(false);}
+  };
+
+  const openPayment = async () => {
+    try {
+      const res = await paymentsService.initCheckout({ order_id: orderId });
+      setCheckoutId((res as any).checkout_id || 'dummy_checkout_id');
+      setShowPaymentSheet(true);
+      setPaymentMethod(null);
+      setCardStep(null);
+      setBankStep(null);
+    } catch(e) {
+      console.error(e);
+      alert('Error initializing checkout');
+    }
+  };
+
   const handleCardPay = () => {
     if (!cardNumber || !expiry || !cvv) return;
+    // Real implementation would submit to stripe/paystack using checkoutId.
     setCardStep('otp');
   };
 
-  const handleOtpChange = (val: string, idx: number) => {
-    const digit = val.replace(/\D/g, '').slice(-1);
-    const next = [...otp];
-    next[idx] = digit;
-    setOtp(next);
-    if (digit && idx < 5) otpRefs.current[idx + 1]?.focus();
-  };
-
-  const handleOtpKeyDown = (e: React.KeyboardEvent, idx: number) => {
-    if (e.key === 'Backspace' && !otp[idx] && idx > 0) otpRefs.current[idx - 1]?.focus();
-  };
-
-  const handleVerifyOtp = () => {
-    if (otp.every(d => d)) setCardStep('success');
+  const handleVerifyOtp = async () => {
+    if (otp.every(d => d)) {
+      try {
+         setIsLoading(true);
+         // Process dummy direct charge via endpoints
+         await paymentsService.directCharge({ checkout_id: checkoutId, method: 'card', card_details: { number: cardNumber, expiry_month: '12', expiry_year: '30', cvv } } as any);
+         setCardStep('success');
+         await refreshOrder();
+      } catch (e) {
+         console.error(e);
+         setIsLoading(false);
+      }
+    }
   };
 
   const handleCardSuccess = () => {
     setCardStep(null);
     setPaymentMethod(null);
     setShowPaymentSheet(false);
-    injectPaymentSuccess();
   };
 
-  /* ── Bank transfer ── */
-  const handleISentIt = () => {
+  const handleISentIt = async () => {
     setBankStep('verifying');
-    setCountdown(30);
+    try {
+      await paymentsService.directCharge({ checkout_id: checkoutId, method: 'bank_transfer' } as any);
+    } catch (e) {
+      console.error(e);
+    }
+    
+    setCountdown(3);
     countdownRef.current = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
           clearInterval(countdownRef.current!);
           setBankStep('success');
+          refreshOrder(); // update order state to paid
           return 0;
         }
         return prev - 1;
@@ -207,28 +316,24 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
     setBankStep(null);
     setPaymentMethod(null);
     setShowPaymentSheet(false);
-    injectPaymentSuccess();
   };
 
-  /* ── Inject success message into chat ── */
-  const injectPaymentSuccess = () => {
-    if (paymentTargetId) updateMsg(paymentTargetId, 'Paid');
-    setMessages(prev => [...prev, {
-      id: Date.now(),
-      type: 'payment_success',
-      sender: 'user',
-      vendor: vendorName,
-      status: 'Paid',
-      items: [],
-      total: 0,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    }]);
+  const handleOtpChange = (val: string, idx: number) => {
+    const digit = val.replace(/\D/g, '').slice(-1);
+    const next = [...otp];
+    next[idx] = digit;
+    setOtp(next);
+    if (digit && idx < 5) otpRefs.current[idx + 1]?.focus();
   };
-
-  /* ── Get pay amount for a target message ── */
-  const payAmount = paymentTargetId ? messages.find(m => m.id === paymentTargetId)?.total ?? 0 : 0;
+  const handleOtpKeyDown = (e: React.KeyboardEvent, idx: number) => {
+    if (e.key === 'Backspace' && !otp[idx] && idx > 0) otpRefs.current[idx - 1]?.focus();
+  };
 
   /* ────────────────────────────────── RENDER ────────────────────────────────── */
+  const vendorName = order?.vendor_name || '...';
+  const vendorInitials = vendorName.charAt(0).toUpperCase();
+  const payAmount = Number(order?.grand_total || 0);
+
   return (
     <div className="flex flex-col h-[100dvh] bg-[#ece5dd]">
       {/* ── Header ── */}
@@ -238,7 +343,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
             <Link href="/chats" className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors text-gray-700">
               <ArrowLeft size={20} />
             </Link>
-            <Link href={`/vendors/${vendorId}`} className="flex items-center gap-3 group">
+            <Link href={`/vendors/${order?.vendor || 'new'}`} className="flex items-center gap-3 group flex-1">
               <div className="w-10 h-10 rounded-full bg-[#FA3728]/10 flex items-center justify-center text-[#FA3728] font-bold group-hover:bg-[#FA3728]/20 transition-colors">
                 {vendorInitials}
               </div>
@@ -250,252 +355,231 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                     <div className="w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
                       <span className="text-white text-[8px] font-bold">✓</span>
                     </div>
-                    <span className="text-[10px] text-blue-600 font-bold uppercase tracking-wide">Verified</span>
                   </div>
-                  <div className="text-gray-300 ml-1 group-hover:text-[#FA3728] transition-colors">›</div>
                 </div>
               </div>
             </Link>
+            <button onClick={refreshOrder} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors active:scale-95">
+               <RefreshCcw size={18} className={isLoading ? "animate-spin text-[#FA3728]" : ""} />
+            </button>
           </div>
         </div>
       </header>
 
       {/* ── Messages ── */}
       <main className="flex-1 overflow-y-auto px-3 sm:px-4 py-5 max-w-3xl mx-auto w-full">
-        <div className="flex flex-col gap-3">
-          {messages.map((message) => {
-            const isSelf = message.sender === 'user';
-            return (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`flex items-end gap-2 ${isSelf ? 'justify-end' : 'justify-start'}`}
-              >
-                {/* Vendor avatar on left */}
-                {!isSelf && (
-                  <div className="w-7 h-7 rounded-full bg-[#FA3728]/10 flex items-center justify-center text-[#FA3728] font-bold text-xs flex-shrink-0 mb-1">
-                    {vendorInitials}
-                  </div>
-                )}
-
-                {message.type === 'text' ? (
-                  /* ── Text bubble ── */
-                  <div
-                    className={`max-w-[72%] sm:max-w-[60%] rounded-2xl px-4 py-2.5 shadow-sm ${
-                      isSelf
-                        ? 'bg-[#FA3728] text-white rounded-br-sm'
-                        : 'bg-white text-gray-800 rounded-bl-sm'
-                    }`}
-                  >
-                    <p className="text-sm leading-relaxed">{message.text}</p>
-                    <p className={`text-[10px] mt-1 text-right ${isSelf ? 'text-white/70' : 'text-gray-400'}`}>
-                      {message.time}
-                    </p>
-                  </div>
-
-                ) : message.type === 'payment_success' ? (
-                  /* ── Payment success chat card ── */
-                  <div className="max-w-[75%] sm:max-w-[60%] bg-white rounded-2xl px-4 py-3 shadow-sm border border-emerald-100">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-base">
-                        🎉
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-emerald-800">Payment Successful!</p>
-                        <p className="text-xs text-gray-500">Buyer has successfully purchased this order</p>
-                      </div>
+        {isLoading && messages.length === 0 ? (
+          <div className="flex justify-center mt-10"><Loader2 className="animate-spin text-gray-400" /></div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {messages.map((message, i) => {
+              const isSelf = message.sender === 'user';
+              return (
+                <motion.div
+                  key={`${message.id}-${i}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex items-end gap-2 ${isSelf ? 'justify-end' : 'justify-start'}`}
+                >
+                  {/* Vendor avatar on left */}
+                  {!isSelf && (
+                    <div className="w-7 h-7 rounded-full bg-[#FA3728]/10 flex items-center justify-center text-[#FA3728] font-bold text-xs flex-shrink-0 mb-1">
+                      {vendorInitials}
                     </div>
-                    <p className={`text-[10px] mt-2 text-right text-gray-400`}>{message.time}</p>
-                  </div>
+                  )}
 
-                ) : message.type === 'shipping_notification' ? (
-                  /* ── Shipping fee notification card (vendor → buyer) ── */
-                  <div className="max-w-[80%] sm:max-w-[22rem] bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-7 h-7 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center">
-                        <Truck size={14} />
-                      </div>
-                      <p className="text-sm font-bold text-gray-900">Shipping Fee Set</p>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-3 mb-3 space-y-1.5">
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <span>Shipping Fee</span>
-                        <span className="font-medium text-gray-800">₦{(message.shippingFee ?? 0).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-sm font-bold">
-                        <span>Total to Pay</span>
-                        <span className="text-[#FA3728]">₦{message.total.toLocaleString()}</span>
-                      </div>
+                  {message.type === 'text' ? (
+                    /* ── Text bubble ── */
+                    <div
+                      className={`max-w-[72%] sm:max-w-[60%] rounded-2xl px-4 py-2.5 shadow-sm ${
+                        isSelf
+                          ? 'bg-[#FA3728] text-white rounded-br-sm'
+                          : 'bg-white text-gray-800 rounded-bl-sm'
+                      }`}
+                    >
+                      <p className="text-sm leading-relaxed">{message.text}</p>
+                      <p className={`text-[10px] mt-1 text-right ${isSelf ? 'text-white/70' : 'text-gray-400'}`}>
+                        {message.time}
+                      </p>
                     </div>
 
-                    {message.status === 'Awaiting Payment' && !isVendor && (
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={() => openPayment(message.id)}
-                          className="w-full py-2.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-xl font-semibold text-sm transition-all shadow-sm"
-                        >
-                          Proceed to Pay
-                        </button>
-                        <button
-                          onClick={() => handleDeclineShipping(message.id)}
-                          className="w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl font-semibold text-sm transition-all border border-gray-200"
-                        >
-                          Decline
-                        </button>
-                      </div>
-                    )}
-
-                    {message.status === 'Awaiting Payment' && isVendor && (
-                      <div className="px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-center">
-                        <p className="text-xs font-semibold text-amber-700">Awaiting payment from buyer</p>
-                      </div>
-                    )}
-
-                    {message.status === 'Declined' && (
-                      <div className="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 text-center">
-                        <p className="text-xs font-semibold text-gray-500">Order was declined by buyer</p>
-                      </div>
-                    )}
-
-                    {message.status === 'Paid' && (
-                      <div className="px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-100 text-center">
-                        <p className="text-xs font-semibold text-emerald-700">✓ Payment received</p>
-                      </div>
-                    )}
-
-                    <p className="text-[10px] mt-2 text-right text-gray-400">{message.time}</p>
-                  </div>
-
-                ) : (
-                  /* ── Order Card ── */
-                  <div className="max-w-[80%] sm:max-w-[22rem] bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                    {/* Card header - REDESIGNED */}
-                    <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-gray-50">
-                      <span className="font-bold text-gray-900 text-xs">Order Summary</span>
-                      <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full ${
-                        message.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-[#FA3728]/10 text-[#FA3728]'
-                      }`}>
-                        {message.status}
-                      </span>
-                    </div>
-
-                    {/* Items */}
-                    <div className="space-y-2.5">
-                      {message.items.map((item, index) => (
-                        <div key={index} className="flex gap-2.5 items-center">
-                          {item.image ? (
-                            <div className="w-12 h-12 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
-                              <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                            </div>
-                          ) : (
-                            <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex-shrink-0" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-gray-900 text-xs truncate">{item.name}</h4>
-                            <p className="text-gray-400 text-[11px] mt-0.5">₦{item.price.toLocaleString()} × {item.quantity}</p>
-                          </div>
-                          <div className="font-bold text-gray-900 text-xs flex-shrink-0">
-                            ₦{(item.price * item.quantity).toLocaleString()}
-                          </div>
+                  ) : message.type === 'payment_success' ? (
+                    /* ── Payment success chat card ── */
+                    <div className="max-w-[75%] sm:max-w-[60%] bg-white rounded-2xl px-4 py-3 shadow-sm border border-emerald-100">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-base">
+                          🎉
                         </div>
-                      ))}
+                        <div>
+                          <p className="text-sm font-bold text-emerald-800">Payment Successful!</p>
+                          <p className="text-xs text-gray-500">Buyer has successfully purchased this order</p>
+                        </div>
+                      </div>
+                      <p className={`text-[10px] mt-2 text-right text-gray-400`}>{message.time}</p>
                     </div>
 
-                    {/* Totals - ACCESSIBILITY IMPROVED */}
-                    <div className="mt-3 pt-2.5 border-t border-gray-50 space-y-1">
-                      <div className="flex justify-between text-xs text-gray-600">
-                        <span>Subtotal</span>
-                        <span>₦{message.items.reduce((s, i) => s + i.price * i.quantity, 0).toLocaleString()}</span>
+                  ) : message.type === 'shipping_notification' ? (
+                    /* ── Shipping fee notification card (vendor → buyer) ── */
+                    <div className="max-w-[80%] sm:max-w-[22rem] bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-7 h-7 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center">
+                          <Truck size={14} />
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">Shipping Fee Set</p>
                       </div>
-                      {message.shippingFee !== undefined && (
-                        <div className="flex justify-between text-xs text-gray-600">
-                          <span>Shipping</span>
-                          <span>₦{message.shippingFee.toLocaleString()}</span>
+                      <div className="bg-gray-50 rounded-xl p-3 mb-3 space-y-1.5">
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>Shipping Fee</span>
+                          <span className="font-medium text-gray-800">₦{(message.shippingFee ?? 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-sm font-bold">
+                          <span>Total to Pay</span>
+                          <span className="text-[#FA3728]">₦{message.total.toLocaleString()}</span>
+                        </div>
+                      </div>
+
+                      {message.status === 'Awaiting Payment' && !isVendor && (
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={() => openPayment()}
+                            className="w-full py-2.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-xl font-semibold text-sm transition-all shadow-sm flex justify-center items-center gap-2"
+                          >
+                            Proceed to Pay
+                          </button>
                         </div>
                       )}
-                      <div className="flex justify-between text-sm font-bold pt-0.5">
-                        <span className="text-gray-900">Total</span>
-                        <span className="text-gray-900">₦{message.total.toLocaleString()}</span>
-                      </div>
+
+                      {message.status === 'Awaiting Payment' && isVendor && (
+                        <div className="px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-center">
+                          <p className="text-xs font-semibold text-amber-700">Awaiting payment from buyer</p>
+                        </div>
+                      )}
+
+                      {message.status === 'Paid' && (
+                        <div className="px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-100 text-center">
+                          <p className="text-xs font-semibold text-emerald-700">✓ Payment received</p>
+                        </div>
+                      )}
+
+                      <p className="text-[10px] mt-2 text-right text-gray-400">{message.time}</p>
                     </div>
 
-                    {/* ── State: Pending ── */}
-                    {message.status === 'Pending' && (
-                      <div className="mt-3">
-                        {isVendor ? (
-                          <div className="flex flex-row gap-2">
-                            <button
-                              onClick={() => updateMsg(message.id, 'Accepted')}
-                              className="flex-1 py-2 bg-[#FA3728] text-white rounded-xl text-[10px] font-bold shadow-sm hover:bg-[#E31B23] flex items-center justify-center gap-1"
-                            >
-                              <Check size={12} strokeWidth={3} />
-                              Accept
-                            </button>
-                            <button className="flex-1 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-bold shadow-sm hover:bg-amber-600">
-                              Modify
-                            </button>
-                            <button
-                              onClick={() => updateMsg(message.id, 'Declined')}
-                              className="flex-1 py-2 bg-gray-50 text-gray-700 rounded-xl text-[10px] font-bold border border-gray-200 hover:bg-gray-100"
-                            >
-                              Decline
-                            </button>
+                  ) : (
+                    /* ── Order Card ── */
+                    <div className="max-w-[80%] sm:max-w-[22rem] bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                      <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-gray-50">
+                        <span className="font-bold text-gray-900 text-xs">Order Summary</span>
+                        <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full ${
+                          message.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-[#FA3728]/10 text-[#FA3728]'
+                        }`}>
+                          {message.status}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2.5">
+                        {message.items.map((item, index) => (
+                          <div key={index} className="flex gap-2.5 items-center">
+                            {item.image ? (
+                              <div className="w-12 h-12 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
+                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                              </div>
+                            ) : (
+                              <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex-shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 text-xs truncate">{item.name}</h4>
+                              <p className="text-gray-400 text-[11px] mt-0.5">₦{item.price.toLocaleString()} × {item.quantity}</p>
+                            </div>
+                            <div className="font-bold text-gray-900 text-xs flex-shrink-0">
+                              ₦{(item.price * item.quantity).toLocaleString()}
+                            </div>
                           </div>
-                        ) : (
-                          <div className="px-3 py-3.5 bg-amber-50 rounded-lg border border-amber-100 text-center">
-                            <p className="text-xs font-semibold text-amber-800 tracking-tight">Awaiting vendor confirmation</p>
+                        ))}
+                      </div>
+
+                      <div className="mt-3 pt-2.5 border-t border-gray-50 space-y-1">
+                        <div className="flex justify-between text-xs text-gray-600">
+                          <span>Subtotal</span>
+                          <span>₦{message.items.reduce((s, i) => s + i.price * i.quantity, 0).toLocaleString()}</span>
+                        </div>
+                        {message.shippingFee !== undefined && (
+                          <div className="flex justify-between text-xs text-gray-600">
+                            <span>Shipping</span>
+                            <span>₦{message.shippingFee.toLocaleString()}</span>
                           </div>
                         )}
+                        <div className="flex justify-between text-sm font-bold pt-0.5">
+                          <span className="text-gray-900">Total</span>
+                          <span className="text-gray-900">₦{(message.total + (message.shippingFee || 0)).toLocaleString()}</span>
+                        </div>
                       </div>
-                    )}
 
-                    {/* ── State: Accepted ── */}
-                    {message.status === 'Accepted' && (
-                      <div className="mt-3">
-                        {isVendor ? (
-                          <div className="px-3 py-2 bg-blue-50 rounded-lg border border-blue-100 text-center">
-                            <p className="text-xs font-semibold text-blue-800">Awaiting buyer delivery details</p>
-                          </div>
-                        ) : (
-                          <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
-                            <p className="text-xs font-semibold mb-2 text-gray-700">Select fulfillment method</p>
-                            <div className="flex gap-2 mb-2.5">
-                              <button className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#FA3728] text-white rounded-md text-xs font-semibold">
-                                <Truck size={12} /> Delivery
+                      {/* ── State: Pending ── */}
+                      {message.status === 'Pending' && (
+                        <div className="mt-3">
+                          {isVendor ? (
+                            <div className="flex flex-row gap-2">
+                              <button
+                                onClick={handleVendorAccept}
+                                className="flex-1 py-2 bg-[#FA3728] text-white rounded-xl text-[10px] font-bold shadow-sm hover:bg-[#E31B23] flex items-center justify-center gap-1"
+                              >
+                                <Check size={12} strokeWidth={3} /> Accept
                               </button>
-                              <button className="flex-1 flex items-center justify-center gap-1.5 py-2 border border-gray-200 bg-white text-gray-700 rounded-md text-xs font-semibold">
-                                <MapPin size={12} /> Pickup
+                              <button
+                                onClick={handleVendorDecline}
+                                className="flex-1 py-2 bg-gray-50 text-gray-700 rounded-xl text-[10px] font-bold border border-gray-200 hover:bg-gray-100"
+                              >
+                                Decline
                               </button>
                             </div>
-                            <input
-                              type="text"
-                              id={`address-${message.id}`}
-                              placeholder="Enter delivery address"
-                              className="w-full text-xs p-2.5 rounded-md border border-gray-300 mb-2.5 outline-none focus:border-[#FA3728] text-gray-900"
-                            />
-                            <button
-                              onClick={() => {
-                                const address = (document.getElementById(`address-${message.id}`) as HTMLInputElement)?.value;
-                                updateMsg(message.id, 'Delivery Details Set', { deliveryOption: 'Delivery', address });
-                              }}
-                              className="w-full py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-xs font-semibold transition-colors"
-                            >
-                              Submit Details
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                          ) : (
+                            <div className="px-3 py-3.5 bg-amber-50 rounded-lg border border-amber-100 text-center">
+                              <p className="text-xs font-semibold text-amber-800 tracking-tight">Awaiting vendor confirmation</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
-                    {/* ── State: Delivery Details Set ── */}
-                    {message.status === 'Delivery Details Set' && (
-                      <div className="mt-3">
-                        {isVendor ? (
+                      {/* ── State: Accepted ── */}
+                      {message.status === 'Accepted' && (
+                        <div className="mt-3">
+                          {isVendor ? (
+                           <div className="px-3 py-2 bg-blue-50 rounded-lg border border-blue-100 text-center">
+                            <p className="text-xs font-semibold text-blue-800">Awaiting buyer delivery details</p>
+                           </div>
+                          ) : (
+                            <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                              <p className="text-xs font-semibold mb-2 text-gray-700">Select fulfillment method</p>
+                              <div className="flex gap-2 mb-2.5">
+                                <button className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#FA3728] text-white rounded-md text-xs font-semibold">
+                                  <Truck size={12} /> Delivery
+                                </button>
+                              </div>
+                              <input
+                                type="text"
+                                id={`address-${message.id}`}
+                                placeholder="Enter delivery address"
+                                className="w-full text-xs p-2.5 rounded-md border border-gray-300 mb-2.5 outline-none focus:border-[#FA3728] text-gray-900"
+                              />
+                              <button
+                                onClick={() => handleSetDeliveryAddress(message.id)}
+                                className="w-full py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-xs font-semibold transition-colors flex justify-center"
+                              >
+                                Submit Details
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* ── State: Delivery Details Set ── */}
+                      {message.status === 'Delivery Details Set' && (
+                        <div className="mt-3">
+                         {isVendor ? (
                           <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
                             <div className="mb-2.5 text-xs text-gray-600 bg-white p-2 rounded border border-gray-100">
                               <span className="font-semibold text-gray-800">Delivery Address:</span><br />
-                              {message.address || 'User Address'}
+                              {message.address}
                             </div>
                             <p className="text-xs font-semibold mb-2 text-gray-700">Set shipping fee (₦):</p>
                             <input
@@ -505,41 +589,39 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                               className="w-full text-xs p-2.5 rounded-md border border-gray-300 mb-2.5 outline-none focus:border-[#FA3728] text-gray-900"
                             />
                             <button
-                              onClick={() => {
-                                const fee = parseInt((document.getElementById(`fee-${message.id}`) as HTMLInputElement)?.value || '0');
-                                handleSetShippingFee(message.id, fee, message.total);
-                              }}
-                              className="w-full py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-lg text-xs font-semibold transition-colors"
+                              onClick={() => handleSetShippingFee(message.id)}
+                              className="w-full py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-lg text-xs font-semibold transition-colors flex justify-center"
                             >
                               Set Shipping Fee
                             </button>
                           </div>
-                        ) : (
+                         ) : (
                           <div className="px-3 py-2 bg-blue-50 rounded-lg border border-blue-100 text-center">
                             <p className="text-xs font-semibold text-blue-800">Awaiting shipping fee from vendor</p>
                           </div>
-                        )}
-                      </div>
-                    )}
+                         )}
+                        </div>
+                      )}
 
-                    {/* ── State: Paid ── */}
-                    {message.status === 'Paid' && (
-                      <div className="mt-3 px-3 py-2.5 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center justify-center gap-2">
-                        <CheckCircle2 size={16} className="text-emerald-600" />
-                        <p className="text-xs font-bold text-emerald-800">
-                          {isVendor ? 'Payment Received' : 'Payment Sent'}
-                        </p>
-                      </div>
-                    )}
+                      {/* ── State: Paid ── */}
+                      {message.status === 'Paid' && (
+                        <div className="mt-3 px-3 py-2.5 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center justify-center gap-2">
+                          <CheckCircle2 size={16} className="text-emerald-600" />
+                          <p className="text-xs font-bold text-emerald-800">
+                            {isVendor ? 'Payment Received' : 'Payment Sent'}
+                          </p>
+                        </div>
+                      )}
 
-                    <p className="text-[10px] mt-2 text-right text-gray-400">{message.time}</p>
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
-          <div ref={messagesEndRef} />
-        </div>
+                      <p className="text-[10px] mt-2 text-right text-gray-400">{message.time}</p>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
       </main>
 
       {/* ── Anchored Message Input ── */}
@@ -561,7 +643,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
             </div>
             <button
               type="submit"
-              disabled={!newMessage.trim()}
+              disabled={!newMessage.trim() || isLoading}
               className="w-10 h-10 bg-[#FA3728] text-white rounded-full flex items-center justify-center flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#E31B23] transition-all active:scale-90 shadow-sm"
             >
               <Send size={16} className="translate-x-[1px] translate-y-[-1px]" />
@@ -647,7 +729,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                   </div>
 
                   <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 mb-5">
-                    <p className="text-[11px] font-semibold text-blue-600 uppercase tracking-wide mb-4">Transfer Details (Monnify)</p>
+                    <p className="text-[11px] font-semibold text-blue-600 uppercase tracking-wide mb-4">Transfer Details</p>
                     <div className="space-y-3">
                       {[
                         { label: 'Bank Name', value: 'Wema Bank' },
@@ -663,15 +745,12 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-gray-400 text-center mb-5">
-                    Transfer exactly <span className="font-bold text-gray-700">₦{payAmount.toLocaleString()}</span> to the account above, then tap the button below.
-                  </p>
-
                   <button
                     onClick={handleISentIt}
-                    className="w-full py-3.5 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-bold text-sm transition-all shadow-md"
+                    disabled={isLoading}
+                    className="w-full py-3.5 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-bold text-sm transition-all shadow-md flex justify-center items-center"
                   >
-                    I've Sent It
+                    {isLoading ? <Loader2 className="animate-spin text-white" /> : "I've Sent It"}
                   </button>
                 </>
               )}
@@ -688,22 +767,19 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                   </div>
                   <div className="text-center">
                     <p className="font-bold text-gray-900 text-base">Verifying Transfer…</p>
-                    <p className="text-sm text-gray-400 mt-1">Please wait while we confirm your payment</p>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2 overflow-hidden">
-                    <motion.div
-                      className="h-full bg-blue-400 rounded-full"
-                      initial={{ width: '100%' }}
-                      animate={{ width: `${(countdown / 30) * 100}%` }}
-                      transition={{ duration: 1, ease: 'linear' }}
-                    />
                   </div>
                 </div>
               )}
 
               {/* ── BANK TRANSFER: Success ── */}
               {paymentMethod === 'bank' && bankStep === 'success' && (
-                <SuccessPanel amount={payAmount} onDone={handleBankSuccess} />
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4">
+                    <CheckCircle2 size={32} />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">Transfer Successful</h3>
+                  <button onClick={handleBankSuccess} className="mt-4 w-full py-3 bg-blue-600 text-white rounded-xl font-bold">Done</button>
+                </div>
               )}
             </motion.div>
           </>
@@ -739,20 +815,6 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                     >
                       <X size={18} className="text-gray-500" />
                     </button>
-                  </div>
-
-                  {/* Card visual */}
-                  <div className="w-full h-36 rounded-2xl bg-gradient-to-br from-[#FA3728] to-[#c0290e] p-5 mb-6 relative overflow-hidden shadow-lg">
-                    <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/10 -translate-y-10 translate-x-10" />
-                    <div className="absolute bottom-0 left-0 w-28 h-28 rounded-full bg-white/10 translate-y-10 -translate-x-5" />
-                    <p className="text-white/60 text-xs font-medium mb-2">CARD NUMBER</p>
-                    <p className="text-white font-mono text-lg tracking-widest">
-                      {cardNumber || '•••• •••• •••• ••••'}
-                    </p>
-                    <div className="absolute bottom-5 left-5 right-5 flex justify-between text-white text-xs">
-                      <span>{expiry || 'MM/YY'}</span>
-                      <span className="font-bold text-base tracking-widest">CVV: {cvv ? '•••' : '•••'}</span>
-                    </div>
                   </div>
 
                   <div className="space-y-4">
@@ -799,7 +861,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
                   <button
                     onClick={handleCardPay}
                     disabled={!cardNumber || !expiry || !cvv}
-                    className="mt-6 w-full py-3.5 bg-[#FA3728] hover:bg-[#E31B23] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-bold text-sm transition-all shadow-md"
+                    className="w-full mt-6 py-3.5 bg-[#FA3728] text-white rounded-2xl font-bold text-sm shadow-md hover:bg-[#E31B23] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   >
                     Pay ₦{payAmount.toLocaleString()}
                   </button>
@@ -810,95 +872,53 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
               {cardStep === 'otp' && (
                 <>
                   <div className="flex items-center gap-2 mb-6">
-                    <button onClick={() => setCardStep('details')} className="p-1.5 rounded-full hover:bg-gray-100">
+                    <button onClick={() => setCardStep('details')} className="p-1.5 rounded-full hover:bg-gray-100 -ml-2">
                       <ArrowLeft size={18} className="text-gray-600" />
                     </button>
                     <h2 className="text-lg font-bold text-gray-900">Enter OTP</h2>
                   </div>
-
-                  <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-[#FA3728]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-2xl">📱</span>
-                    </div>
-                    <p className="text-sm text-gray-700 font-medium">We sent a 6-digit code to your registered phone number</p>
-                    <p className="text-xs text-gray-400 mt-1">Enter the code below to verify your payment</p>
-                  </div>
-
-                  {/* 6-digit OTP boxes */}
-                  <div className="flex gap-2.5 justify-center mb-8">
-                    {otp.map((digit, idx) => (
+                  <p className="text-sm text-gray-500 mb-6 text-center">
+                    Enter any 6 digits to verify this dummy payment.
+                  </p>
+                  <div className="flex justify-between gap-2 sm:gap-3 mb-8">
+                    {otp.map((d, i) => (
                       <input
-                        key={idx}
-                        ref={el => { otpRefs.current[idx] = el; }}
+                        key={i}
+                        ref={el => { otpRefs.current[i] = el; }}
                         type="text"
                         inputMode="numeric"
                         maxLength={1}
-                        value={digit}
-                        onChange={e => handleOtpChange(e.target.value, idx)}
-                        onKeyDown={e => handleOtpKeyDown(e, idx)}
-                        className={`w-11 h-13 text-center text-xl font-bold border-2 rounded-xl outline-none transition-all ${
-                          digit ? 'border-[#FA3728] bg-[#FA3728]/5 text-[#FA3728]' : 'border-gray-200 text-gray-900'
-                        } focus:border-[#FA3728]`}
-                        style={{ height: '52px' }}
+                        value={d}
+                        onChange={e => handleOtpChange(e.target.value, i)}
+                        onKeyDown={e => handleOtpKeyDown(e, i)}
+                        className="w-10 h-10 sm:w-12 sm:h-12 border border-gray-200 rounded-xl text-center text-lg font-bold outline-none focus:border-[#FA3728] focus:ring-1 focus:ring-[#FA3728]"
                       />
                     ))}
                   </div>
-
                   <button
                     onClick={handleVerifyOtp}
-                    disabled={!otp.every(d => d)}
-                    className="w-full py-3.5 bg-[#FA3728] hover:bg-[#E31B23] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-bold text-sm transition-all shadow-md"
+                    disabled={!otp.every(d => d) || isLoading}
+                    className="w-full py-3.5 bg-[#FA3728] text-white rounded-2xl font-bold text-sm shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    Verify OTP
+                     {isLoading ? <Loader2 className="animate-spin text-white" /> : "Verify Payment"}
                   </button>
                 </>
               )}
 
               {/* ── Card Success ── */}
               {cardStep === 'success' && (
-                <SuccessPanel amount={payAmount} onDone={handleCardSuccess} />
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+                    <CheckCircle2 size={32} />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">Payment Successful!</h3>
+                  <button onClick={handleCardSuccess} className="mt-4 w-full py-3 bg-[#FA3728] text-white rounded-xl font-bold">Done</button>
+                </div>
               )}
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-/* ─────────────── Success Panel (shared) ─────────────── */
-function SuccessPanel({ amount, onDone }: { amount: number; onDone: () => void }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 3000);
-    return () => clearTimeout(t);
-  }, [onDone]);
-
-  return (
-    <div className="flex flex-col items-center py-6 gap-4 text-center">
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: 'spring', damping: 14, stiffness: 200 }}
-        className="w-24 h-24 rounded-full bg-emerald-50 border-4 border-emerald-200 flex items-center justify-center"
-      >
-        <CheckCircle2 size={48} className="text-emerald-500" strokeWidth={1.5} />
-      </motion.div>
-
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-        <p className="text-xl font-black text-gray-900">Payment Successful!</p>
-        <p className="text-2xl font-black text-[#FA3728] mt-1">₦{amount.toLocaleString()}</p>
-        <p className="text-sm text-gray-400 mt-2">Your order has been confirmed</p>
-      </motion.div>
-
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        onClick={onDone}
-        className="mt-4 px-10 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold text-sm transition-all shadow-md"
-      >
-        Done
-      </motion.button>
     </div>
   );
 }

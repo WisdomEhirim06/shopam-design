@@ -307,7 +307,7 @@ export default function VendorsPage() {
                         e.stopPropagation();
                         handleFollow(vendor.id);
                       }}
-                      className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:scale-110 active:scale-95 transition-all z-10"
+                      className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:scale-110 active:scale-95 transition-all z-10 flex items-center justify-center"
                     >
                       <Heart size={16} className="text-[#FA3728]" />
                     </button>

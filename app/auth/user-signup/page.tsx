@@ -79,15 +79,6 @@ function UserSignUpForm() {
     } catch (err: any) {
       console.error('Registration error:', err);
 
-      // --- OFFLINE PROTOTYPE BYPASS ---
-      if (err.message === 'Failed to fetch' || err.message === 'Network Error' || String(err.message).toLowerCase().includes('timeout')) {
-        console.warn('Backend unavailable. Mocking buyer registration for testing.');
-        localStorage.setItem('access_token', 'mock_buyer_token');
-        localStorage.setItem('user', JSON.stringify({ id: 'b1', is_vendor: false, is_customer: true, username: formData.username }));
-        router.push(returnUrl);
-        return;
-      }
-
       // Handle different error types
       if (err.response?.data?.username) {
         setError(`Username: ${err.response.data.username[0]}`);

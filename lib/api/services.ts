@@ -15,6 +15,13 @@ import type {
   CreateFollowRequest,
   Review,
   CreateReviewRequest,
+  SetShippingRequest,
+  CustomerApprovalRequest,
+  CustomerPaymentDecisionRequest,
+  ConfirmHandoverRequest,
+  RaiseDisputeRequest,
+  Message,
+  SendMessageRequest,
 } from './types';
 
 // Orders Service
@@ -37,17 +44,24 @@ export const ordersService = {
     return response.data;
   },
 
-  /** Get single order by ID */
+  /** Get single order by ID — tries vendor detail endpoint first, falls back to customer history search */
   async getOrder(id: string): Promise<Order> {
-    const response = await apiClient.get<Order>(
-      API_ENDPOINTS.ORDERS.DETAIL(id)
-    );
-    return response.data;
+    try {
+      const response = await apiClient.get<Order>(API_ENDPOINTS.ORDERS.DETAIL(id));
+      return response.data;
+    } catch {
+      // Buyer can't access /commerceorders/{id}/ directly — search history instead
+      const hist = await apiClient.get<PaginatedResponse<Order>>(API_ENDPOINTS.ORDERS.HISTORY);
+      const match = hist.data.results?.find((o) => o.id === id);
+      if (match) return match;
+      throw new Error('Order not found');
+    }
   },
 
-  /** Place a new order (Step 1) */
-  async createOrder(data: CreateOrderRequest): Promise<void> {
-    await apiClient.post(API_ENDPOINTS.ORDERS.PLACE, data);
+  /** Place a new order (Step 1) — returns the created orders array */
+  async createOrder(data: CreateOrderRequest): Promise<Order[]> {
+    const response = await apiClient.post<Order[]>(API_ENDPOINTS.ORDERS.PLACE, data);
+    return Array.isArray(response.data) ? response.data : [response.data as unknown as Order];
   },
 
   /** Step 2: Vendor reviews (accepts or proposes changes to) an order */
@@ -71,6 +85,50 @@ export const ordersService = {
       API_ENDPOINTS.ORDERS.UPDATE(id),
       data
     );
+    return response.data;
+  },
+
+  /** Step 3: Customer accepts or rejects vendor modifications */
+  async customerApprove(orderId: string, data: CustomerApprovalRequest): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.ORDERS.CUSTOMER_APPROVE(orderId), data);
+  },
+
+  /** Step 4: Customer provides shipping type and address */
+  async setShipping(orderId: string, data: SetShippingRequest): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.ORDERS.SET_SHIPPING(orderId), data);
+  },
+
+  /** Step 6: Customer decides to pay or cancel (must call paymentsService.initCheckout first) */
+  async paymentDecision(orderId: string, data: CustomerPaymentDecisionRequest): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.ORDERS.PAYMENT_DECISION(orderId), data);
+  },
+
+  /** Step 8: Customer confirms delivery with the handover code */
+  async confirmHandover(orderId: string, data: ConfirmHandoverRequest): Promise<{ status: string; payout_date: string }> {
+    const response = await apiClient.post<{ status: string; payout_date: string }>(
+      API_ENDPOINTS.ORDERS.CONFIRM_HANDOVER(orderId),
+      data
+    );
+    return response.data;
+  },
+
+  /** Step 9: Customer raises a dispute within 7 days of delivery */
+  async raiseDispute(orderId: string, data: RaiseDisputeRequest): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.ORDERS.RAISE_DISPUTE(orderId), data);
+  },
+
+  /** Customer's full order history (paginated, newest first) */
+  async getOrderHistory(page = 1, pageSize = 20): Promise<PaginatedResponse<Order>> {
+    const response = await apiClient.get<PaginatedResponse<Order>>(
+      API_ENDPOINTS.ORDERS.HISTORY,
+      { params: { page, page_size: pageSize } }
+    );
+    return response.data;
+  },
+
+  /** Smart filter endpoint — auto-detects vendor vs customer */
+  async filterOrders(filters?: { order_id?: string; status?: string; page?: number }): Promise<Order | PaginatedResponse<Order>> {
+    const response = await apiClient.get(API_ENDPOINTS.ORDERS.FILTER, { params: filters });
     return response.data;
   },
 };
@@ -267,5 +325,34 @@ export const reviewsService = {
    */
   async deleteReview(id: number): Promise<void> {
     await apiClient.delete(API_ENDPOINTS.REVIEWS.DELETE(id));
+  },
+};
+
+// Direct Messages Service
+export const messagesService = {
+  /** Get all DM conversations (list of messages) */
+  async getMessages(): Promise<Message[]> {
+    const response = await apiClient.get<Message[]>(API_ENDPOINTS.MESSAGES.LIST);
+    return response.data;
+  },
+
+  /** Get the full chat thread between current user and another user */
+  async getThread(userId: string): Promise<Message[]> {
+    const response = await apiClient.get<Message[]>(
+      API_ENDPOINTS.MESSAGES.THREAD,
+      { params: { user_id: userId } }
+    );
+    return response.data;
+  },
+
+  /** Send a direct message */
+  async sendMessage(data: SendMessageRequest): Promise<Message> {
+    const response = await apiClient.post<Message>(API_ENDPOINTS.MESSAGES.LIST, data);
+    return response.data;
+  },
+
+  /** Delete a message (sender only) */
+  async deleteMessage(id: string): Promise<void> {
+    await apiClient.delete(API_ENDPOINTS.MESSAGES.DETAIL(id));
   },
 };

@@ -20,7 +20,7 @@ import { authService } from '@/lib/api';
 import Image from 'next/image';
 
 type Step = 'personal' | 'business' | 'success';
-type BusinessCategory = 'retail' | 'wholesale' | 'service' | 'food' | 'fashion' | 'tech' | 'beauty' | 'electronics' | 'other';
+type BusinessCategory = 'retail' | 'wholesale' | 'service' | 'food' | 'fashion' | 'tech' | 'beauty' | 'other';
 
 export default function VendorSignUpPage() {
   const router = useRouter();
@@ -55,9 +55,8 @@ export default function VendorSignUpPage() {
     { value: 'service', label: 'Service' },
     { value: 'food', label: 'Food & Beverage' },
     { value: 'fashion', label: 'Fashion & Apparel' },
-    { value: 'tech', label: 'Technology' },
+    { value: 'tech', label: 'Technology & Electronics' },
     { value: 'beauty', label: 'Beauty & Cosmetics' },
-    { value: 'electronics', label: 'Electronics' },
     { value: 'other', label: 'Other' },
   ];
 
@@ -83,14 +82,18 @@ export default function VendorSignUpPage() {
 
     setIsSubmitting(true);
 
+    // Normalise phone to international format (+234XXXXXXXXXX)
+    let phone = personalData.phone.trim().replace(/\s+/g, '');
+    if (phone.startsWith('0')) phone = '+234' + phone.slice(1);
+    else if (phone.startsWith('234') && !phone.startsWith('+')) phone = '+' + phone;
+
     try {
-      // Register as vendor directly using the unified endpoint
-      const response = await authService.registerVendor({
+      await authService.registerVendor({
         email: personalData.email,
         password: personalData.password,
         first_name: personalData.first_name,
         last_name: personalData.last_name,
-        phone: personalData.phone,
+        phone,
         business_name: businessData.business_name,
         business_category: businessData.business_category,
         business_address: businessData.business_address,
@@ -98,37 +101,24 @@ export default function VendorSignUpPage() {
         tin: businessData.tin || undefined,
       });
 
-      console.log('Vendor account created:', response.user);
-
       setIsSubmitting(false);
-      
-      // Tokens and user are already stored by authService.registerVendor
       router.push('/dashboard');
     } catch (err: any) {
-      console.error('Registration error:', err);
-      
-      // --- OFFLINE PROTOTYPE BYPASS ---
-      if (err.message === 'Failed to fetch' || err.message === 'Network Error' || String(err.message).toLowerCase().includes('timeout')) {
-        console.warn('Backend unavailable. Mocking vendor registration for testing.');
-        localStorage.setItem('access_token', 'mock_vendor_token');
-        localStorage.setItem('user', JSON.stringify({ id: 'v1', is_vendor: true, first_name: personalData.first_name }));
-        setIsSubmitting(false);
-        router.push('/dashboard');
+      setIsSubmitting(false);
+
+      // Vendor must verify email before login
+      if (err.response?.data?.error === 'EMAIL_NOT_VERIFIED' || err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+        setCurrentStep('success');
         return;
       }
 
-      setIsSubmitting(false);
-
       if (err.response?.data) {
-        // Handle field-specific errors from backend
         const errors = err.response.data;
-        const firstErrorKey = Object.keys(errors)[0];
-        const firstError = Array.isArray(errors[firstErrorKey]) ? errors[firstErrorKey][0] : errors[firstErrorKey];
-        setError(`${firstErrorKey}: ${firstError}`);
-      } else if (err.message) {
-        setError(err.message);
+        const firstKey = Object.keys(errors)[0];
+        const firstMsg = Array.isArray(errors[firstKey]) ? errors[firstKey][0] : errors[firstKey];
+        setError(`${firstKey}: ${firstMsg}`);
       } else {
-        setError('Registration failed. Please try again.');
+        setError(err.message || 'Registration failed. Please try again.');
       }
     }
   };
@@ -456,8 +446,8 @@ export default function VendorSignUpPage() {
                   <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <CheckCircle size={40} className="text-green-600" />
                   </div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome to ShopAm!</h2>
-                  <p className="text-gray-600">Your vendor account has been created successfully</p>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Check Your Email</h2>
+                  <p className="text-gray-600">Your vendor account is created. Click the verification link in your email to activate it, then sign in.</p>
                 </div>
 
                 <button

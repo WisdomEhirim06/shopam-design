@@ -196,12 +196,12 @@ export default function ProductsPage() {
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setIsAddModalOpen(false)}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 md:hidden"
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] md:hidden"
             />
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setIsAddModalOpen(false)}
-              className="hidden md:block absolute inset-0 bg-black/5 backdrop-blur-[2px] z-50 rounded-2xl"
+              className="hidden md:block absolute inset-0 bg-black/5 backdrop-blur-[2px] z-[60] rounded-2xl"
             />
 
             {/* Sheet */}
@@ -210,7 +210,7 @@ export default function ProductsPage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 md:absolute md:bottom-0 z-50 bg-white rounded-t-3xl md:rounded-b-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] max-h-[92dvh] flex flex-col"
+              className="fixed bottom-0 left-0 right-0 md:absolute md:bottom-0 z-[60] bg-white rounded-t-3xl md:rounded-b-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] max-h-[92dvh] flex flex-col"
             >
               {/* Drag handle */}
               <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2 md:hidden flex-shrink-0" />
@@ -219,22 +219,24 @@ export default function ProductsPage() {
               <div className="flex items-center justify-between px-6 pt-2 pb-4 flex-shrink-0">
                 <h2 className="text-xl font-bold text-gray-900">Add New Product</h2>
                 <button
+                  type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="w-8 h-8 rounded-full bg-[#FA3728] text-white flex items-center justify-center hover:bg-[#E31B23] transition-colors"
+                  className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 transition-colors"
                 >
                   <X size={18} strokeWidth={2.5} />
                 </button>
               </div>
 
               {/* Scrollable form body */}
-              <div className="overflow-y-auto flex-1 px-6 pb-8">
-                {submitError && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 text-xs px-3 py-2 rounded-lg mb-4">
-                    {submitError}
-                  </div>
-                )}
+              <form className="flex flex-col flex-1 overflow-hidden" onSubmit={handleSubmit}>
+                <div className="overflow-y-auto flex-1 px-6 pb-8">
+                  {submitError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 text-xs px-3 py-2 rounded-lg mb-4">
+                      {submitError}
+                    </div>
+                  )}
 
-                <form className="space-y-5" onSubmit={handleSubmit}>
+                  <div className="space-y-5">
 
                   {/* ── Images Section ── */}
                   <div>
@@ -398,26 +400,31 @@ export default function ProductsPage() {
                   </div>
 
                   {/* ── Tax inclusive ── */}
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={formData.tax_inclusive}
-                      onClick={() => setFormData({ ...formData, tax_inclusive: !formData.tax_inclusive })}
-                      className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${
-                        formData.tax_inclusive ? 'bg-[#FA3728]' : 'bg-gray-200'
+                  <div 
+                    onClick={() => setFormData({ ...formData, tax_inclusive: !formData.tax_inclusive })}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer transition-colors hover:border-gray-300"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Tax Inclusive</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Price already includes taxes</p>
+                    </div>
+                    <div
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                        formData.tax_inclusive ? 'bg-[#FA3728]' : 'bg-gray-300'
                       }`}
                     >
                       <span
-                        className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
                           formData.tax_inclusive ? 'translate-x-5' : 'translate-x-0'
                         }`}
                       />
-                    </button>
-                    <span className="text-sm text-gray-700">Price is tax inclusive</span>
-                  </label>
+                    </div>
+                  </div>
 
-                  {/* ── Submit ── */}
+                  </div>
+                </div>
+
+                <div className="p-4 md:p-6 border-t border-gray-100 bg-white flex-shrink-0 md:rounded-b-2xl pb-6">
                   <button
                     type="submit"
                     disabled={isSubmitting || !formData.title || !formData.price}
@@ -429,8 +436,8 @@ export default function ProductsPage() {
                       'Save Product'
                     )}
                   </button>
-                </form>
-              </div>
+                </div>
+              </form>
             </motion.div>
           </>
         )}

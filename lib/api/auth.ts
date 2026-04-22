@@ -6,6 +6,9 @@ import type {
   LoginResponse,
   UserProfile,
   PasswordChangeRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
+  UpdateProfileRequest,
 } from './types';
 
 export const authService = {
@@ -13,57 +16,41 @@ export const authService = {
    * Register a new user (customer)
    */
   async registerUser(data: UserRegister): Promise<LoginResponse> {
-    const response = await apiClient.post<LoginResponse>(
-      API_ENDPOINTS.AUTH.USER_REGISTER,
-      data
-    );
-    
-    // Store tokens
-    if (response.data.access) {
-      localStorage.setItem('access_token', response.data.access);
-      localStorage.setItem('refresh_token', response.data.refresh);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-    }
-    
-    return response.data;
+    // Registration returns user info only — no tokens. Auto-login to get them.
+    await apiClient.post(API_ENDPOINTS.AUTH.USER_REGISTER, data);
+    return this.login({ email: data.email, password: data.password });
   },
 
   /**
-   * Register a new vendor
+   * Register a new vendor (returns no tokens — auto-login, which may throw EMAIL_NOT_VERIFIED)
    */
   async registerVendor(data: VendorRegister): Promise<LoginResponse> {
-    const response = await apiClient.post<LoginResponse>(
-      API_ENDPOINTS.AUTH.VENDOR_REGISTER,
-      data
-    );
-    
-    // Store tokens
-    if (response.data.access) {
-      localStorage.setItem('access_token', response.data.access);
-      localStorage.setItem('refresh_token', response.data.refresh);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-    }
-    
-    return response.data;
+    await apiClient.post(API_ENDPOINTS.AUTH.VENDOR_REGISTER, data);
+    return this.login({ email: data.email, password: data.password });
   },
 
   /**
    * Login user or vendor
    */
-  async login(data: LoginRequest): Promise<LoginResponse> {
-    const response = await apiClient.post<LoginResponse>(
-      API_ENDPOINTS.AUTH.LOGIN,
-      data
-    );
-    
-    // Store tokens
-    if (response.data.access) {
-      localStorage.setItem('access_token', response.data.access);
-      localStorage.setItem('refresh_token', response.data.refresh);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+  async login(data: LoginRequest | { username: string; password: string }): Promise<LoginResponse> {
+    const payload = 'username' in data && !('email' in data)
+      ? { email: (data as any).username, password: data.password }
+      : data;
+    const response = await apiClient.post<any>(API_ENDPOINTS.AUTH.LOGIN, payload);
+    const raw = response.data;
+
+    // API wraps tokens: { tokens: { access, refresh }, user } — normalise to flat LoginResponse
+    const access: string = raw.tokens?.access ?? raw.access ?? '';
+    const refresh: string = raw.tokens?.refresh ?? raw.refresh ?? '';
+    const user: UserProfile = raw.user ?? raw;
+
+    if (access) {
+      localStorage.setItem('access_token', access);
+      localStorage.setItem('refresh_token', refresh);
+      localStorage.setItem('user', JSON.stringify(user));
     }
-    
-    return response.data;
+
+    return { access, refresh, user };
   },
 
   /**
@@ -96,10 +83,9 @@ export const authService = {
    * Get current user profile
    */
   async getProfile(): Promise<UserProfile> {
-    const response = await apiClient.get<UserProfile>(
-      API_ENDPOINTS.AUTH.PROFILE
-    );
-    return response.data;
+    const response = await apiClient.get<any>(API_ENDPOINTS.AUTH.PROFILE);
+    // API returns { user: {...}, profile: {...} } — extract user
+    return response.data?.user ?? response.data;
   },
 
   /**
@@ -128,5 +114,58 @@ export const authService = {
    */
   getAccessToken(): string | null {
     return localStorage.getItem('access_token');
+  },
+
+  /**
+   * Send password reset link to email
+   */
+  async forgotPassword(data: ForgotPasswordRequest): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, data);
+  },
+
+  /**
+   * Reset password using token from email link
+   */
+  async resetPassword(data: ResetPasswordRequest): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, data);
+  },
+
+  /**
+   * Verify email using token from query param
+   */
+  async verifyEmail(token: string): Promise<void> {
+    await apiClient.get(API_ENDPOINTS.AUTH.VERIFY_EMAIL, { params: { token } });
+  },
+
+  /**
+   * Fetch the full profile from the server and update localStorage
+   */
+  async refreshProfile(): Promise<UserProfile> {
+    const response = await apiClient.get<any>(API_ENDPOINTS.AUTH.PROFILE);
+    const profile: UserProfile = response.data?.user ?? response.data;
+    localStorage.setItem('user', JSON.stringify(profile));
+    return profile;
+  },
+
+  /**
+   * Partially update the authenticated user's profile
+   */
+  async updateProfile(data: UpdateProfileRequest): Promise<UserProfile> {
+    const response = await apiClient.patch<UserProfile>(
+      API_ENDPOINTS.AUTH.PROFILE_UPDATE,
+      data
+    );
+    localStorage.setItem('user', JSON.stringify(response.data));
+    return response.data;
+  },
+
+  /**
+   * Soft-delete the authenticated user's account
+   */
+  async deactivateAccount(): Promise<void> {
+    await apiClient.delete(API_ENDPOINTS.AUTH.PROFILE_DEACTIVATE);
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
   },
 };

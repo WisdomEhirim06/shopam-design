@@ -9,7 +9,9 @@ export {
   commentsService,
   followsService,
   reviewsService,
+  messagesService,
 } from './services';
+export { paymentsService } from './payments';
 
 // Export API config
 export { default as apiClient, API_BASE_URL, API_ENDPOINTS } from './config';

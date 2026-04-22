@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowUpRight, DollarSign, ShoppingBag, Package } from 'lucide-react';
+import { ArrowUpRight, Wallet, ShoppingBag, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { authService } from '@/lib/api';
@@ -25,7 +25,7 @@ export default function DashboardHome() {
         className="mb-6 md:mb-8"
       >
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2">
-          Hello, {userName} <span className="text-2xl">👋</span>
+          Hello, {userName}
         </h1>
         <p className="text-gray-500 text-sm md:text-base mt-1">Here's your store overview</p>
       </motion.div>
@@ -40,7 +40,7 @@ export default function DashboardHome() {
           className="bg-white rounded-2xl p-5 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center gap-4 flex-1"
         >
           <div className="w-12 h-12 bg-red-50 text-[#FA3728] rounded-xl flex items-center justify-center flex-shrink-0">
-            <DollarSign size={24} />
+            <Wallet size={24} />
           </div>
           <div className="flex-1">
             <p className="text-xs font-medium text-gray-500 mb-0.5">Total Sales</p>

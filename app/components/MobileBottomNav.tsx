@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Package, MessageSquare, User } from 'lucide-react';
+import { Home, Package, ShoppingBag, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -10,7 +10,7 @@ export default function MobileBottomNav() {
   const navItems = [
     { href: '/dashboard', icon: Home, label: 'Home' },
     { href: '/dashboard/products', icon: Package, label: 'Products' },
-    { href: '/dashboard/orders', icon: MessageSquare, label: 'Orders' },
+    { href: '/dashboard/orders', icon: ShoppingBag, label: 'Orders' },
     { href: '/dashboard/profile', icon: User, label: 'Profile' },
   ];
 
