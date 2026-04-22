@@ -93,8 +93,8 @@ export default function ProfilePage() {
         <div className="flex flex-col items-start -mt-10 sm:-mt-12 mb-6">
           <div className="relative group">
             {/* White ring wrapper */}
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-[6px] border-white bg-white shadow-md relative z-10">
-              <div className="w-full h-full rounded-full border-[3px] border-[#FA3728] overflow-hidden bg-gray-100 flex items-center justify-center relative">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-[4px] border-white bg-white shadow-md relative z-10">
+              <div className="w-full h-full rounded-full border-[2px] border-[#FA3728] overflow-hidden bg-gray-100 flex items-center justify-center relative">
                  <img 
                    src={MOCK_VENDOR.avatar} 
                    alt={name} 
@@ -107,8 +107,8 @@ export default function ProfilePage() {
               </div>
             </div>
             {/* Verified Badge */}
-            <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-[#FA3728] rounded-full p-0.5 z-20 border-[2px] border-white shadow-sm">
-               <CheckCircle2 className="text-white" size={16} />
+            <div className="absolute bottom-2 right-2 bg-[#FA3728] rounded-full p-1 z-20 border-[2.5px] border-white shadow-sm flex items-center justify-center">
+               <Check className="text-white" strokeWidth={3} size={14} />
             </div>
           </div>
         </div>

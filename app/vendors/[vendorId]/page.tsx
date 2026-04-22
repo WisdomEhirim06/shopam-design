@@ -11,7 +11,7 @@ import {
   Phone,
   Mail,
   MapPin,
-  CheckCircle2,
+  Check,
   MessageCircle,
   User
 } from 'lucide-react';
@@ -46,6 +46,7 @@ const SECONDARY_CATEGORIES = ['All', 'Smartphones', 'Accessories', 'Headsets', '
 
 export default function VendorShopPage({ params }: { params: Promise<{ vendorId: string }> }) {
   const { vendorId } = use(params);
+  const [activeTab, setActiveTab] = useState<'info' | 'products' | 'posts'>('products');
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -109,8 +110,8 @@ export default function VendorShopPage({ params }: { params: Promise<{ vendorId:
           {/* Avatar Area - Aligned Left */}
           <div className="flex flex-col items-start -mt-10 sm:-mt-12 mb-6">
             <div className="relative">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-[6px] border-white bg-white shadow-md relative z-10">
-                <div className="w-full h-full rounded-full border-[3px] border-[#FA3728] overflow-hidden bg-gray-100 flex items-center justify-center relative">
+              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-[4px] border-white bg-white shadow-md relative z-10">
+                <div className="w-full h-full rounded-full border-[2px] border-[#FA3728] overflow-hidden bg-gray-100 flex items-center justify-center relative">
                    <img 
                      src={MOCK_VENDOR.avatar} 
                      alt={shopName} 
@@ -119,73 +120,80 @@ export default function VendorShopPage({ params }: { params: Promise<{ vendorId:
                    />
                 </div>
               </div>
-              <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-[#FA3728] rounded-full p-0.5 z-20 border-[2px] border-white shadow-sm">
-                 <CheckCircle2 className="text-white" size={16} />
+              <div className="absolute bottom-2 right-2 bg-[#FA3728] rounded-full p-1 z-20 border-[2.5px] border-white shadow-sm flex items-center justify-center">
+                 <Check className="text-white" strokeWidth={3} size={14} />
               </div>
             </div>
           </div>
 
-          {/* Simple Shop Bio Container - Aligned Left */}
-          <div className="text-left max-w-2xl">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 leading-tight">{shopName}</h1>
-            
-            <p className="text-sm text-gray-700 mb-3 font-medium leading-relaxed max-w-xl">{MOCK_VENDOR.bio}</p>
-            
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-1">
-                 <a href={`tel:${MOCK_VENDOR.phone.replace(/\s/g, '')}`} className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-[#FA3728] transition-colors font-semibold py-1 rounded-sm">
-                    <Phone size={14} className="text-[#FA3728]" /> {MOCK_VENDOR.phone}
-                 </a>
-                 <a href={`mailto:${MOCK_VENDOR.email}`} className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-[#FA3728] transition-colors font-semibold py-1 rounded-sm">
-                    <Mail size={14} className="text-[#FA3728]" /> {MOCK_VENDOR.email}
-                 </a>
-                 <a href={`https://maps.google.com/?q=${MOCK_VENDOR.location}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-[#FA3728] transition-colors font-semibold py-1 rounded-sm">
-                    <MapPin size={14} className="text-[#FA3728]" /> {toTitleCase(MOCK_VENDOR.location)}
-                 </a>
-            </div>
+          {/* Simple Shop Header Container - Aligned Left */}
+          <div className="text-left max-w-2xl mb-4">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1 leading-tight">{shopName}</h1>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-3">
+              {MOCK_VENDOR.category} • {toTitleCase(MOCK_VENDOR.location)}
+            </p>
+            <p className="text-sm text-gray-700 leading-relaxed font-medium line-clamp-2">
+              {MOCK_VENDOR.bio}
+            </p>
           </div>
         </div>
 
-        {/* Tools & Filters Section */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 relative z-30">
-           
-           {/* Prominent Search Bar Moved Top */}
-           <div className="relative w-full mb-4">
-             <input 
-               type="text" 
-               placeholder={`Search ${shopName}...`} 
-               value={searchQuery}
-               onChange={(e) => setSearchQuery(e.target.value)}
-               className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white border border-gray-200 text-sm outline-none focus:border-[#FA3728]/50 transition-colors shadow-sm" 
-             />
-             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-           </div>
-
-           <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide items-center mb-1">
-             <button className="flex-shrink-0 px-4 py-2 rounded-full bg-white border border-gray-200 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-50 shadow-sm transition-colors text-xs sm:text-sm font-semibold">
-               <Filter size={14} /> Filters
-             </button>
-             <button className="flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-full bg-gray-100 text-gray-800 text-xs sm:text-sm font-semibold shadow-sm hover:bg-gray-200 transition-colors">
-               Sort by
-             </button>
-
-             {/* Separator */}
-             <div className="w-px h-6 bg-gray-200 mx-1 flex-shrink-0"></div>
-
-             {SECONDARY_CATEGORIES.map((cat) => (
+        {/* Tab Navigation Menu */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 border-b border-gray-100 w-full overflow-x-auto scrollbar-hide pt-2">
+          <div className="flex gap-8 sm:gap-10 min-w-max">
+            {['Products', 'Posts', 'Info'].map((tabLabel) => {
+              const tabId = tabLabel.toLowerCase() as 'info' | 'products' | 'posts';
+              return (
                 <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`flex-shrink-0 px-4 sm:px-5 py-2 text-xs sm:text-sm font-medium whitespace-nowrap rounded-full transition-all duration-200 ${
-                    activeCategory === cat 
-                    ? 'bg-[#FA3728]/10 text-[#FA3728] border border-[#FA3728]/20' 
-                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                  key={tabId}
+                  onClick={() => setActiveTab(tabId)}
+                  className={`py-3.5 text-[15px] font-bold whitespace-nowrap border-b-2 transition-all ${
+                    activeTab === tabId ? 'border-[#FA3728] text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-700'
                   }`}
                 >
-                  {cat}
+                  {tabLabel}
                 </button>
-             ))}
-           </div>
+              );
+            })}
+          </div>
         </div>
+
+        {activeTab === 'products' && (
+          <>
+            {/* Tools & Filters Section */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 relative z-30">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                 
+                 <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 items-center">
+                   {SECONDARY_CATEGORIES.map((cat) => (
+                     <button
+                       key={cat}
+                       onClick={() => setActiveCategory(cat)}
+                       className={`flex-shrink-0 px-4 sm:px-5 py-1.5 text-xs sm:text-[13px] font-semibold rounded-full transition-colors ${
+                         activeCategory === cat
+                         ? 'bg-gray-900 text-white'
+                         : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 shadow-sm'
+                       }`}
+                     >
+                       {cat}
+                     </button>
+                   ))}
+                 </div>
+                 
+                 <div className="flex items-center gap-2 w-full md:w-auto">
+                   <div className="relative w-full md:w-64 flex-shrink-0">
+                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                     <input
+                       type="text"
+                       placeholder="Search products..."
+                       value={searchQuery}
+                       onChange={(e) => setSearchQuery(e.target.value)}
+                       className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none outline-none text-sm text-gray-900 rounded-full focus:ring-1 focus:ring-gray-300 transition-all font-medium placeholder:text-gray-400"
+                     />
+                   </div>
+                 </div>
+              </div>
+            </div>
 
         {/* Product Grid Area */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -236,6 +244,55 @@ export default function VendorShopPage({ params }: { params: Promise<{ vendorId:
             </div>
           )}
         </div>
+        </>
+        )}
+
+        {activeTab === 'posts' && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20 text-center">
+            <div className="w-16 h-16 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MessageCircle size={28} />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">No posts yet</h3>
+            <p className="text-sm text-gray-500">{shopName} hasn't shared any updates.</p>
+          </div>
+        )}
+
+        {activeTab === 'info' && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+            <div className="max-w-2xl bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900 mb-5">Contact Information</h3>
+              <div className="space-y-5">
+                <a href={`tel:${MOCK_VENDOR.phone.replace(/\s/g, '')}`} className="flex items-center gap-4 text-sm text-gray-800 hover:text-[#FA3728] transition-colors font-semibold">
+                  <div className="w-12 h-12 rounded-full bg-[#FA3728]/10 flex items-center justify-center flex-shrink-0">
+                    <Phone size={20} className="text-[#FA3728]" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium mb-0.5">Phone Number</p>
+                    {MOCK_VENDOR.phone}
+                  </div>
+                </a>
+                <a href={`mailto:${MOCK_VENDOR.email}`} className="flex items-center gap-4 text-sm text-gray-800 hover:text-[#FA3728] transition-colors font-semibold">
+                  <div className="w-12 h-12 rounded-full bg-[#FA3728]/10 flex items-center justify-center flex-shrink-0">
+                    <Mail size={20} className="text-[#FA3728]" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium mb-0.5">Email Address</p>
+                    {MOCK_VENDOR.email}
+                  </div>
+                </a>
+                <a href={`https://maps.google.com/?q=${MOCK_VENDOR.location}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-sm text-gray-800 hover:text-[#FA3728] transition-colors font-semibold">
+                  <div className="w-12 h-12 rounded-full bg-[#FA3728]/10 flex items-center justify-center flex-shrink-0">
+                    <MapPin size={20} className="text-[#FA3728]" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium mb-0.5">Location</p>
+                    {toTitleCase(MOCK_VENDOR.location)}
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
         
       </div>
 
