@@ -107,45 +107,45 @@ export const API_ENDPOINTS = {
 
   // Products
   PRODUCTS: {
-    LIST: '/api/commerceproducts/',
-    MY_PRODUCTS: '/api/commercemy-products/',
-    DETAIL: (id: string) => `/api/commerceproducts/${id}/`,
-    CREATE: '/api/commerceproducts/',
-    UPDATE: (id: string) => `/api/commerceproducts/${id}/`,
-    DELETE: (id: string) => `/api/commerceproducts/${id}/`,
+    LIST: '/api/commerce/products/',
+    MY_PRODUCTS: '/api/commerce/my-products/',
+    DETAIL: (id: string) => `/api/commerce/products/${id}/`,
+    CREATE: '/api/commerce/products/',
+    UPDATE: (id: string) => `/api/commerce/products/${id}/`,
+    DELETE: (id: string) => `/api/commerce/products/${id}/`,
   },
 
   // Categories
   CATEGORIES: {
-    LIST: '/api/commercecategories/',
-    DETAIL: (id: number) => `/api/commercecategories/${id}/`,
+    LIST: '/api/commerce/categories/', // Assumed pattern
+    DETAIL: (id: number) => `/api/commerce/categories/${id}/`,
   },
 
   // Cart
   CART: {
-    GET: '/api/commercecart/',
-    ADD: '/api/commercecart/add/',
-    CLEAR: '/api/commercecart/clear/',
-    ITEM_DETAIL: (id: string) => `/api/commercecart/items/${id}/`,
+    GET: '/api/commerce/cart/',
+    ADD: '/api/commerce/cart/add/',
+    CLEAR: '/api/commerce/cart/clear/',
+    ITEM_DETAIL: (id: string) => `/api/commerce/cart/items/${id}/`,
   },
 
   // Orders
   ORDERS: {
-    VENDOR_LIST: '/api/commercevendor/orders/',
-    LIST: '/api/commerceorders/',
-    PLACE: '/api/commerceorders/place/',
-    FILTER: '/api/commerceorders/filter',
-    HISTORY: '/api/commerceorders/history/',
-    DETAIL: (id: string) => `/api/commerceorders/${id}/`,
-    UPDATE: (id: string) => `/api/commerceorders/${id}/`,
-    VENDOR_REVIEW: (id: string) => `/api/commerceorders/${id}/vendor-review/`,
-    CUSTOMER_APPROVE: (id: string) => `/api/commerceorders/${id}/customer-approve/`,
-    SET_SHIPPING: (id: string) => `/api/commerceorders/${id}/set-shipping/`,
-    SET_SHIPPING_FEE: (id: string) => `/api/commerceorders/${id}/set-shipping-fee/`,
-    PAYMENT_DECISION: (id: string) => `/api/commerceorders/${id}/payment-decision/`,
-    START_DELIVERY: (id: string) => `/api/commerceorders/${id}/start-delivery/`,
-    CONFIRM_HANDOVER: (id: string) => `/api/commerceorders/${id}/confirm-handover/`,
-    RAISE_DISPUTE: (id: string) => `/api/commerceorders/${id}/dispute/`,
+    VENDOR_LIST: '/api/commerce/vendor/orders/',
+    LIST: '/api/commerce/orders/',
+    PLACE: '/api/commerce/orders/place/',
+    FILTER: '/api/commerce/orders/filter',
+    HISTORY: '/api/commerce/orders/history/',
+    DETAIL: (id: string) => `/api/commerce/orders/filter?order_id=${id}`,
+    UPDATE: (id: string) => `/api/commerce/orders/${id}/`,
+    VENDOR_REVIEW: (id: string) => `/api/commerce/orders/${id}/vendor-review/`,
+    CUSTOMER_APPROVE: (id: string) => `/api/commerce/orders/${id}/customer-approve/`,
+    SET_SHIPPING: (id: string) => `/api/commerce/orders/${id}/set-shipping/`,
+    SET_SHIPPING_FEE: (id: string) => `/api/commerce/orders/${id}/set-shipping-fee/`,
+    PAYMENT_DECISION: (id: string) => `/api/commerce/orders/${id}/payment-decision/`,
+    START_DELIVERY: (id: string) => `/api/commerce/orders/${id}/start-delivery/`,
+    CONFIRM_HANDOVER: (id: string) => `/api/commerce/orders/${id}/confirm-handover/`,
+    RAISE_DISPUTE: (id: string) => `/api/commerce/orders/${id}/dispute/`,
   },
 
   // Payments (Monnify)

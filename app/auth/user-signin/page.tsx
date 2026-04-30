@@ -48,13 +48,9 @@ function UserSignInForm() {
     } catch (err: any) {
       console.error('Login error:', err);
 
-      // --- OFFLINE PROTOTYPE BYPASS ---
-      // If backend is disconnected or user types 'buyer@shopam.com'
-      if (formData.email === 'buyer@shopam.com' || err.message === 'Failed to fetch' || err.message === 'Network Error' || String(err.message).toLowerCase().includes('timeout')) {
-        console.warn('Backend unavailable. Mocking buyer login for testing.');
-        localStorage.setItem('access_token', 'mock_buyer_token');
-        localStorage.setItem('user', JSON.stringify({ id: 'b1', is_vendor: false, is_customer: true, username: 'Mock Buyer' }));
-        router.push(returnUrl);
+      // Handle EMAIL_NOT_VERIFIED error
+      if (err.response?.data?.error === 'EMAIL_NOT_VERIFIED' || err.response?.data?.code === 'EMAIL_NOT_VERIFIED' || err.response?.data?.detail === 'Email not verified') {
+        router.push('/auth/user-verify');
         return;
       }
       

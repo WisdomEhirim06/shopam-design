@@ -45,6 +45,11 @@ export default function VendorSignInPage() {
     } catch (err: any) {
       console.error('Login error:', err);
 
+      // Handle EMAIL_NOT_VERIFIED error
+      if (err.response?.data?.error === 'EMAIL_NOT_VERIFIED' || err.response?.data?.code === 'EMAIL_NOT_VERIFIED' || err.response?.data?.detail === 'Email not verified') {
+        router.push('/auth/user-verify');
+        return;
+      }
 
       // Handle different error types
       if (err.response?.data?.message) {
@@ -238,7 +243,7 @@ export default function VendorSignInPage() {
           </motion.div>
         </div>
       </div>
+      </div>
     </div>
-  </div>
-);
+  );
 }
