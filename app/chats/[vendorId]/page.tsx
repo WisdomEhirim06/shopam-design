@@ -57,7 +57,8 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   /* ── Payment state ── */
-  const [checkoutId, setCheckoutId] = useState<string>('');
+  const [transactionRef, setTransactionRef] = useState<string>('');
+  const [bankDetails, setBankDetails] = useState<{bankName: string; accountNumber: string; accountName: string} | null>(null);
   const [showPaymentSheet, setShowPaymentSheet] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank' | null>(null);
 
@@ -193,7 +194,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
     const textMsgs: Message[] = textThreads.map(msg => ({
       id: msg.id,
       type: 'text' as const,
-      sender: msg.sender_id === currentUser?.id ? 'user' : 'vendor',
+      sender: msg.sender === currentUser?.id ? 'user' : 'vendor',
       vendor: vName,
       status: '',
       items: [],
@@ -252,29 +253,52 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
   const openPayment = async () => {
     try {
       const res = await paymentsService.initCheckout({ order_id: orderId });
-      setCheckoutId((res as any).checkout_id || 'dummy_checkout_id');
+      setTransactionRef(res.transaction_reference);
       setShowPaymentSheet(true);
       setPaymentMethod(null);
       setCardStep(null);
       setBankStep(null);
+      setBankDetails(null);
     } catch(e) {
       console.error(e);
       alert('Error initializing checkout');
     }
   };
 
-  const handleCardPay = () => {
+  const handleCardPay = async () => {
     if (!cardNumber || !expiry || !cvv) return;
-    // Real implementation would submit to stripe/paystack using checkoutId.
-    setCardStep('otp');
+    try {
+      setIsLoading(true);
+      const [expiryMonth, expiryYear] = expiry.split('/');
+      // Spec: POST /api/payments/direct-charge/ with correct card fields
+      await paymentsService.directCharge({
+        transaction_reference: transactionRef,
+        number: cardNumber.replace(/\s/g, ''),
+        expiryMonth: expiryMonth?.trim() || '',
+        expiryYear: (expiryYear?.trim() || '').length === 2 ? `20${expiryYear.trim()}` : (expiryYear?.trim() || ''),
+        cvv,
+      });
+      // If backend responds normally it means no OTP needed → success
+      setCardStep('success');
+      await refreshOrder();
+    } catch (err: any) {
+      // Backend may respond with OTP_REQUIRED — treat as OTP step
+      setCardStep('otp');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleVerifyOtp = async () => {
     if (otp.every(d => d)) {
       try {
          setIsLoading(true);
-         // Process dummy direct charge via endpoints
-         await paymentsService.directCharge({ checkout_id: checkoutId, method: 'card', card_details: { number: cardNumber, expiry_month: '12', expiry_year: '30', cvv } } as any);
+         // Submit OTP authorization per spec
+         await paymentsService.authorizeOTP({
+           transaction_reference: transactionRef,
+           token_id: 'otp',
+           token: otp.join(''),
+         });
          setCardStep('success');
          await refreshOrder();
       } catch (e) {
@@ -293,7 +317,8 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
   const handleISentIt = async () => {
     setBankStep('verifying');
     try {
-      await paymentsService.directCharge({ checkout_id: checkoutId, method: 'bank_transfer' } as any);
+      // Spec: POST /api/payments/bank-transfer/ with { transaction_reference, bank_code }
+      await paymentsService.bankTransfer({ transaction_reference: transactionRef });
     } catch (e) {
       console.error(e);
     }

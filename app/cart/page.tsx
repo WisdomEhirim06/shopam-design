@@ -15,58 +15,7 @@ import {
 import { cartService } from '@/lib/api/cart';
 import { Cart, SubCart, CartItem } from '@/lib/api/types';
 
-const MOCK_CART: Cart = {
-  id: 'mock-cart-id',
-  user: 'mock-user-id',
-  subcarts: [
-    {
-      id: 'subcart-1',
-      vendor_id: 'vendor-1',
-      vendor_name: "Sarah's Fashion",
-      items: [
-        {
-          id: 'item-1',
-          subcart: 'subcart-1',
-          product: 'prod-1',
-          product_details: {
-            id: 'prod-1',
-            name: 'African Print Dress',
-            price: '28000',
-            images: [],
-            stock: 10,
-          } as any,
-          quantity: 1,
-          selected_addons: [],
-          addon_details: [],
-          total_price: '28000'
-        }
-      ]
-    },
-    {
-      id: 'subcart-2',
-      vendor_id: 'vendor-2',
-      vendor_name: 'TechHub Nigeria',
-      items: [
-        {
-          id: 'item-2',
-          subcart: 'subcart-2',
-          product: 'prod-2',
-          product_details: {
-            id: 'prod-2',
-            name: 'Wireless Earbuds Pro',
-            price: '15000',
-            images: [],
-            stock: 50,
-          } as any,
-          quantity: 2,
-          selected_addons: [],
-          addon_details: [],
-          total_price: '30000'
-        }
-      ]
-    }
-  ]
-};
+
 
 export default function CartPage() {
   const [cart, setCart] = useState<Cart | null>(null);
@@ -78,18 +27,10 @@ export default function CartPage() {
     try {
       setIsLoading(true);
       const data = await cartService.getCart();
-      
-      // If cart is empty, use mock data for testing as requested
-      if (!data.subcarts || data.subcarts.length === 0) {
-        setCart(MOCK_CART);
-      } else {
-        setCart(data);
-      }
+      setCart(data);
     } catch (err) {
       console.error('Failed to fetch cart:', err);
-      // Fallback to mock data even on error for design testing
-      setCart(MOCK_CART);
-      // setError('Could not load your cart. Please try again.');
+      setError('Could not load your cart. Please try again.');
     } finally {
       setIsLoading(false);
     }

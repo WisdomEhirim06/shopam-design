@@ -84,7 +84,8 @@ export default function ExplorePage() {
       };
 
       if (selectedCategories.length > 0) {
-        filters.categories = selectedCategories.join(',');
+        // Pass category slugs (comma-joined) to the API
+        filters.category = selectedCategories.join(',');
       }
 
       if (searchQuery) {
@@ -309,33 +310,32 @@ export default function ExplorePage() {
 
                     <div className="space-y-1.5 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
                       {[
-                        "Food and Drinks",
-                        "Home and Living",
-                        "Beauty, Hair and Personal Care",
-                        "Accessories",
-                        "Women's Fashion",
-                        "Men's Fashion",
-                        "Baby and Kids"
-                      ].map((cat) => (
+                        { label: "Food and Drinks",               slug: 'food_drinks' },
+                        { label: "Home and Living",               slug: 'home_living' },
+                        { label: "Beauty, Hair and Personal Care", slug: 'beauty_hair_personal_care' },
+                        { label: "Accessories",                   slug: 'accessories' },
+                        { label: "Women's Fashion",               slug: 'womens_fashion' },
+                        { label: "Men's Fashion",                 slug: 'mens_fashion' },
+                        { label: "Baby and Kids",                 slug: 'baby_kids' },
+                      ].map(({ label, slug }) => (
                         <label
-                          key={cat}
-                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${selectedCategories.includes(cat)
+                                                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${selectedCategories.includes(slug)
                               ? 'bg-[#FA3728]/5 text-[#FA3728]'
                               : 'hover:bg-gray-50 text-gray-600'
                             }`}
-                        >
-                          <span className="text-xs font-semibold">{cat}</span>
-                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedCategories.includes(cat)
+                         >
+                          <span className="text-xs font-semibold">{label}</span>
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedCategories.includes(slug)
                               ? 'bg-[#FA3728] border-[#FA3728]'
                               : 'border-gray-300'
                             }`}>
-                            {selectedCategories.includes(cat) && <Check size={10} className="text-white" />}
+                            {selectedCategories.includes(slug) && <Check size={10} className="text-white" />}
                           </div>
                           <input
                             type="checkbox"
                             className="hidden"
-                            checked={selectedCategories.includes(cat)}
-                            onChange={() => toggleCategory(cat)}
+                            checked={selectedCategories.includes(slug)}
+                            onChange={() => toggleCategory(slug)}
                           />
                         </label>
                       ))}

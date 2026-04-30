@@ -62,16 +62,14 @@ export interface UserProfile {
   is_vendor?: boolean;
 }
 
-export type BusinessCategory = 
-  | 'retail' 
-  | 'wholesale' 
-  | 'service' 
-  | 'food' 
-  | 'fashion' 
-  | 'tech' 
-  | 'beauty'
-  | 'electronics'
-  | 'other';
+export type BusinessCategory =
+  | 'food_drinks'
+  | 'home_living'
+  | 'beauty_hair_personal_care'
+  | 'accessories'
+  | 'womens_fashion'
+  | 'mens_fashion'
+  | 'baby_kids';
 
 // Product Types (matches API ProductService schema)
 export type ItemType = 'product' | 'service';
@@ -168,7 +166,6 @@ export interface UpdateCartItemRequest {
 // Auth Request Types
 export interface PasswordChangeRequest {
   old_password: string;
-  old_password1: string;
   new_password: string;
 }
 
@@ -251,21 +248,22 @@ export interface Transaction {
   updated_at: string;
 }
 
-// Review Types
+// Review Types — matches spec ReviewRequest / Review schemas
 export interface Review {
-  id: string; // Updated to string (UUID)
+  id: string;
   customer: string;
-  transaction: string;
-  rating: number; // 1-5
-  comment: string;
+  product: string | null;  // nullable UUID
+  order: string | null;    // nullable UUID
+  rating: number;          // 1-5
+  comment?: string;
   created_at: string;
-  updated_at: string;
 }
 
 export interface CreateReviewRequest {
-  transaction: string; // UUID
+  product?: string | null; // UUID of the product
+  order?: string | null;   // UUID of the order
   rating: number;
-  comment: string;
+  comment?: string;
 }
 
 // Social - Post Types
@@ -365,17 +363,22 @@ export interface PostFilters {
   page_size?: number;
 }
 
-// Payment Types
-export type PaymentStatus = 'pending' | 'success' | 'failed' | 'cancelled';
+// Payment Types — matches spec Payment schema exactly
+export type PaymentStatus = 'pending' | 'successful' | 'failed';
 
 export interface Payment {
   id: string;
-  order: string;
-  amount: string;
+  order: string | null;
+  total_amount: string;
+  vat_amount: string;
+  platform_fee: string;
+  vendor_payout_amount: string;
   status: PaymentStatus;
   tx_ref: string;
-  payment_method: string;
+  monnify_ref: string;
+  is_settled_to_vendor: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 export interface CheckoutInitRequest {
@@ -426,6 +429,7 @@ export interface ConfirmHandoverRequest {
 }
 
 export interface RaiseDisputeRequest {
+  email: string;   // required by spec
   reason: string;
 }
 

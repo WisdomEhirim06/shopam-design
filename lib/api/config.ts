@@ -12,14 +12,27 @@ const apiClient: AxiosInstance = axios.create({
   },
 });
 
+// Public endpoints that must NOT carry an Authorization header
+const PUBLIC_ENDPOINTS = [
+  '/api/accounts/register/',
+  '/api/accounts/login/',
+  '/api/accounts/token/refresh/',
+  '/api/accounts/password/forgot/',
+  '/api/accounts/password/reset',
+  '/api/accounts/verify-email',
+];
+
 // Request interceptor - Add auth token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Get token from localStorage
-    const token = localStorage.getItem('access_token');
+    const url = config.url || '';
+    const isPublic = PUBLIC_ENDPOINTS.some((p) => url.startsWith(p));
 
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (!isPublic) {
+      const token = localStorage.getItem('access_token');
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
 
     return config;
@@ -162,13 +175,10 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string) => `/api/posts/messages/${id}/`,
   },
 
-  // Reviews
+  // Reviews — spec: GET/POST /api/commercevendors/reviews/
   REVIEWS: {
-    LIST: '/api/commercereviews/',
-    CREATE: '/api/commercereviews/',
-    DETAIL: (id: number) => `/api/commercereviews/${id}/`,
-    UPDATE: (id: number) => `/api/commercereviews/${id}/`,
-    DELETE: (id: number) => `/api/commercereviews/${id}/`,
+    LIST: '/api/commercevendors/reviews/',
+    CREATE: '/api/commercevendors/reviews/',
   },
 
   // Social - Posts
