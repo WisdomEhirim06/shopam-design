@@ -38,6 +38,7 @@ export default function VendorSignUpPage() {
     confirmPassword: '',
     phone: '',
     first_name: '',
+    middle_name: '',
     last_name: '',
   });
 
@@ -81,18 +82,21 @@ export default function VendorSignUpPage() {
 
     setIsSubmitting(true);
 
-    // Normalise phone to international format (+234XXXXXXXXXX)
+    // Strip country code so the backend can concatenate phone_country_code + phone correctly
     let phone = personalData.phone.trim().replace(/\s+/g, '');
-    if (phone.startsWith('0')) phone = '+234' + phone.slice(1);
-    else if (phone.startsWith('234') && !phone.startsWith('+')) phone = '+' + phone;
+    if (phone.startsWith('+234')) phone = phone.slice(4);
+    else if (phone.startsWith('234')) phone = phone.slice(3);
+    else if (phone.startsWith('0')) phone = phone.slice(1);
 
     try {
       await authService.registerVendor({
         email: personalData.email,
         password: personalData.password,
         first_name: personalData.first_name,
+        middle_name: personalData.middle_name || undefined,
         last_name: personalData.last_name,
         phone,
+        phone_country_code: '234',
         business_name: businessData.business_name,
         business_category: businessData.business_category,
         business_address: businessData.business_address,
@@ -101,23 +105,26 @@ export default function VendorSignUpPage() {
       });
 
       setIsSubmitting(false);
-      router.push('/dashboard');
+      router.push(`/auth/user-verify?email=${encodeURIComponent(personalData.email)}`);
     } catch (err: any) {
       setIsSubmitting(false);
+      console.error('Vendor registration error:', err.response?.status, err.response?.data);
 
-      // Vendor must verify email before login
-      if (err.response?.data?.error === 'EMAIL_NOT_VERIFIED' || err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
-        setCurrentStep('success');
-        return;
-      }
-
-      if (err.response?.data) {
-        const errors = err.response.data;
-        const firstKey = Object.keys(errors)[0];
-        const firstMsg = Array.isArray(errors[firstKey]) ? errors[firstKey][0] : errors[firstKey];
+      const data = err.response?.data;
+      if (!data) {
+        setError(err.message || 'Registration failed. Please try again.');
+      } else if (typeof data === 'string') {
+        setError('Server error. Please try again later.');
+      } else if (data.detail) {
+        setError(data.detail);
+      } else if (data.message) {
+        setError(data.message);
+      } else if (typeof data === 'object' && !Array.isArray(data)) {
+        const firstKey = Object.keys(data)[0];
+        const firstMsg = Array.isArray(data[firstKey]) ? data[firstKey][0] : data[firstKey];
         setError(`${firstKey}: ${firstMsg}`);
       } else {
-        setError(err.message || 'Registration failed. Please try again.');
+        setError('Registration failed. Please try again.');
       }
     }
   };
@@ -242,6 +249,17 @@ export default function VendorSignUpPage() {
                           className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
                         />
                       </div>
+                    </div>
+
+                    {/* Middle Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Middle Name <span className="text-gray-400 font-normal">(Opt)</span></label>
+                      <input
+                        type="text"
+                        value={personalData.middle_name}
+                        onChange={(e) => setPersonalData({ ...personalData, middle_name: e.target.value })}
+                        className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
+                      />
                     </div>
 
                     {/* Email */}

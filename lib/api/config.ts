@@ -103,6 +103,7 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: '/api/accounts/password/reset',
     VERIFY_EMAIL: '/api/accounts/verify-email',
     TOKEN_REFRESH: '/api/accounts/token/refresh/',
+    VENDOR_PROFILE_UPDATE: '/api/accounts/path/vendor-update/',
   },
 
   // Products
@@ -113,6 +114,8 @@ export const API_ENDPOINTS = {
     CREATE: '/api/commerce/products/',
     UPDATE: (id: string) => `/api/commerce/products/${id}/`,
     DELETE: (id: string) => `/api/commerce/products/${id}/`,
+    ADDONS: (productId: string) => `/api/commerce/products/${productId}/addons/`,
+    ADDON_DETAIL: (productId: string, id: string) => `/api/commerce/products/${productId}/addons/${id}/`,
   },
 
   // Categories
@@ -120,6 +123,11 @@ export const API_ENDPOINTS = {
     LIST: '/api/commerce/categories/', // Assumed pattern
     DETAIL: (id: number) => `/api/commerce/categories/${id}/`,
   },
+
+  // Discovery
+  SEARCH: '/api/commerce/search/',
+  VENDORS: '/api/commerce/vendors/',
+  VENDOR_REVIEWS: '/api/commerce/vendors/reviews/',
 
   // Cart
   CART: {
@@ -145,7 +153,8 @@ export const API_ENDPOINTS = {
     PAYMENT_DECISION: (id: string) => `/api/commerce/orders/${id}/payment-decision/`,
     START_DELIVERY: (id: string) => `/api/commerce/orders/${id}/start-delivery/`,
     CONFIRM_HANDOVER: (id: string) => `/api/commerce/orders/${id}/confirm-handover/`,
-    RAISE_DISPUTE: (id: string) => `/api/commerce/orders/${id}/dispute/`,
+    RAISE_DISPUTE: (id: string) => `/admins/dispute/create/${id}/`,
+    DISPUTES: '/api/commerce/disputes/',
   },
 
   // Payments (Monnify)

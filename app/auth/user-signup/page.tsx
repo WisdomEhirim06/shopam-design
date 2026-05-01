@@ -61,37 +61,44 @@ function UserSignUpForm() {
 
     setIsSubmitting(true);
 
+    // Strip country code so backend concatenates phone_country_code + phone correctly
+    let phone = formData.phone.trim().replace(/\s+/g, '');
+    if (phone.startsWith('+234')) phone = phone.slice(4);
+    else if (phone.startsWith('234')) phone = phone.slice(3);
+    else if (phone.startsWith('0')) phone = phone.slice(1);
+
     try {
-      // Real API call
-      const response = await authService.registerUser({
+      await authService.registerUser({
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        phone: formData.phone,
+        phone,
         first_name: formData.first_name || undefined,
         last_name: formData.last_name || undefined,
       });
 
-      console.log('Registration successful:', response.user);
-
-      // Redirect to explore page or returnUrl (user is automatically logged in)
-      router.push(returnUrl);
+      // Email verification required before login — redirect to verify page
+      router.push(`/auth/user-verify?email=${encodeURIComponent(formData.email)}`);
     } catch (err: any) {
-      console.error('Registration error:', err);
+      console.error('Registration error:', err.response?.status, err.response?.data);
 
-      // Handle different error types
-      if (err.response?.data?.username) {
-        setError(`Username: ${err.response.data.username[0]}`);
-      } else if (err.response?.data?.email) {
-        setError(`Email: ${err.response.data.email[0]}`);
-      } else if (err.response?.data?.phone) {
-        setError(`Phone: ${err.response.data.phone[0]}`);
-      } else if (err.response?.data?.password) {
-        setError(`Password: ${err.response.data.password[0]}`);
-      } else if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.response?.data?.detail) {
-        setError(err.response.data.detail);
+      const data = err.response?.data;
+      if (!data) {
+        setError(err.message || 'Registration failed. Please try again.');
+      } else if (typeof data === 'string') {
+        setError('Server error. Please try again later.');
+      } else if (data.detail) {
+        setError(data.detail);
+      } else if (data.username) {
+        setError(`Username: ${Array.isArray(data.username) ? data.username[0] : data.username}`);
+      } else if (data.email) {
+        setError(`Email: ${Array.isArray(data.email) ? data.email[0] : data.email}`);
+      } else if (data.phone) {
+        setError(`Phone: ${Array.isArray(data.phone) ? data.phone[0] : data.phone}`);
+      } else if (data.password) {
+        setError(`Password: ${Array.isArray(data.password) ? data.password[0] : data.password}`);
+      } else if (data.message) {
+        setError(data.message);
       } else {
         setError('Registration failed. Please try again.');
       }

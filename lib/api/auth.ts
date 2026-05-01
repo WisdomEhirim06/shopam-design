@@ -13,20 +13,19 @@ import type {
 
 export const authService = {
   /**
-   * Register a new user (customer)
+   * Register a new user (customer). Backend sends a verification email — user must verify
+   * before they can log in. Redirect to /auth/user-verify after calling this.
    */
-  async registerUser(data: UserRegister): Promise<LoginResponse> {
-    // Registration returns user info only — no tokens. Auto-login to get them.
+  async registerUser(data: UserRegister): Promise<void> {
     await apiClient.post(API_ENDPOINTS.AUTH.USER_REGISTER, data);
-    return this.login({ email: data.email, password: data.password });
   },
 
   /**
-   * Register a new vendor (returns no tokens — auto-login, which may throw EMAIL_NOT_VERIFIED)
+   * Register a new vendor. Backend sends a verification email — user must verify before
+   * they can log in. Redirect to /auth/user-verify after calling this.
    */
-  async registerVendor(data: VendorRegister): Promise<LoginResponse> {
+  async registerVendor(data: VendorRegister): Promise<void> {
     await apiClient.post(API_ENDPOINTS.AUTH.VENDOR_REGISTER, data);
-    return this.login({ email: data.email, password: data.password });
   },
 
   /**

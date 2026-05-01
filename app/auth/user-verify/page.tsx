@@ -12,6 +12,8 @@ function UserVerifyForm() {
   const searchParams = useSearchParams();
   // When user clicks link in email, token arrives as ?token=...
   const urlToken = searchParams.get('token');
+  // Email passed from signup page so users know where to check their inbox
+  const emailHint = searchParams.get('email');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -132,7 +134,7 @@ function UserVerifyForm() {
           <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3, duration: 0.5 }}>
             <h2 className="text-4xl font-bold mb-6 tracking-tight">Security Check</h2>
             <p className="text-xl opacity-90 leading-relaxed font-light">
-              We've sent a unique 6-digit verification code to your mailbox. Please enter it to secure your account.
+              We've sent a verification link to your mailbox. Click it to activate your account, or enter the code from the email below.
             </p>
           </motion.div>
         </div>
@@ -158,7 +160,11 @@ function UserVerifyForm() {
             <>
               <div className="mb-10 text-center">
                 <h2 className="text-3xl font-extrabold text-gray-900 mb-3 tracking-tight">Enter Code</h2>
-                <p className="text-gray-500 font-medium">Check your inbox for the verification digits</p>
+                <p className="text-gray-500 font-medium">
+                  {emailHint
+                    ? <>Check the inbox for <span className="text-gray-700 font-semibold">{emailHint}</span></>
+                    : 'Check your inbox for the verification digits'}
+                </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-8">
