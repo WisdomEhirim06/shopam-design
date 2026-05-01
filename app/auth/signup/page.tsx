@@ -20,7 +20,7 @@ import { authService } from '@/lib/api';
 import Image from 'next/image';
 
 type Step = 'personal' | 'business' | 'success';
-type BusinessCategory = 'food_drinks' | 'home_living' | 'beauty_hair_personal_care' | 'accessories' | 'womens_fashion' | 'mens_fashion' | 'baby_kids';
+type BusinessCategory = 'fashion' | 'food' | 'beauty_hair' | 'home_living' | 'baby_kids' | 'other';
 
 export default function VendorSignUpPage() {
   const router = useRouter();
@@ -44,20 +44,19 @@ export default function VendorSignUpPage() {
 
   const [businessData, setBusinessData] = useState({
     business_name: '',
-    business_category: 'food_drinks' as BusinessCategory,
+    business_category: 'fashion' as BusinessCategory,
     business_address: '',
     cac_registration: '',
     tin: '',
   });
 
   const businessCategories = [
-    { value: 'food_drinks', label: 'Food and Drinks' },
-    { value: 'home_living', label: 'Home and Living' },
-    { value: 'beauty_hair_personal_care', label: 'Beauty, Hair and Personal Care' },
-    { value: 'accessories', label: 'Accessories' },
-    { value: 'womens_fashion', label: "Women's Fashion" },
-    { value: 'mens_fashion', label: "Men's Fashion" },
-    { value: 'baby_kids', label: 'Baby and Kids' },
+    { value: 'fashion', label: 'Fashion' },
+    { value: 'food', label: 'Food & Drinks' },
+    { value: 'beauty_hair', label: 'Beauty, Hair and Personal Care' },
+    { value: 'home_living', label: 'Home & Living' },
+    { value: 'baby_kids', label: 'Baby & Kids' },
+    { value: 'other', label: 'Other' },
   ];
 
   // Handle form submission

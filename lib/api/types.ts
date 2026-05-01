@@ -63,13 +63,12 @@ export interface UserProfile {
 }
 
 export type BusinessCategory =
-  | 'food_drinks'
+  | 'fashion'
+  | 'food'
+  | 'beauty_hair'
   | 'home_living'
-  | 'beauty_hair_personal_care'
-  | 'accessories'
-  | 'womens_fashion'
-  | 'mens_fashion'
-  | 'baby_kids';
+  | 'baby_kids'
+  | 'other';
 
 // Product Types (matches API ProductService schema)
 export type ItemType = 'product' | 'service';
