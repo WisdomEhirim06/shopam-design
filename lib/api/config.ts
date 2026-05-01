@@ -184,10 +184,11 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string) => `/api/posts/messages/${id}/`,
   },
 
-  // Reviews — spec: GET/POST /api/commercevendors/reviews/
   REVIEWS: {
-    LIST: '/api/commercevendors/reviews/',
-    CREATE: '/api/commercevendors/reviews/',
+    LIST: '/api/commerce/vendors/reviews/',
+    CREATE: '/api/commerce/vendors/reviews/',
+    UPDATE: (id: number) => `/api/commerce/vendors/reviews/${id}/`,
+    DELETE: (id: number) => `/api/commerce/vendors/reviews/${id}/`,
   },
 
   // Social - Posts
