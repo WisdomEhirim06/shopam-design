@@ -18,7 +18,7 @@ const DROP_RESPONSE_HEADERS = new Set([
 ]);
 
 async function proxy(request: NextRequest, segments: string[]): Promise<NextResponse> {
-  const path = '/api/' + segments.join('/');
+  const path = '/api/' + segments.join('/') + '/';
   const search = request.nextUrl.search;
   const target = `${BACKEND}${path}${search}`;
 
