@@ -220,9 +220,20 @@ export default function OrdersPage() {
     );
   };
 
-  /* ── Decline order ── */
-  const handleDecline = (orderId: string, msgId: string) => {
+  /* ── Decline order (Step 2 — vendor declines) ── */
+  const handleDecline = async (orderId: string, msgId: string) => {
+    try {
+      await ordersService.vendorReview(orderId, { action: 'decline' });
+    } catch {
+      // optimistic update even if API call fails
+    }
     updateConvMsg(orderId, msgId, { orderStatus: 'Declined' });
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: 'Declined', apiStatus: 'declined' } : o))
+    );
+    setSelectedOrder((prev) =>
+      prev?.id === orderId ? { ...prev, status: 'Declined', apiStatus: 'declined' } : prev
+    );
   };
 
   /* ── Set shipping fee (Step 5) ── */

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Camera,
@@ -12,8 +12,11 @@ import {
   Search,
   Check,
   X,
-  ChevronRight
+  ChevronRight,
+  Loader2,
 } from 'lucide-react';
+import { authService, productsService } from '@/lib/api';
+import type { ProductService } from '@/lib/api/types';
 
 const toTitleCase = (str: string) => {
   return str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
@@ -21,26 +24,14 @@ const toTitleCase = (str: string) => {
 
 type ProfileTab = 'business' | 'products' | 'settings';
 
-const MOCK_VENDOR = {
-  id: 'v1',
-  name: "Sarah's Store",
-  category: 'Fashion & Beauty Vendor',
-  location: 'Lagos, Nigeria',
-  phone: '+234 812 345 6789',
-  email: 'hello@sarahsstore.ng',
-  bio: 'Authentic African crafts, fashion, and beauty products made with love and tradition. We pride ourselves on fast delivery and premium customer service across all regions.',
-  avatar: '/images/stress-1.jpg',
-  coverBg: 'bg-gradient-to-r from-gray-900 via-gray-800 to-[#FA3728]/20'
+const CATEGORY_LABEL: Record<string, string> = {
+  fashion: 'Fashion',
+  food: 'Food & Drinks',
+  beauty_hair: 'Beauty, Hair & Personal Care',
+  home_living: 'Home & Living',
+  baby_kids: 'Baby & Kids',
+  other: 'Other',
 };
-
-const MOCK_PRODUCTS = [
-  { id: 1, name: 'Ankara Dress', description: 'Beautifully crafted Ankara piece for all occasions.', price: 28000, image: '/images/products/fashion.jpg', category: 'Fashion' },
-  { id: 2, name: 'Natural Hair Extensions', description: 'Premium quality 100% human hair extensions.', price: 15000, image: '/images/products/hair.jpg', category: 'Beauty' },
-  { id: 3, name: 'Leather Handbag', description: 'Genuine leather handbag with multiple compartments.', price: 32000, image: '/images/products/handbad.jpg', category: 'Fashion' },
-  { id: 4, name: 'Skin Glow Set', description: 'Complete skincare routine for glowing, healthy skin.', price: 25000, image: '/images/products/speaker.jpg', category: 'Beauty', placeholder: true },
-];
-
-const SECONDARY_CATEGORIES = ['All', 'Fashion', 'Beauty', 'Crafts', 'Services'];
 
 const settingsItems = [
   { label: 'Edit Profile' },
@@ -54,33 +45,84 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>('products');
   const [activeCategory, setActiveCategory] = useState('All');
   const [editingName, setEditingName] = useState(false);
-  const [name, setName] = useState(MOCK_VENDOR.name);
-  const [tempName, setTempName] = useState(name);
-  const nameInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // Real data state
+  const [loading, setLoading] = useState(true);
+  const [businessName, setBusinessName] = useState('');
+  const [tempName, setTempName] = useState('');
+  const [vendorData, setVendorData] = useState<{
+    email: string;
+    phone: string;
+    bio: string;
+    category: string;
+    location: string;
+  }>({ email: '', phone: '', bio: '', category: '', location: '' });
+  const [products, setProducts] = useState<ProductService[]>([]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [profile, productData] = await Promise.all([
+          authService.getFullProfile(),
+          productsService.getMyProducts(),
+        ]);
+
+        const { user, vendor_profile } = profile;
+        setBusinessName(vendor_profile?.business_name || `${user.first_name || user.username}'s Store`);
+        setVendorData({
+          email: user.email,
+          phone: user.phone ? `+234 ${user.phone}` : '',
+          bio: vendor_profile?.bio || '',
+          category: vendor_profile?.business_category
+            ? CATEGORY_LABEL[vendor_profile.business_category] || vendor_profile.business_category
+            : '',
+          location: vendor_profile?.business_address || '',
+        });
+        setProducts(Array.isArray(productData) ? productData : (productData as any).results ?? []);
+      } catch {
+        // keep empty states — display will show placeholders
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   const handleEditName = () => {
-    setTempName(name);
+    setTempName(businessName);
     setEditingName(true);
     setTimeout(() => nameInputRef.current?.focus(), 50);
   };
 
   const handleSaveName = () => {
-    if (tempName.trim()) setName(tempName.trim());
+    if (tempName.trim()) setBusinessName(tempName.trim());
     setEditingName(false);
   };
 
-  const filteredProducts = MOCK_PRODUCTS.filter(product => {
+  // Derive unique categories from real products for the filter bar
+  const productCategories = ['All', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))];
+
+  const filteredProducts = products.filter(product => {
     const matchCategory = activeCategory === 'All' || product.category === activeCategory;
-    const matchSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase());
     return matchCategory && matchSearch;
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 size={32} className="animate-spin text-[#FA3728]" />
+      </div>
+    );
+  }
 
   return (
     <div className="pb-24 lg:pb-8 min-h-screen bg-gray-50 flex flex-col pt-16">
       
       {/* Cover Banner */}
-      <div className={`w-full h-28 sm:h-40 md:h-48 ${MOCK_VENDOR.coverBg} relative object-cover`}>
+      <div className="w-full h-28 sm:h-40 md:h-48 bg-gradient-to-r from-gray-900 via-gray-800 to-[#FA3728]/20 relative object-cover">
          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }}></div>
          <button className="absolute bottom-3 right-3 bg-black/40 hover:bg-black/60 backdrop-blur-md text-white rounded-full p-2 transition-all shadow-sm">
            <Camera size={16} />
@@ -95,11 +137,9 @@ export default function ProfilePage() {
             {/* White ring wrapper */}
             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-[4px] border-white bg-white shadow-md relative z-10">
               <div className="w-full h-full rounded-full border-[2px] border-[#FA3728] overflow-hidden bg-gray-100 flex items-center justify-center relative">
-                 <img 
-                   src={MOCK_VENDOR.avatar} 
-                   alt={name} 
-                   className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
-                 />
+                 <span className="text-4xl font-bold text-gray-400">
+                   {businessName.charAt(0).toUpperCase()}
+                 </span>
                  <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                    <Camera className="text-white mb-0.5" size={20} />
                    <span className="text-white text-[9px] font-bold uppercase tracking-widest">Change</span>
@@ -134,7 +174,7 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">{toTitleCase(name)}</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">{businessName}</h1>
                 <button onClick={handleEditName} className="p-1.5 text-gray-400 hover:text-[#FA3728] transition-colors rounded-full">
                   <Edit3 size={16} />
                 </button>
@@ -142,18 +182,26 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <p className="text-sm text-gray-700 mb-3 font-medium leading-relaxed max-w-xl">{MOCK_VENDOR.bio}</p>
+          {vendorData.bio && (
+            <p className="text-sm text-gray-700 mb-3 font-medium leading-relaxed max-w-xl">{vendorData.bio}</p>
+          )}
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-1">
-             <div className="flex items-center gap-1.5 text-xs text-gray-600 font-semibold">
-                <Phone size={14} className="text-[#FA3728]" /> {MOCK_VENDOR.phone}
-             </div>
-             <div className="flex items-center gap-1.5 text-xs text-gray-600 font-semibold">
-                <Mail size={14} className="text-[#FA3728]" /> {MOCK_VENDOR.email}
-             </div>
-             <div className="flex items-center gap-1.5 text-xs text-gray-600 font-semibold">
-                <MapPin size={14} className="text-[#FA3728]" /> {MOCK_VENDOR.location}
-             </div>
+             {vendorData.phone && (
+               <div className="flex items-center gap-1.5 text-xs text-gray-600 font-semibold">
+                 <Phone size={14} className="text-[#FA3728]" /> {vendorData.phone}
+               </div>
+             )}
+             {vendorData.email && (
+               <div className="flex items-center gap-1.5 text-xs text-gray-600 font-semibold">
+                 <Mail size={14} className="text-[#FA3728]" /> {vendorData.email}
+               </div>
+             )}
+             {vendorData.location && (
+               <div className="flex items-center gap-1.5 text-xs text-gray-600 font-semibold">
+                 <MapPin size={14} className="text-[#FA3728]" /> {vendorData.location}
+               </div>
+             )}
           </div>
         </div>
 
@@ -194,7 +242,7 @@ export default function ProfilePage() {
                 {/* Search & Categories line */}
                 <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between mb-5">
                    <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide py-1 items-center flex-grow">
-                     {SECONDARY_CATEGORIES.map((cat) => (
+                     {productCategories.map((cat) => (
                         <button
                           key={cat}
                           onClick={() => setActiveCategory(cat)}
@@ -221,32 +269,32 @@ export default function ProfilePage() {
                    </div>
                 </div>
 
+                {filteredProducts.length === 0 && (
+                  <div className="text-center py-16 text-gray-400">
+                    <p className="font-medium">No products yet</p>
+                    <p className="text-sm mt-1">Add your first product from the Products page.</p>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
                   {filteredProducts.map((product) => (
-                    <motion.div 
+                    <motion.div
                       key={product.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-gray-100 transition-all duration-200 group flex flex-col h-full"
                     >
                       <div className="relative aspect-[4/3] w-full bg-gray-50">
-                        {product.placeholder ? (
-                           <div className="w-full h-full bg-gray-200 flex items-center justify-center rounded-t-xl sm:rounded-t-2xl text-xs font-semibold text-gray-400">NO IMAGE</div>
-                        ) : (
-                           <img 
-                            src={product.image} 
-                            alt={product.name} 
-                            className="w-full h-full object-contain mix-blend-multiply group-hover:scale-[1.02] transition-transform duration-300 p-3 sm:p-5"
-                            onError={(e) => { e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f3f4f6" width="200" height="200"/%3E%3C/svg%3E' }}
-                           />
-                        )}
+                        <div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-t-xl sm:rounded-t-2xl text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                          {product.item_type || 'product'}
+                        </div>
                       </div>
 
                       <div className="p-3 sm:p-4 flex flex-col flex-grow bg-white border-t border-gray-50/50">
-                        <h3 className="font-semibold text-xs sm:text-sm text-gray-800 mb-1 line-clamp-2 leading-snug">{toTitleCase(product.name)}</h3>
+                        <h3 className="font-semibold text-xs sm:text-sm text-gray-800 mb-1 line-clamp-2 leading-snug">{product.title}</h3>
                         <p className="text-[10px] sm:text-xs text-gray-500 mb-2 line-clamp-2">{product.description}</p>
                         <div className="mt-auto pt-1 flex justify-between items-end">
-                           <span className="font-extrabold text-sm sm:text-[15px] text-[#FA3728]">₦{product.price.toLocaleString()}</span>
+                           <span className="font-extrabold text-sm sm:text-[15px] text-[#FA3728]">₦{Number(product.price).toLocaleString()}</span>
                            <button className="text-gray-400 hover:text-gray-700 transition-colors p-1" aria-label="Edit product">
                               <Edit3 size={14} />
                            </button>
@@ -280,20 +328,26 @@ export default function ProfilePage() {
                   <div className="space-y-4">
                     <div>
                       <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Store Name</p>
-                      <p className="text-sm font-semibold text-gray-900 bg-gray-50 px-3 py-2.5 rounded-lg border border-gray-100">{name}</p>
+                      <p className="text-sm font-semibold text-gray-900 bg-gray-50 px-3 py-2.5 rounded-lg border border-gray-100">{businessName || '—'}</p>
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Category</p>
-                      <p className="text-sm font-semibold text-[#FA3728] bg-[#FA3728]/5 px-3 py-2.5 rounded-lg border border-[#FA3728]/10">{MOCK_VENDOR.category}</p>
+                      <p className="text-sm font-semibold text-[#FA3728] bg-[#FA3728]/5 px-3 py-2.5 rounded-lg border border-[#FA3728]/10">{vendorData.category || '—'}</p>
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Location</p>
-                      <p className="text-sm font-medium text-gray-900 bg-gray-50 px-3 py-2.5 rounded-lg border border-gray-100">{MOCK_VENDOR.location}</p>
+                      <p className="text-sm font-medium text-gray-900 bg-gray-50 px-3 py-2.5 rounded-lg border border-gray-100">{vendorData.location || '—'}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Bio</p>
-                      <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 px-3 py-2.5 rounded-lg border border-gray-100">{MOCK_VENDOR.bio}</p>
+                      <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Contact Email</p>
+                      <p className="text-sm text-gray-700 bg-gray-50 px-3 py-2.5 rounded-lg border border-gray-100">{vendorData.email || '—'}</p>
                     </div>
+                    {vendorData.bio && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Bio</p>
+                        <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 px-3 py-2.5 rounded-lg border border-gray-100">{vendorData.bio}</p>
+                      </div>
+                    )}
                     <div className="pt-2">
                       <button className="w-full py-3 bg-gray-900 text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors">
                         <Edit3 size={16} /> Edit Details
