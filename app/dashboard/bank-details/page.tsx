@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   CreditCard,
@@ -14,13 +14,14 @@ import {
   TrendingUp,
   Wallet,
 } from 'lucide-react';
+import apiClient, { API_ENDPOINTS } from '@/lib/api/config';
 
 export default function BankDetailsPage() {
-  // Payment Setup State
+  // Payment Setup State — empty until loaded or filled by vendor
   const [paymentSetup, setPaymentSetup] = useState({
-    bankName: 'First Bank of Nigeria',
-    accountNumber: '0123456789',
-    accountName: 'Sarah Adelewo',
+    bankName: '',
+    accountNumber: '',
+    accountName: '',
   });
 
   // Withdrawal Settings State
@@ -30,34 +31,46 @@ export default function BankDetailsPage() {
     withdrawalDay: 'friday',
   });
 
-  // Stats
-  const [stats, setStats] = useState({
-    availableBalance: 125450.50,
-    pendingPayouts: 23500.00,
-    totalEarnings: 856300.00,
-    lastPayout: '2024-01-10',
-  });
-
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [showAccountNumber, setShowAccountNumber] = useState(false);
-  const [isVerified, setIsVerified] = useState(true);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [isVerified, setIsVerified] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveMsg, setSaveMsg] = useState('');
 
-  // Handle Save
-  const handleSave = () => {
+  useEffect(() => {
+    // Load payment history for the transactions section
+    apiClient.get<any>(API_ENDPOINTS.PAYMENTS.HISTORY)
+      .then((res) => {
+        const data = res.data;
+        const results = Array.isArray(data) ? data : (data?.results ?? []);
+        setTransactions(results.slice(0, 5));
+      })
+      .catch(() => { /* silently ignore — no transactions yet */ });
+  }, []);
+
+  // Save bank account details via payments API
+  const handleSave = async () => {
     setSaveStatus('saving');
-    // Simulate API call
-    setTimeout(() => {
+    setSaveMsg('');
+    try {
+      await apiClient.post('/api/payments/bank-account/', {
+        bank_name: paymentSetup.bankName,
+        account_number: paymentSetup.accountNumber,
+        account_name: paymentSetup.accountName,
+      });
       setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    }, 1000);
+      setSaveMsg('Bank details saved successfully');
+    } catch (err: any) {
+      setSaveStatus('error');
+      const detail = err.response?.data?.detail || err.response?.data?.message;
+      setSaveMsg(detail || 'Failed to save. Please try again.');
+    } finally {
+      setTimeout(() => { setSaveStatus('idle'); setSaveMsg(''); }, 3000);
+    }
   };
 
-  // Format currency
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-    }).format(amount);
+    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount);
   };
 
   return (
@@ -84,9 +97,7 @@ export default function BankDetailsPage() {
             <p className="text-sm text-gray-400">Available Balance</p>
             <Wallet size={20} className="text-green-400" />
           </div>
-          <p className="text-3xl font-bold text-green-400">
-            {formatCurrency(stats.availableBalance)}
-          </p>
+          <p className="text-3xl font-bold text-green-400">—</p>
           <button className="mt-4 w-full py-2 bg-green-500/20 hover:bg-green-500 text-green-400 hover:text-white rounded-lg text-sm font-medium transition-all">
             Withdraw Funds
           </button>
@@ -97,9 +108,7 @@ export default function BankDetailsPage() {
             <p className="text-sm text-gray-400">Pending Payouts</p>
             <DollarSign size={20} className="text-amber-400" />
           </div>
-          <p className="text-2xl font-bold text-amber-400">
-            {formatCurrency(stats.pendingPayouts)}
-          </p>
+          <p className="text-2xl font-bold text-amber-400">—</p>
           <p className="text-xs text-gray-500 mt-2">Processing...</p>
         </div>
 
@@ -108,7 +117,7 @@ export default function BankDetailsPage() {
             <p className="text-sm text-gray-400">Total Earnings</p>
             <TrendingUp size={20} className="text-crimson" />
           </div>
-          <p className="text-2xl font-bold">{formatCurrency(stats.totalEarnings)}</p>
+          <p className="text-2xl font-bold">—</p>
           <p className="text-xs text-gray-500 mt-2">All time</p>
         </div>
 
@@ -117,14 +126,8 @@ export default function BankDetailsPage() {
             <p className="text-sm text-gray-400">Last Payout</p>
             <CheckCircle size={20} className="text-blue-400" />
           </div>
-          <p className="text-lg font-bold">
-            {new Date(stats.lastPayout).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
-          </p>
-          <p className="text-xs text-gray-500 mt-2">₦45,300.00</p>
+          <p className="text-lg font-bold">—</p>
+          <p className="text-xs text-gray-500 mt-2">No payouts yet</p>
         </div>
       </motion.div>
 
@@ -225,9 +228,15 @@ export default function BankDetailsPage() {
               </div>
             </div>
 
+            {saveMsg && (
+              <p className={`text-sm text-center ${saveStatus === 'error' ? 'text-red-400' : 'text-green-400'}`}>
+                {saveMsg}
+              </p>
+            )}
             <button
               onClick={handleSave}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 theme-btn-primary rounded-lg font-medium transition-all"
+              disabled={saveStatus === 'saving'}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 theme-btn-primary rounded-lg font-medium transition-all disabled:opacity-50"
             >
               <Save size={20} />
               {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved!' : 'Update Payment Info'}
@@ -353,63 +362,42 @@ export default function BankDetailsPage() {
         </div>
 
         <div className="space-y-3">
-          {[
-            { type: 'Withdrawal', amount: -45300, date: '2024-01-10', status: 'completed' },
-            { type: 'Payment', amount: 12500, date: '2024-01-09', status: 'completed' },
-            { type: 'Payment', amount: 8750, date: '2024-01-08', status: 'completed' },
-            { type: 'Withdrawal', amount: -35000, date: '2024-01-05', status: 'completed' },
-            { type: 'Payment', amount: 15200, date: '2024-01-04', status: 'pending' },
-          ].map((transaction, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <div
-                  className={`p-3 rounded-lg ${
-                    transaction.type === 'Withdrawal'
-                      ? 'bg-red-500/20'
-                      : 'bg-green-500/20'
-                  }`}
-                >
-                  {transaction.type === 'Withdrawal' ? (
-                    <TrendingUp size={20} className="text-red-400 rotate-180" />
-                  ) : (
-                    <TrendingUp size={20} className="text-green-400" />
-                  )}
+          {transactions.length === 0 ? (
+            <p className="text-center text-gray-500 py-8 text-sm">No transactions yet.</p>
+          ) : transactions.map((transaction, index) => {
+            const amount = Number(transaction.amount ?? transaction.total_amount ?? 0);
+            const isCredit = amount >= 0;
+            const dateStr = transaction.created_at ?? transaction.date ?? '';
+            const status = transaction.status ?? 'completed';
+            return (
+              <div
+                key={index}
+                className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-lg ${isCredit ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                    <TrendingUp size={20} className={isCredit ? 'text-green-400' : 'text-red-400 rotate-180'} />
+                  </div>
+                  <div>
+                    <p className="font-medium">{transaction.type ?? (isCredit ? 'Payment' : 'Withdrawal')}</p>
+                    {dateStr && (
+                      <p className="text-sm text-gray-400">
+                        {new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">{transaction.type}</p>
-                  <p className="text-sm text-gray-400">
-                    {new Date(transaction.date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
+                <div className="text-right">
+                  <p className={`text-lg font-bold ${isCredit ? 'text-green-400' : 'text-red-400'}`}>
+                    {isCredit ? '+' : ''}{formatCurrency(amount)}
+                  </p>
+                  <p className={`text-xs ${status === 'completed' || status === 'successful' ? 'text-green-400' : 'text-amber-400'}`}>
+                    {status === 'completed' || status === 'successful' ? '✓ Completed' : '⏳ Pending'}
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <p
-                  className={`text-lg font-bold ${
-                    transaction.amount > 0 ? 'text-green-400' : 'text-red-400'
-                  }`}
-                >
-                  {transaction.amount > 0 ? '+' : ''}
-                  {formatCurrency(transaction.amount)}
-                </p>
-                <p
-                  className={`text-xs ${
-                    transaction.status === 'completed'
-                      ? 'text-green-400'
-                      : 'text-amber-400'
-                  }`}
-                >
-                  {transaction.status === 'completed' ? '✓ Completed' : '⏳ Pending'}
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </motion.div>
     </div>

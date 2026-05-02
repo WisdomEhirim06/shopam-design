@@ -88,12 +88,16 @@ export const productsService = {
 };
 
 export const categoriesService = {
-  /** Get all categories */
+  /** Get all categories — returns [] if endpoint is not yet available (404/401) */
   async getCategories(): Promise<Category[]> {
-    const response = await apiClient.get<Category[]>(
-      API_ENDPOINTS.CATEGORIES.LIST
-    );
-    return response.data;
+    try {
+      const response = await apiClient.get<any>(API_ENDPOINTS.CATEGORIES.LIST);
+      // API may return an array or a paginated { results: [] } shape
+      const data = response.data;
+      return Array.isArray(data) ? data : (data?.results ?? []);
+    } catch {
+      return [];
+    }
   },
 
   /** Get single category */

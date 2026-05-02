@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowUpRight, Wallet, ShoppingBag, Package } from 'lucide-react';
+import { Wallet, ShoppingBag, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { authService } from '@/lib/api';
@@ -45,11 +45,7 @@ export default function DashboardHome() {
           <div className="flex-1">
             <p className="text-xs font-medium text-gray-500 mb-0.5">Total Sales</p>
             <div className="flex items-end justify-between">
-              <p className="text-2xl font-bold text-gray-900 border-none">₦425,300</p>
-              <div className="flex items-center text-xs font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">
-                <ArrowUpRight size={14} />
-                +12%
-              </div>
+              <p className="text-2xl font-bold text-gray-400">—</p>
             </div>
           </div>
         </motion.div>
@@ -67,11 +63,7 @@ export default function DashboardHome() {
           <div className="flex-1">
             <p className="text-xs font-medium text-gray-500 mb-0.5">Orders</p>
             <div className="flex items-end justify-between">
-              <p className="text-2xl font-bold text-gray-900">58</p>
-              <div className="flex items-center text-xs font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">
-                <ArrowUpRight size={14} />
-                +8%
-              </div>
+              <p className="text-2xl font-bold text-gray-400">—</p>
             </div>
           </div>
         </motion.div>
@@ -89,8 +81,7 @@ export default function DashboardHome() {
           <div className="flex-1">
             <p className="text-xs font-medium text-gray-500 mb-0.5">Products</p>
             <div className="flex items-end justify-between">
-              <p className="text-2xl font-bold text-gray-900">12</p>
-              <span className="text-xs font-medium text-gray-500">Active</span>
+              <p className="text-2xl font-bold text-gray-400">—</p>
             </div>
           </div>
         </motion.div>

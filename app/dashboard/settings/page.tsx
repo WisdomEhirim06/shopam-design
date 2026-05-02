@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   User,
@@ -17,22 +17,24 @@ import {
   Mail,
   MapPin,
 } from 'lucide-react';
+import { authService } from '@/lib/api';
+import apiClient, { API_ENDPOINTS } from '@/lib/api/config';
 
 export default function SettingsPage() {
   // Business Profile State
   const [businessProfile, setBusinessProfile] = useState({
-    businessName: "Sarah's African Crafts",
-    businessDescription: 'Authentic African crafts, fashion, and beauty products made with love and tradition.',
-    businessAddress: '123 Victoria Island, Lagos, Nigeria',
-    businessPhone: '+234 801 234 5678',
+    businessName: '',
+    businessDescription: '',
+    businessAddress: '',
+    businessPhone: '',
   });
 
   // Personal Information State
   const [personalInfo, setPersonalInfo] = useState({
-    fullName: 'Sarah Adelewo',
-    email: 'sarah.adelewo@email.com',
-    phoneNumber: '+234 801 234 5678',
-    nationalId: '1234567890',
+    fullName: '',
+    email: '',
+    phoneNumber: '',
+    nationalId: '',
   });
 
   // CAC Registration State
@@ -44,7 +46,7 @@ export default function SettingsPage() {
 
   // Store Settings State
   const [storeSettings, setStoreSettings] = useState({
-    storeUrl: 'shopam.com/sarah-african-crafts',
+    storeUrl: '',
     currency: 'NGN',
     storeStatus: true,
     vacationMode: false,
@@ -58,23 +60,76 @@ export default function SettingsPage() {
     lowStockAlerts: true,
   });
 
-  // Verification Status
+  // Verification Status — derived from real profile
   const [verificationStatus, setVerificationStatus] = useState({
-    email: true,
-    phone: true,
+    email: false,
+    phone: false,
     cac: false,
   });
 
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [savingSection, setSavingSection] = useState<string | null>(null);
+  const [sectionMsg, setSectionMsg] = useState<{ section: string; msg: string; ok: boolean } | null>(null);
 
-  // Handle Save
-  const handleSave = (section: string) => {
-    setSaveStatus('saving');
-    // Simulate API call
-    setTimeout(() => {
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    }, 1000);
+  // Load real profile data on mount
+  useEffect(() => {
+    authService.getFullProfile().then(({ user, vendor_profile }) => {
+      setPersonalInfo({
+        fullName: [user.first_name, user.last_name].filter(Boolean).join(' '),
+        email: user.email ?? '',
+        phoneNumber: user.phone ? `+234 ${user.phone}` : '',
+        nationalId: '',
+      });
+      setBusinessProfile({
+        businessName: vendor_profile?.business_name ?? '',
+        businessDescription: vendor_profile?.bio ?? '',
+        businessAddress: vendor_profile?.business_address ?? '',
+        businessPhone: user.phone ? `+234 ${user.phone}` : '',
+      });
+      setcacRegistration((prev) => ({
+        ...prev,
+        cacNumber: vendor_profile?.cac_registration ?? '',
+        tinNumber: vendor_profile?.tin ?? '',
+      }));
+      setVerificationStatus({
+        email: !!user.email,
+        phone: !!user.phone,
+        cac: !!(vendor_profile?.cac_verified),
+      });
+    }).catch(() => { /* profile load failed — keep empty fields */ });
+  }, []);
+
+  // Handle Save per section
+  const handleSave = async (section: string) => {
+    setSavingSection(section);
+    setSectionMsg(null);
+    try {
+      if (section === 'business') {
+        await apiClient.patch(API_ENDPOINTS.AUTH.VENDOR_PROFILE_UPDATE, {
+          business_name: businessProfile.businessName,
+          bio: businessProfile.businessDescription,
+          business_address: businessProfile.businessAddress,
+        });
+      } else if (section === 'personal') {
+        const nameParts = personalInfo.fullName.trim().split(' ');
+        await authService.updateProfile({
+          first_name: nameParts[0] ?? '',
+          last_name: nameParts.slice(1).join(' ') || undefined,
+          phone: personalInfo.phoneNumber.replace(/^\+234\s?/, ''),
+        });
+      } else if (section === 'cac') {
+        await apiClient.patch(API_ENDPOINTS.AUTH.VENDOR_PROFILE_UPDATE, {
+          cac_registration: cacRegistration.cacNumber,
+          tin: cacRegistration.tinNumber,
+        });
+      }
+      setSectionMsg({ section, msg: 'Saved successfully', ok: true });
+    } catch (err: any) {
+      const detail = err.response?.data?.detail || err.response?.data?.message;
+      setSectionMsg({ section, msg: detail || 'Failed to save. Please try again.', ok: false });
+    } finally {
+      setSavingSection(null);
+      setTimeout(() => setSectionMsg(null), 3000);
+    }
   };
 
   // Handle File Upload
@@ -210,12 +265,16 @@ export default function SettingsPage() {
               />
             </div>
 
+            {sectionMsg?.section === 'business' && (
+              <p className={`text-sm text-center ${sectionMsg.ok ? 'text-green-400' : 'text-red-400'}`}>{sectionMsg.msg}</p>
+            )}
             <button
               onClick={() => handleSave('business')}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 theme-btn-primary rounded-lg font-medium transition-all"
+              disabled={savingSection === 'business'}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 theme-btn-primary rounded-lg font-medium transition-all disabled:opacity-50"
             >
               <Save size={20} />
-              {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved!' : 'Update Business Profile'}
+              {savingSection === 'business' ? 'Saving...' : 'Update Business Profile'}
             </button>
           </div>
         </motion.div>
@@ -285,12 +344,16 @@ export default function SettingsPage() {
               />
             </div>
 
+            {sectionMsg?.section === 'personal' && (
+              <p className={`text-sm text-center ${sectionMsg.ok ? 'text-green-400' : 'text-red-400'}`}>{sectionMsg.msg}</p>
+            )}
             <button
               onClick={() => handleSave('personal')}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 theme-btn-primary rounded-lg font-medium transition-all"
+              disabled={savingSection === 'personal'}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 theme-btn-primary rounded-lg font-medium transition-all disabled:opacity-50"
             >
               <Save size={20} />
-              Update Personal Info
+              {savingSection === 'personal' ? 'Saving...' : 'Update Personal Info'}
             </button>
           </div>
         </motion.div>
@@ -362,12 +425,16 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {sectionMsg?.section === 'cac' && (
+              <p className={`text-sm text-center ${sectionMsg.ok ? 'text-green-400' : 'text-red-400'}`}>{sectionMsg.msg}</p>
+            )}
             <button
               onClick={() => handleSave('cac')}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 theme-btn-primary rounded-lg font-medium transition-all"
+              disabled={savingSection === 'cac'}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 theme-btn-primary rounded-lg font-medium transition-all disabled:opacity-50"
             >
               <Upload size={20} />
-              Upload Documents for Verification
+              {savingSection === 'cac' ? 'Saving...' : 'Upload Documents for Verification'}
             </button>
           </div>
         </motion.div>

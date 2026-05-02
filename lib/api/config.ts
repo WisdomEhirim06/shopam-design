@@ -20,6 +20,10 @@ const PUBLIC_ENDPOINTS = [
   '/api/accounts/password/forgot/',
   '/api/accounts/password/reset',
   '/api/accounts/verify-email',
+  '/api/commerce/products/',
+  '/api/commerce/categories/',
+  '/api/commerce/search/',
+  '/api/commerce/vendors/',
 ];
 
 // Request interceptor - Add auth token
