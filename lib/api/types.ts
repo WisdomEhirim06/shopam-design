@@ -62,6 +62,23 @@ export interface UserProfile {
   is_vendor?: boolean;
 }
 
+export interface VendorProfile {
+  business_name: string;
+  business_category: BusinessCategory;
+  business_address?: string;
+  bio?: string;
+  cac_registration?: string;
+  tin?: string;
+  cac_verified?: boolean;
+  tin_verified?: boolean;
+  address_verified?: boolean;
+}
+
+export interface FullProfile {
+  user: UserProfile;
+  vendor_profile?: VendorProfile;
+}
+
 export type BusinessCategory =
   | 'fashion'
   | 'food'

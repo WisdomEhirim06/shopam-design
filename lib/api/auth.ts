@@ -5,6 +5,8 @@ import type {
   LoginRequest,
   LoginResponse,
   UserProfile,
+  VendorProfile,
+  FullProfile,
   PasswordChangeRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
@@ -130,10 +132,27 @@ export const authService = {
   },
 
   /**
-   * Verify email using token from query param
+   * Verify email using token from query param or 6-digit code.
+   * If the backend returns tokens in the response, stores them and returns
+   * { authenticated: true } so the caller can skip the sign-in step.
+   * Otherwise returns { authenticated: false } — the caller should redirect
+   * to the sign-in page with ?verified=1.
    */
-  async verifyEmail(token: string): Promise<void> {
-    await apiClient.get(API_ENDPOINTS.AUTH.VERIFY_EMAIL, { params: { token } });
+  async verifyEmail(token: string): Promise<{ authenticated: boolean }> {
+    const response = await apiClient.get<any>(API_ENDPOINTS.AUTH.VERIFY_EMAIL, { params: { token } });
+    const raw = response.data ?? {};
+
+    const access: string = raw.tokens?.access ?? raw.access ?? '';
+    const refresh: string = raw.tokens?.refresh ?? raw.refresh ?? '';
+    const user = raw.user ?? null;
+
+    if (access) {
+      localStorage.setItem('access_token', access);
+      localStorage.setItem('refresh_token', refresh);
+      if (user) localStorage.setItem('user', JSON.stringify(user));
+      return { authenticated: true };
+    }
+    return { authenticated: false };
   },
 
   /**
@@ -144,6 +163,19 @@ export const authService = {
     const profile: UserProfile = response.data?.user ?? response.data;
     localStorage.setItem('user', JSON.stringify(profile));
     return profile;
+  },
+
+  /**
+   * Fetch user + vendor business profile together.
+   * API returns { user: {...}, vendor_profile: {...} } for vendors.
+   */
+  async getFullProfile(): Promise<FullProfile> {
+    const response = await apiClient.get<any>(API_ENDPOINTS.AUTH.PROFILE);
+    const raw = response.data ?? {};
+    const user: UserProfile = raw.user ?? raw;
+    const vendor_profile: VendorProfile | undefined = raw.vendor_profile ?? raw.profile ?? undefined;
+    localStorage.setItem('user', JSON.stringify(user));
+    return { user, vendor_profile };
   },
 
   /**

@@ -103,7 +103,7 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: '/api/accounts/password/reset',
     VERIFY_EMAIL: '/api/accounts/verify-email',
     TOKEN_REFRESH: '/api/accounts/token/refresh/',
-    VENDOR_PROFILE_UPDATE: '/api/accounts/path/vendor-update/',
+    VENDOR_PROFILE_UPDATE: '/api/accounts/vendor-update/',
   },
 
   // Products
@@ -127,6 +127,7 @@ export const API_ENDPOINTS = {
   // Discovery
   SEARCH: '/api/commerce/search/',
   VENDORS: '/api/commerce/vendors/',
+  VENDOR_DETAIL: (id: string | number) => `/api/commerce/vendors/${id}/`,
   VENDOR_REVIEWS: '/api/commerce/vendors/reviews/',
 
   // Cart

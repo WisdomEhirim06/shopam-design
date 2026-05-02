@@ -22,13 +22,20 @@ function UserVerifyForm() {
   const inputRefs = Array.from({ length: 6 }, () => useRef<HTMLInputElement>(null));
   const [code, setCode] = useState(Array(6).fill(''));
 
+  const [verifiedNeedsSignIn, setVerifiedNeedsSignIn] = useState(false);
+
   useEffect(() => {
     if (!urlToken) return;
     setIsSubmitting(true);
     authService.verifyEmail(urlToken)
-      .then(() => {
+      .then(({ authenticated }) => {
         setSuccess(true);
-        setTimeout(() => router.push('/explore'), 2500);
+        if (authenticated) {
+          setTimeout(() => router.push('/explore'), 2500);
+        } else {
+          setVerifiedNeedsSignIn(true);
+          setTimeout(() => router.push('/auth/user-signin?verified=1'), 2500);
+        }
       })
       .catch(() => {
         setError('Verification link is invalid or has expired. Please request a new one.');
@@ -70,9 +77,14 @@ function UserVerifyForm() {
     setError('');
     setIsSubmitting(true);
     try {
-      await authService.verifyEmail(token);
+      const { authenticated } = await authService.verifyEmail(token);
       setSuccess(true);
-      setTimeout(() => router.push('/explore'), 2500);
+      if (authenticated) {
+        setTimeout(() => router.push('/explore'), 2500);
+      } else {
+        setVerifiedNeedsSignIn(true);
+        setTimeout(() => router.push('/auth/user-signin?verified=1'), 2500);
+      }
     } catch (err: any) {
       setError(
         err.response?.data?.detail ||
@@ -188,7 +200,11 @@ function UserVerifyForm() {
                   <CheckCircle2 size={48} strokeWidth={1.5} />
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 tracking-tight">Verified!</h2>
-                <p className="text-gray-500">Your account is now active. Redirecting you to the platform…</p>
+                <p className="text-gray-500">
+                  {verifiedNeedsSignIn
+                    ? 'Your email is confirmed. Redirecting you to sign in…'
+                    : 'Your account is now active. Redirecting you to the platform…'}
+                </p>
               </motion.div>
             ) : (
               <>

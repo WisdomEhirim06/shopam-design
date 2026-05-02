@@ -13,6 +13,7 @@ function UserSignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get('redirect') || '/explore';
+  const justVerified = searchParams.get('verified') === '1';
 
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,6 +131,13 @@ function UserSignInForm() {
 
           {/* Sign In Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email verified banner */}
+            {justVerified && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm font-medium">
+                ✓ Email verified! Sign in to continue.
+              </div>
+            )}
+
             {/* Error Message */}
             {error && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
