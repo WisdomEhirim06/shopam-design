@@ -18,6 +18,20 @@ const DROP_RESPONSE_HEADERS = new Set([
 ]);
 
 async function proxy(request: NextRequest, segments: string[]): Promise<NextResponse> {
+  // Redirect email verification links back into the frontend verify page so the
+  // user never lands on the raw DRF response. Requires the backend FRONTEND_URL
+  // env var to be set to this app's origin (e.g. http://localhost:3000).
+  if (
+    request.method === 'GET' &&
+    segments.join('/') === 'accounts/verify-email'
+  ) {
+    const token = request.nextUrl.searchParams.get('token');
+    const dest = token
+      ? `/auth/user-verify?token=${encodeURIComponent(token)}`
+      : '/auth/user-verify';
+    return NextResponse.redirect(new URL(dest, request.url));
+  }
+
   const path = '/api/' + segments.join('/') + '/';
   const search = request.nextUrl.search;
   const target = `${BACKEND}${path}${search}`;

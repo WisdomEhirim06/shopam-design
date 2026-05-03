@@ -54,8 +54,17 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+    // Never attempt a token refresh for auth endpoints — they don't use tokens and
+    // a redirect loop would swallow the real error before the page can show it.
+    const url = originalRequest.url || '';
+    const isAuthEndpoint =
+      url.startsWith('/api/accounts/login') ||
+      url.startsWith('/api/accounts/register') ||
+      url.startsWith('/api/accounts/token/refresh') ||
+      url.startsWith('/api/accounts/verify-email');
+
     // If error is 401 and we haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {

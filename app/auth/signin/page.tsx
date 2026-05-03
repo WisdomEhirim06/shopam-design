@@ -45,23 +45,23 @@ function VendorSignInForm() {
       // Redirect to vendor dashboard
       router.push('/dashboard');
     } catch (err: any) {
-      console.error('Login error:', err);
+      const data = err.response?.data;
+      console.error('Login error:', err.response?.status, data);
 
       // Handle EMAIL_NOT_VERIFIED error
-      if (err.response?.data?.error === 'EMAIL_NOT_VERIFIED' || err.response?.data?.code === 'EMAIL_NOT_VERIFIED' || err.response?.data?.detail === 'Email not verified') {
+      if (data?.error === 'EMAIL_NOT_VERIFIED' || data?.code === 'EMAIL_NOT_VERIFIED' || data?.detail === 'Email not verified') {
         router.push('/auth/user-verify');
         return;
       }
 
-      // Handle different error types
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.response?.data?.detail) {
-        setError(err.response.data.detail);
+      // Show the most specific message the backend gives us
+      const msg = data?.message || data?.detail || data?.error || data?.non_field_errors?.[0];
+      if (msg) {
+        setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
       } else if (err.response?.status === 401) {
-        setError('Invalid email or password');
+        setError('Invalid email or password. If you just verified your email, try again — vendor accounts may require admin approval.');
       } else if (err.response?.status === 400) {
-        setError('Please check your credentials');
+        setError(data ? JSON.stringify(data) : 'Please check your credentials');
       } else {
         setError('Login failed. Please try again.');
       }
