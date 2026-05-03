@@ -102,7 +102,7 @@ export default function ProfilePage() {
   };
 
   // Derive unique categories from real products for the filter bar
-  const productCategories = ['All', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))];
+  const productCategories = ['All', ...Array.from(new Set(products.map(p => p.category).filter((c): c is string => !!c)))];
 
   const filteredProducts = products.filter(product => {
     const matchCategory = activeCategory === 'All' || product.category === activeCategory;
