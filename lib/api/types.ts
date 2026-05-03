@@ -96,6 +96,7 @@ export interface ProductService {
   owner_name: string;
   title: string;
   description?: string;
+  category?: string;
   price: string;
   tax_inclusive: boolean;
   item_type: ItemType;
