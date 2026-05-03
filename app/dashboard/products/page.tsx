@@ -3,8 +3,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, MoreVertical, X, ImageIcon, Package, Loader2, Camera, Grid2x2 } from 'lucide-react';
-import { productsService } from '../../../lib/api/products';
+import { productsService, categoriesService } from '../../../lib/api/products';
 import type { ProductService, ItemType } from '../../../lib/api/types';
+
+// Same categories shown on the explore page — used as the base suggestion list.
+// When the API returns its own categories they are merged in at the top.
+const EXPLORE_CATEGORIES = [
+  'Food and Drinks',
+  'Home and Living',
+  'Beauty, Hair and Personal Care',
+  'Accessories',
+  "Women's Fashion",
+  "Men's Fashion",
+  'Baby and Kids',
+];
 
 /* ── Extended UI product type (includes local-only preview fields) ── */
 interface UIProduct extends ProductService {
@@ -49,11 +61,42 @@ export default function ProductsPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>(EXPLORE_CATEGORIES);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const categoryRef = useRef<HTMLDivElement>(null);
 
   const mainImageRef = useRef<HTMLInputElement>(null);
   const subImagesRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { loadProducts(); }, []);
+  useEffect(() => { loadProducts(); loadCategories(); }, []);
+
+  // Close the category dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+        setCategoryOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const data = await categoriesService.getCategories();
+      if (data.length > 0) {
+        // Merge API category names on top, then append any explore categories not already covered
+        const apiNames = data.map((c) => c.name);
+        const extras = EXPLORE_CATEGORIES.filter(
+          (name) => !apiNames.some((n) => n.toLowerCase() === name.toLowerCase())
+        );
+        setCategoryOptions([...apiNames, ...extras]);
+      }
+      // If API returns nothing, categoryOptions stays as EXPLORE_CATEGORIES (set in useState)
+    } catch {
+      // silently keep the hardcoded list
+    }
+  };
 
   const loadProducts = async () => {
     setIsLoading(true);
@@ -243,188 +286,238 @@ export default function ProductsPage() {
 
                   <div className="space-y-5">
 
-                  {/* ── Images Section ── */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Product Images
-                    </label>
+                    {/* ── Images Section ── */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Product Images
+                      </label>
 
-                    <div className="flex gap-3">
-                      {/* Main image */}
-                      <button
-                        type="button"
-                        onClick={() => mainImageRef.current?.click()}
-                        className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#FA3728] flex flex-col items-center justify-center gap-1 transition-colors overflow-hidden flex-shrink-0 relative"
-                      >
-                        {formData.mainImagePreview ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={formData.mainImagePreview}
-                            alt="Main"
-                            className="absolute inset-0 w-full h-full object-cover"
-                          />
-                        ) : (
-                          <>
-                            <Camera size={20} className="text-gray-400" />
-                            <span className="text-[10px] text-gray-400 font-medium text-center leading-tight">
-                              Main<br />Photo
-                            </span>
-                          </>
-                        )}
-                      </button>
-                      <input
-                        ref={mainImageRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleMainImage}
-                      />
-
-                      {/* Sub-images row */}
-                      <div className="flex gap-2 flex-wrap">
-                        {formData.subImagePreviews.map((src, idx) => (
-                          <div key={idx} className="w-16 h-16 rounded-lg overflow-hidden relative flex-shrink-0">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={src} alt={`Sub ${idx + 1}`} className="w-full h-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => removeSubImage(idx)}
-                              className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center"
-                            >
-                              <X size={10} className="text-white" strokeWidth={3} />
-                            </button>
-                          </div>
-                        ))}
-                        {formData.subImagePreviews.length < 5 && (
-                          <button
-                            type="button"
-                            onClick={() => subImagesRef.current?.click()}
-                            className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 hover:border-[#FA3728] flex flex-col items-center justify-center gap-0.5 transition-colors flex-shrink-0"
-                          >
-                            <Grid2x2 size={16} className="text-gray-400" />
-                            <span className="text-[9px] text-gray-400 font-medium">Add</span>
-                          </button>
-                        )}
+                      <div className="flex gap-3">
+                        {/* Main image */}
+                        <button
+                          type="button"
+                          onClick={() => mainImageRef.current?.click()}
+                          className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#FA3728] flex flex-col items-center justify-center gap-1 transition-colors overflow-hidden flex-shrink-0 relative"
+                        >
+                          {formData.mainImagePreview ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={formData.mainImagePreview}
+                              alt="Main"
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                          ) : (
+                            <>
+                              <Camera size={20} className="text-gray-400" />
+                              <span className="text-[10px] text-gray-400 font-medium text-center leading-tight">
+                                Main<br />Photo
+                              </span>
+                            </>
+                          )}
+                        </button>
                         <input
-                          ref={subImagesRef}
+                          ref={mainImageRef}
                           type="file"
                           accept="image/*"
-                          multiple
                           className="hidden"
-                          onChange={handleSubImages}
+                          onChange={handleMainImage}
                         />
+
+                        {/* Sub-images row */}
+                        <div className="flex gap-2 flex-wrap">
+                          {formData.subImagePreviews.map((src, idx) => (
+                            <div key={idx} className="w-16 h-16 rounded-lg overflow-hidden relative flex-shrink-0">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={src} alt={`Sub ${idx + 1}`} className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => removeSubImage(idx)}
+                                className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center"
+                              >
+                                <X size={10} className="text-white" strokeWidth={3} />
+                              </button>
+                            </div>
+                          ))}
+                          {formData.subImagePreviews.length < 5 && (
+                            <button
+                              type="button"
+                              onClick={() => subImagesRef.current?.click()}
+                              className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 hover:border-[#FA3728] flex flex-col items-center justify-center gap-0.5 transition-colors flex-shrink-0"
+                            >
+                              <Grid2x2 size={16} className="text-gray-400" />
+                              <span className="text-[9px] text-gray-400 font-medium">Add</span>
+                            </button>
+                          )}
+                          <input
+                            ref={subImagesRef}
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={handleSubImages}
+                          />
+                        </div>
                       </div>
+                      <p className="text-[11px] text-gray-400 mt-1.5">
+                        1 main photo + up to 5 gallery images
+                      </p>
                     </div>
-                    <p className="text-[11px] text-gray-400 mt-1.5">
-                      1 main photo + up to 5 gallery images
-                    </p>
-                  </div>
 
-                  {/* ── Title ── */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Product Name <span className="text-[#FA3728]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="e.g. African Print Dress"
-                      required
-                      className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
-                    />
-                  </div>
-
-                  {/* ── Description ── */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Describe your product — material, size, use case…"
-                      rows={3}
-                      className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all resize-none"
-                    />
-                  </div>
-
-                  {/* ── Price + Type ── */}
-                  <div className="grid grid-cols-2 gap-4">
+                    {/* ── Title ── */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Price (₦) <span className="text-[#FA3728]">*</span>
+                        Product Name <span className="text-[#FA3728]">*</span>
                       </label>
                       <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                        placeholder="0.00"
+                        type="text"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        placeholder="e.g. African Print Dress"
                         required
                         className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Type <span className="text-[#FA3728]">*</span>
-                      </label>
-                      <select
-                        value={formData.item_type}
-                        onChange={(e) => setFormData({ ...formData, item_type: e.target.value as ItemType })}
-                        className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none transition-all"
-                      >
-                        <option value="product">Product</option>
-                        <option value="service">Service</option>
-                      </select>
-                    </div>
-                  </div>
 
-                  {/* ── Stock + Category ── */}
-                  <div className="grid grid-cols-2 gap-4">
+                    {/* ── Description ── */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Stock Qty</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.stock}
-                        onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                        placeholder="e.g. 50"
-                        className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Describe your product - material, size, use case"
+                        rows={3}
+                        className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all resize-none"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
-                      <input
-                        type="text"
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        placeholder="e.g. Clothing"
-                        className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
-                      />
-                    </div>
-                  </div>
 
-                  {/* ── Tax inclusive ── */}
-                  <div 
-                    onClick={() => setFormData({ ...formData, tax_inclusive: !formData.tax_inclusive })}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer transition-colors hover:border-gray-300"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">Tax Inclusive</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Price already includes taxes</p>
+                    {/* ── Price + Type ── */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Price (₦) <span className="text-[#FA3728]">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.price}
+                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                          placeholder="0.00"
+                          required
+                          className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Type <span className="text-[#FA3728]">*</span>
+                        </label>
+                        <select
+                          value={formData.item_type}
+                          onChange={(e) => setFormData({ ...formData, item_type: e.target.value as ItemType })}
+                          className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none transition-all"
+                        >
+                          <option value="product">Product</option>
+                          <option value="service">Service</option>
+                        </select>
+                      </div>
                     </div>
+
+                    {/* ── Stock + Category ── */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Stock Qty</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={formData.stock}
+                          onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                          placeholder="e.g. 50"
+                          className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 placeholder:text-[11px] outline-none transition-all"
+                        />
+                      </div>
+                      <div ref={categoryRef} className="relative">
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
+                        <input
+                          type="text"
+                          value={formData.category}
+                          onChange={(e) => {
+                            setFormData({ ...formData, category: e.target.value });
+                            setCategoryOpen(true);
+                          }}
+                          onFocus={() => setCategoryOpen(true)}
+                          placeholder="Select or type custom…"
+                          className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 placeholder:text-[11px] outline-none transition-all"
+                        />
+                        <AnimatePresence>
+                          {categoryOpen && (
+                            <motion.ul
+                              initial={{ opacity: 0, y: -4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -4 }}
+                              transition={{ duration: 0.15 }}
+                              className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto py-1"
+                            >
+                              {categoryOptions
+                                .filter((opt) =>
+                                  !formData.category ||
+                                  opt.toLowerCase().includes(formData.category.toLowerCase())
+                                )
+                                .map((opt) => (
+                                  <li
+                                    key={opt}
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      setFormData({ ...formData, category: opt });
+                                      setCategoryOpen(false);
+                                    }}
+                                    className={`px-4 py-2 text-sm cursor-pointer transition-colors ${formData.category === opt
+                                      ? 'bg-[#FA3728]/5 text-[#FA3728] font-semibold'
+                                      : 'text-gray-700 hover:bg-gray-50'
+                                      }`}
+                                  >
+                                    {opt}
+                                  </li>
+                                ))}
+                              {/* Always show the custom entry if typed value isn't in the list */}
+                              {formData.category &&
+                                !categoryOptions.some(
+                                  (opt) => opt.toLowerCase() === formData.category.toLowerCase()
+                                ) && (
+                                  <li
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      setCategoryOpen(false);
+                                    }}
+                                    className="px-4 py-2 text-sm text-gray-400 italic"
+                                  >
+                                    Using "{formData.category}" as custom category
+                                  </li>
+                                )}
+                            </motion.ul>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+
+                    {/* ── Tax inclusive ── */}
                     <div
-                      className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                        formData.tax_inclusive ? 'bg-[#FA3728]' : 'bg-gray-300'
-                      }`}
+                      onClick={() => setFormData({ ...formData, tax_inclusive: !formData.tax_inclusive })}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer transition-colors hover:border-gray-300"
                     >
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                          formData.tax_inclusive ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">Tax Inclusive</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Price already includes taxes</p>
+                      </div>
+                      <div
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${formData.tax_inclusive ? 'bg-[#FA3728]' : 'bg-gray-300'
+                          }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${formData.tax_inclusive ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                        />
+                      </div>
                     </div>
-                  </div>
 
                   </div>
                 </div>
