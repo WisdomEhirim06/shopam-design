@@ -130,7 +130,12 @@ export default function ProductsPage() {
       setFormData(INITIAL_FORM);
       setIsAddModalOpen(false);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to create product';
+      const axiosErr = err as any;
+      const data = axiosErr?.response?.data;
+      const msg = data?.detail || data?.message || data?.error
+        || (typeof data === 'object' ? JSON.stringify(data) : null)
+        || axiosErr?.message
+        || 'Failed to create product';
       setSubmitError(msg);
     } finally {
       setIsSubmitting(false);

@@ -12,7 +12,12 @@ const apiClient: AxiosInstance = axios.create({
   },
 });
 
-// Public endpoints that must NOT carry an Authorization header
+// Public endpoints that must NOT carry an Authorization header.
+// Only list auth/registration routes here — commerce browse endpoints
+// (products, categories, vendors) intentionally omitted so that vendor
+// write requests (POST/PATCH/DELETE) receive the auth token. Sending a
+// token on a public GET is harmless; not sending one on a vendor POST
+// causes a 403 Forbidden from the backend.
 const PUBLIC_ENDPOINTS = [
   '/api/accounts/register/',
   '/api/accounts/login/',
@@ -20,10 +25,6 @@ const PUBLIC_ENDPOINTS = [
   '/api/accounts/password/forgot/',
   '/api/accounts/password/reset',
   '/api/accounts/verify-email',
-  '/api/commerce/products/',
-  '/api/commerce/categories/',
-  '/api/commerce/search/',
-  '/api/commerce/vendors/',
 ];
 
 // Request interceptor - Add auth token

@@ -35,9 +35,10 @@ function VendorSignInForm() {
 
       console.log('Login successful:', response.user);
 
-      // Check if user is a vendor
-      if (!response.user.is_vendor) {
-        setError('Please use customer sign-in page');
+      // Only block if the backend explicitly says is_vendor: false.
+      // If the field is absent from the login response, allow through.
+      if (response.user.is_vendor === false) {
+        setError('This account is not a vendor account. Please use the customer sign-in page.');
         setIsSubmitting(false);
         return;
       }
@@ -169,6 +170,13 @@ function VendorSignInForm() {
                 {justVerified && (
                   <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm font-medium">
                     ✓ Email verified! Sign in to continue.
+                  </div>
+                )}
+
+                {/* Error message */}
+                {error && (
+                  <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium">
+                    {error}
                   </div>
                 )}
 

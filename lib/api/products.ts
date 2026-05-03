@@ -35,43 +35,37 @@ export const productsService = {
 
   /** Create a new product (vendor only) */
   async createProduct(data: ProductServiceCreate): Promise<ProductService> {
-    const formData = new FormData();
-    formData.append('title', data.title);
-    formData.append('price', data.price);
-    formData.append('item_type', data.item_type);
-    if (data.description) formData.append('description', data.description);
-    if (data.tax_inclusive !== undefined) formData.append('tax_inclusive', String(data.tax_inclusive));
-    // Extra fields: backend will accept when support is added
-    if (data.stock !== undefined) formData.append('stock', String(data.stock));
-    if (data.category) formData.append('category', data.category);
-    if (data.images?.length) {
-      data.images.forEach((file) => formData.append('images', file));
-    }
+    // API spec accepts only: title, description, category, price, tax_inclusive, item_type.
+    // No images or stock fields exist in the schema — send JSON to keep it clean.
+    const payload: Record<string, unknown> = {
+      title: data.title,
+      price: data.price,
+      item_type: data.item_type,
+    };
+    if (data.description) payload.description = data.description;
+    if (data.category) payload.category = data.category;
+    if (data.tax_inclusive !== undefined) payload.tax_inclusive = data.tax_inclusive;
+
     const response = await apiClient.post<ProductService>(
       API_ENDPOINTS.PRODUCTS.CREATE,
-      formData,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
+      payload
     );
     return response.data;
   },
 
   /** Update product (vendor only) */
   async updateProduct(id: string, data: Partial<ProductServiceCreate>): Promise<ProductService> {
-    const formData = new FormData();
-    if (data.title) formData.append('title', data.title);
-    if (data.price) formData.append('price', data.price);
-    if (data.item_type) formData.append('item_type', data.item_type);
-    if (data.description) formData.append('description', data.description);
-    if (data.tax_inclusive !== undefined) formData.append('tax_inclusive', String(data.tax_inclusive));
-    if (data.stock !== undefined) formData.append('stock', String(data.stock));
-    if (data.category) formData.append('category', data.category);
-    if (data.images?.length) {
-      data.images.forEach((file) => formData.append('images', file));
-    }
+    const payload: Record<string, unknown> = {};
+    if (data.title) payload.title = data.title;
+    if (data.price) payload.price = data.price;
+    if (data.item_type) payload.item_type = data.item_type;
+    if (data.description) payload.description = data.description;
+    if (data.category) payload.category = data.category;
+    if (data.tax_inclusive !== undefined) payload.tax_inclusive = data.tax_inclusive;
+
     const response = await apiClient.patch<ProductService>(
       API_ENDPOINTS.PRODUCTS.UPDATE(id),
-      formData,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
+      payload
     );
     return response.data;
   },
