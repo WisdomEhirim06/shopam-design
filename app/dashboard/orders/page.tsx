@@ -229,10 +229,10 @@ export default function OrdersPage() {
     }
     updateConvMsg(orderId, msgId, { orderStatus: 'Declined' });
     setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: 'Declined', apiStatus: 'declined' } : o))
+      prev.map((o) => (o.id === orderId ? { ...o, status: 'Declined', apiStatus: 'cancelled' } : o))
     );
     setSelectedOrder((prev) =>
-      prev?.id === orderId ? { ...prev, status: 'Declined', apiStatus: 'declined' } : prev
+      prev?.id === orderId ? { ...prev, status: 'Declined', apiStatus: 'cancelled' } : prev
     );
   };
 
