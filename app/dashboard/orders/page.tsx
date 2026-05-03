@@ -9,7 +9,7 @@ import { ordersService } from '../../../lib/api/services';
 import type { Order as APIOrder, OrderStatus as APIOrderStatus } from '../../../lib/api/types';
 
 /* ─────────────── UI Types ─────────────── */
-type UIOrderStatus = 'All' | 'Pending' | 'Confirmed' | 'Completed';
+type UIOrderStatus = 'All' | 'Pending' | 'Confirmed' | 'Completed' | 'Declined';
 
 interface UIOrderItem {
   name: string;
