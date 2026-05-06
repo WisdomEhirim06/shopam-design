@@ -244,7 +244,7 @@ export default function ProductsPage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 md:absolute md:bottom-0 z-[60] bg-white rounded-t-3xl md:rounded-b-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] max-h-[92dvh] flex flex-col"
+              className="fixed bottom-0 left-0 right-0 md:absolute md:bottom-0 z-[60] bg-white rounded-t-3xl md:rounded-b-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] max-h-[96dvh] md:max-h-[92dvh] flex flex-col"
             >
               {/* Drag handle */}
               <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2 md:hidden flex-shrink-0" />
@@ -262,8 +262,8 @@ export default function ProductsPage() {
               </div>
 
               {/* Scrollable form body */}
-              <form className="flex flex-col flex-1 overflow-hidden" onSubmit={handleSubmit}>
-                <div className="overflow-y-auto flex-1 px-6 pb-8">
+              <form className="flex flex-col flex-1 min-h-0 overflow-hidden" onSubmit={handleSubmit}>
+                <div className="overflow-y-auto flex-1 min-h-0 px-6 pb-28 md:pb-8">
                   {submitError && (
                     <div className="bg-red-50 border border-red-200 text-red-700 text-xs px-3 py-2 rounded-lg mb-4">
                       {submitError}
@@ -409,7 +409,7 @@ export default function ProductsPage() {
                     </div>
 
                     {/* ── Stock + Category ── */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Stock Qty</label>
                         <input
@@ -464,7 +464,9 @@ export default function ProductsPage() {
                   </div>
                 </div>
 
-                <div className="p-4 md:p-6 border-t border-gray-100 bg-white flex-shrink-0 md:rounded-b-2xl pb-6">
+                <div className="p-4 md:p-6 border-t border-gray-100 bg-white flex-shrink-0 md:rounded-b-2xl"
+                  style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+                >
                   <button
                     type="submit"
                     disabled={isSubmitting || !formData.title || !formData.price}

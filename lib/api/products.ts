@@ -35,41 +35,61 @@ export const productsService = {
 
   /** Create a new product (vendor only) */
   async createProduct(data: ProductServiceCreate): Promise<ProductService> {
-    const form = new FormData();
-    form.append('title', data.title);
-    form.append('price', data.price);
-    form.append('item_type', data.item_type);
-    if (data.description) form.append('description', data.description);
-    if (data.tax_inclusive !== undefined) form.append('tax_inclusive', String(data.tax_inclusive));
-    if (data.taxonomy_id) form.append('taxonomy_id', data.taxonomy_id);
-    if (data.images) {
-      data.images.forEach((img) => form.append('uploaded_images', img));
+    const hasImages = !!data.images?.length;
+
+    if (hasImages) {
+      const form = new FormData();
+      form.append('title', data.title);
+      form.append('price', data.price);
+      form.append('item_type', data.item_type);
+      if (data.description) form.append('description', data.description);
+      if (data.tax_inclusive !== undefined) form.append('tax_inclusive', String(data.tax_inclusive));
+      if (data.taxonomy_id) form.append('taxonomy_id', data.taxonomy_id);
+      data.images!.forEach((img) => form.append('uploaded_images', img));
+      const response = await apiClient.post<ProductService>(API_ENDPOINTS.PRODUCTS.CREATE, form);
+      return response.data;
     }
 
-    const response = await apiClient.post<ProductService>(
-      API_ENDPOINTS.PRODUCTS.CREATE,
-      form
-    );
+    // No files — send plain JSON so DRF parses types correctly
+    const payload: Record<string, unknown> = {
+      title: data.title,
+      price: data.price,
+      item_type: data.item_type,
+    };
+    if (data.description) payload.description = data.description;
+    if (data.tax_inclusive !== undefined) payload.tax_inclusive = data.tax_inclusive;
+    if (data.taxonomy_id) payload.taxonomy_id = data.taxonomy_id;
+
+    const response = await apiClient.post<ProductService>(API_ENDPOINTS.PRODUCTS.CREATE, payload);
     return response.data;
   },
 
   /** Update product (vendor only) */
   async updateProduct(id: string, data: Partial<ProductServiceCreate>): Promise<ProductService> {
-    const form = new FormData();
-    if (data.title) form.append('title', data.title);
-    if (data.price) form.append('price', data.price);
-    if (data.item_type) form.append('item_type', data.item_type);
-    if (data.description) form.append('description', data.description);
-    if (data.tax_inclusive !== undefined) form.append('tax_inclusive', String(data.tax_inclusive));
-    if (data.taxonomy_id) form.append('taxonomy_id', data.taxonomy_id);
-    if (data.images) {
-      data.images.forEach((img) => form.append('uploaded_images', img));
+    const hasImages = !!data.images?.length;
+
+    if (hasImages) {
+      const form = new FormData();
+      if (data.title) form.append('title', data.title);
+      if (data.price) form.append('price', data.price);
+      if (data.item_type) form.append('item_type', data.item_type);
+      if (data.description) form.append('description', data.description);
+      if (data.tax_inclusive !== undefined) form.append('tax_inclusive', String(data.tax_inclusive));
+      if (data.taxonomy_id) form.append('taxonomy_id', data.taxonomy_id);
+      data.images!.forEach((img) => form.append('uploaded_images', img));
+      const response = await apiClient.patch<ProductService>(API_ENDPOINTS.PRODUCTS.UPDATE(id), form);
+      return response.data;
     }
 
-    const response = await apiClient.patch<ProductService>(
-      API_ENDPOINTS.PRODUCTS.UPDATE(id),
-      form
-    );
+    const payload: Record<string, unknown> = {};
+    if (data.title) payload.title = data.title;
+    if (data.price) payload.price = data.price;
+    if (data.item_type) payload.item_type = data.item_type;
+    if (data.description) payload.description = data.description;
+    if (data.tax_inclusive !== undefined) payload.tax_inclusive = data.tax_inclusive;
+    if (data.taxonomy_id) payload.taxonomy_id = data.taxonomy_id;
+
+    const response = await apiClient.patch<ProductService>(API_ENDPOINTS.PRODUCTS.UPDATE(id), payload);
     return response.data;
   },
 
