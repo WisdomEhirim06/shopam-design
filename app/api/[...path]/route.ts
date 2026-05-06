@@ -5,6 +5,9 @@ const BACKEND = 'https://api.shopam.net';
 // Headers that Next.js adds during proxying which cause DisallowedHost on the
 // Django backend (it has USE_X_FORWARDED_HOST=True, ALLOWED_HOSTS=['.shopam.net']).
 const DROP_REQUEST_HEADERS = new Set([
+  // Let fetch set Host to match the target URL (api.shopam.net).
+  // Forwarding Host: localhost:3000 causes nginx to redirect to www.shopam.net.
+  'host',
   'x-forwarded-host',
   'x-forwarded-proto',
   'x-forwarded-port',
