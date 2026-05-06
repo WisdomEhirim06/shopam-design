@@ -6,22 +6,26 @@ import { Plus, MoreVertical, X, ImageIcon, Package, Loader2, Camera, Grid2x2 } f
 import { productsService, categoriesService } from '../../../lib/api/products';
 import type { ProductService, ItemType } from '../../../lib/api/types';
 
-// Same categories shown on the explore page — used as the base suggestion list.
-// When the API returns its own categories they are merged in at the top.
-const EXPLORE_CATEGORIES = [
-  'Food and Drinks',
-  'Home and Living',
-  'Beauty, Hair and Personal Care',
-  'Accessories',
-  "Women's Fashion",
-  "Men's Fashion",
-  'Baby and Kids',
-];
+interface TaxonomyOption {
+  id: string;
+  name: string;
+  depth: number;
+}
+
+function flattenTaxonomy(items: any[], depth = 0): TaxonomyOption[] {
+  const result: TaxonomyOption[] = [];
+  for (const item of items) {
+    result.push({ id: item.id, name: item.name, depth });
+    if (Array.isArray(item.subcategories)) {
+      result.push(...flattenTaxonomy(item.subcategories, depth + 1));
+    }
+  }
+  return result;
+}
 
 /* ── Extended UI product type (includes local-only preview fields) ── */
 interface UIProduct extends ProductService {
   localStock?: number;
-  localCategory?: string;
   mainImagePreview?: string;
   subImagePreviews?: string[];
 }
@@ -33,7 +37,8 @@ interface FormData {
   item_type: ItemType;
   tax_inclusive: boolean;
   stock: string;
-  category: string;
+  taxonomy_id: string;   // UUID sent to API
+  taxonomy_name: string; // display name shown in the input
   mainImage: File | null;
   subImages: File[];
   mainImagePreview: string | null;
@@ -47,7 +52,8 @@ const INITIAL_FORM: FormData = {
   item_type: 'product',
   tax_inclusive: false,
   stock: '',
-  category: '',
+  taxonomy_id: '',
+  taxonomy_name: '',
   mainImage: null,
   subImages: [],
   mainImagePreview: null,
@@ -61,7 +67,8 @@ export default function ProductsPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
-  const [categoryOptions, setCategoryOptions] = useState<string[]>(EXPLORE_CATEGORIES);
+  const [categoryOptions, setCategoryOptions] = useState<TaxonomyOption[]>([]);
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const categoryRef = useRef<HTMLDivElement>(null);
 
@@ -84,17 +91,11 @@ export default function ProductsPage() {
   const loadCategories = async () => {
     try {
       const data = await categoriesService.getCategories();
-      if (data.length > 0) {
-        // Merge API category names on top, then append any explore categories not already covered
-        const apiNames = data.map((c) => c.name);
-        const extras = EXPLORE_CATEGORIES.filter(
-          (name) => !apiNames.some((n) => n.toLowerCase() === name.toLowerCase())
-        );
-        setCategoryOptions([...apiNames, ...extras]);
-      }
-      // If API returns nothing, categoryOptions stays as EXPLORE_CATEGORIES (set in useState)
+      setCategoryOptions(flattenTaxonomy(data));
     } catch {
-      // silently keep the hardcoded list
+      // leave options empty
+    } finally {
+      setCategoriesLoaded(true);
     }
   };
 
@@ -156,7 +157,7 @@ export default function ProductsPage() {
         item_type: formData.item_type,
         tax_inclusive: formData.tax_inclusive,
         stock: formData.stock ? Number(formData.stock) : undefined,
-        category: formData.category || undefined,
+        taxonomy_id: formData.taxonomy_id || undefined,
         images: allImages.length ? allImages : undefined,
       });
 
@@ -164,7 +165,6 @@ export default function ProductsPage() {
       const uiProduct: UIProduct = {
         ...newProduct,
         localStock: formData.stock ? Number(formData.stock) : undefined,
-        localCategory: formData.category || undefined,
         mainImagePreview: formData.mainImagePreview ?? undefined,
         subImagePreviews: formData.subImagePreviews,
       };
@@ -439,17 +439,17 @@ export default function ProductsPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
                         <input
                           type="text"
-                          value={formData.category}
+                          value={formData.taxonomy_name}
                           onChange={(e) => {
-                            setFormData({ ...formData, category: e.target.value });
+                            setFormData({ ...formData, taxonomy_name: e.target.value, taxonomy_id: '' });
                             setCategoryOpen(true);
                           }}
                           onFocus={() => setCategoryOpen(true)}
-                          placeholder="Select or type custom…"
+                          placeholder={!categoriesLoaded ? 'Loading…' : categoryOptions.length ? 'Search category…' : 'No categories available'}
                           className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 placeholder:text-[11px] outline-none transition-all"
                         />
                         <AnimatePresence>
-                          {categoryOpen && (
+                          {categoryOpen && categoryOptions.length > 0 && (
                             <motion.ul
                               initial={{ opacity: 0, y: -4 }}
                               animate={{ opacity: 1, y: 0 }}
@@ -459,40 +459,27 @@ export default function ProductsPage() {
                             >
                               {categoryOptions
                                 .filter((opt) =>
-                                  !formData.category ||
-                                  opt.toLowerCase().includes(formData.category.toLowerCase())
+                                  !formData.taxonomy_name ||
+                                  opt.name.toLowerCase().includes(formData.taxonomy_name.toLowerCase())
                                 )
                                 .map((opt) => (
                                   <li
-                                    key={opt}
+                                    key={opt.id}
                                     onMouseDown={(e) => {
                                       e.preventDefault();
-                                      setFormData({ ...formData, category: opt });
+                                      setFormData({ ...formData, taxonomy_id: opt.id, taxonomy_name: opt.name });
                                       setCategoryOpen(false);
                                     }}
-                                    className={`px-4 py-2 text-sm cursor-pointer transition-colors ${formData.category === opt
+                                    className={`px-4 py-2 text-sm cursor-pointer transition-colors ${formData.taxonomy_id === opt.id
                                       ? 'bg-[#FA3728]/5 text-[#FA3728] font-semibold'
                                       : 'text-gray-700 hover:bg-gray-50'
-                                      }`}
+                                    }`}
+                                    style={{ paddingLeft: `${1 + opt.depth * 0.75}rem` }}
                                   >
-                                    {opt}
+                                    {opt.depth > 0 && <span className="text-gray-400 mr-1">↳</span>}
+                                    {opt.name}
                                   </li>
                                 ))}
-                              {/* Always show the custom entry if typed value isn't in the list */}
-                              {formData.category &&
-                                !categoryOptions.some(
-                                  (opt) => opt.toLowerCase() === formData.category.toLowerCase()
-                                ) && (
-                                  <li
-                                    onMouseDown={(e) => {
-                                      e.preventDefault();
-                                      setCategoryOpen(false);
-                                    }}
-                                    className="px-4 py-2 text-sm text-gray-400 italic"
-                                  >
-                                    Using "{formData.category}" as custom category
-                                  </li>
-                                )}
                             </motion.ul>
                           )}
                         </AnimatePresence>
@@ -552,10 +539,17 @@ function ProductCard({
   product: UIProduct;
   formatPrice: (p: string) => string;
 }) {
-  const hasImage = !!product.mainImagePreview;
+  const primaryImage = product.mainImagePreview || product.images?.[0]?.image_url;
+  const hasImage = !!primaryImage;
   const hasStock = product.localStock !== undefined;
-  const hasCategory = !!product.localCategory;
+  const categoryLabel = product.taxonomy_path || '';
   const hasDescription = !!product.description;
+
+  // Sub-images: prefer local previews (freshly created), fall back to API images[1+]
+  const subImages: string[] =
+    product.subImagePreviews && product.subImagePreviews.length > 0
+      ? product.subImagePreviews
+      : (product.images?.slice(1).map((i) => i.image_url) ?? []);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:border-red-100 hover:shadow-md transition-all relative overflow-hidden">
@@ -575,7 +569,7 @@ function ProductCard({
           {hasImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={product.mainImagePreview}
+              src={primaryImage}
               alt={product.title}
               className="w-full h-full object-cover"
             />
@@ -590,9 +584,9 @@ function ProductCard({
         {/* Info */}
         <div className="flex-1 min-w-0 p-4 pr-10">
           {/* Category */}
-          {hasCategory && (
+          {categoryLabel && (
             <span className="text-[10px] font-semibold text-[#FA3728] bg-red-50 px-2 py-0.5 rounded-full mb-1.5 inline-block">
-              {product.localCategory}
+              {categoryLabel}
             </span>
           )}
 
@@ -630,9 +624,9 @@ function ProductCard({
           </div>
 
           {/* Sub-image thumbnails */}
-          {product.subImagePreviews && product.subImagePreviews.length > 0 && (
+          {subImages.length > 0 && (
             <div className="flex gap-1.5 mt-2.5">
-              {product.subImagePreviews.slice(0, 4).map((src, i) => (
+              {subImages.slice(0, 4).map((src, i) => (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   key={i}
@@ -641,9 +635,9 @@ function ProductCard({
                   className="w-8 h-8 rounded-md object-cover border border-gray-100"
                 />
               ))}
-              {product.subImagePreviews.length > 4 && (
+              {subImages.length > 4 && (
                 <div className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 font-bold">
-                  +{product.subImagePreviews.length - 4}
+                  +{subImages.length - 4}
                 </div>
               )}
             </div>

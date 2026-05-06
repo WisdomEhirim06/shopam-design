@@ -25,9 +25,22 @@ export const authService = {
   /**
    * Register a new vendor. Backend sends a verification email — user must verify before
    * they can log in. Redirect to /auth/user-verify after calling this.
+   * Sends multipart/form-data when a logo file is included.
    */
   async registerVendor(data: VendorRegister): Promise<void> {
-    await apiClient.post(API_ENDPOINTS.AUTH.VENDOR_REGISTER, data);
+    if (data.logo) {
+      const form = new FormData();
+      (Object.keys(data) as (keyof VendorRegister)[]).forEach((key) => {
+        if (key === 'logo') return;
+        const val = data[key];
+        if (val !== undefined) form.append(key, val as string);
+      });
+      form.append('logo', data.logo);
+      await apiClient.post(API_ENDPOINTS.AUTH.VENDOR_REGISTER, form);
+    } else {
+      const { logo: _logo, ...rest } = data;
+      await apiClient.post(API_ENDPOINTS.AUTH.VENDOR_REGISTER, rest);
+    }
   },
 
   /**

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -15,6 +15,7 @@ import {
   Mail,
   Lock,
   Phone,
+  Camera,
 } from 'lucide-react';
 import { authService } from '@/lib/api';
 import Image from 'next/image';
@@ -29,6 +30,7 @@ export default function VendorSignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // Form State
   const [personalData, setPersonalData] = useState({
@@ -48,6 +50,8 @@ export default function VendorSignUpPage() {
     business_address: '',
     cac_registration: '',
     tin: '',
+    logo: null as File | null,
+    logoPreview: '',
   });
 
   const businessCategories = [
@@ -101,6 +105,7 @@ export default function VendorSignUpPage() {
         business_address: businessData.business_address,
         cac_registration: businessData.cac_registration || undefined,
         tin: businessData.tin || undefined,
+        logo: businessData.logo || undefined,
       });
 
       setIsSubmitting(false);
@@ -383,6 +388,64 @@ export default function VendorSignUpPage() {
                         placeholder="e.g. Acme Stores"
                         className="w-full px-4 py-3 !border-2 !border-gray-300 rounded-xl focus:!border-[#FA3728] outline-none transition-colors !bg-white !text-gray-900"
                       />
+                    </div>
+
+                    {/* Business Logo */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Business Logo <span className="text-gray-400 font-normal">(Opt)</span>
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <button
+                          type="button"
+                          onClick={() => logoInputRef.current?.click()}
+                          className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#FA3728] flex flex-col items-center justify-center gap-1 transition-colors overflow-hidden relative flex-shrink-0"
+                        >
+                          {businessData.logoPreview ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={businessData.logoPreview}
+                              alt="Logo preview"
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                          ) : (
+                            <>
+                              <Camera size={20} className="text-gray-400" />
+                              <span className="text-[10px] text-gray-400 font-medium text-center leading-tight">
+                                Upload
+                              </span>
+                            </>
+                          )}
+                        </button>
+                        <input
+                          ref={logoInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setBusinessData({
+                              ...businessData,
+                              logo: file,
+                              logoPreview: URL.createObjectURL(file),
+                            });
+                          }}
+                        />
+                        <div>
+                          <p className="text-sm text-gray-600">Upload your business logo</p>
+                          <p className="text-xs text-gray-400 mt-0.5">PNG, JPG up to 5 MB</p>
+                          {businessData.logoPreview && (
+                            <button
+                              type="button"
+                              onClick={() => setBusinessData({ ...businessData, logo: null, logoPreview: '' })}
+                              className="text-xs text-red-500 hover:underline mt-1"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Business Category */}

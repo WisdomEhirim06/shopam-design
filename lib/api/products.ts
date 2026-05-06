@@ -35,37 +35,40 @@ export const productsService = {
 
   /** Create a new product (vendor only) */
   async createProduct(data: ProductServiceCreate): Promise<ProductService> {
-    // API spec accepts only: title, description, category, price, tax_inclusive, item_type.
-    // No images or stock fields exist in the schema — send JSON to keep it clean.
-    const payload: Record<string, unknown> = {
-      title: data.title,
-      price: data.price,
-      item_type: data.item_type,
-    };
-    if (data.description) payload.description = data.description;
-    if (data.category) payload.category = data.category;
-    if (data.tax_inclusive !== undefined) payload.tax_inclusive = data.tax_inclusive;
+    const form = new FormData();
+    form.append('title', data.title);
+    form.append('price', data.price);
+    form.append('item_type', data.item_type);
+    if (data.description) form.append('description', data.description);
+    if (data.tax_inclusive !== undefined) form.append('tax_inclusive', String(data.tax_inclusive));
+    if (data.taxonomy_id) form.append('taxonomy_id', data.taxonomy_id);
+    if (data.images) {
+      data.images.forEach((img) => form.append('uploaded_images', img));
+    }
 
     const response = await apiClient.post<ProductService>(
       API_ENDPOINTS.PRODUCTS.CREATE,
-      payload
+      form
     );
     return response.data;
   },
 
   /** Update product (vendor only) */
   async updateProduct(id: string, data: Partial<ProductServiceCreate>): Promise<ProductService> {
-    const payload: Record<string, unknown> = {};
-    if (data.title) payload.title = data.title;
-    if (data.price) payload.price = data.price;
-    if (data.item_type) payload.item_type = data.item_type;
-    if (data.description) payload.description = data.description;
-    if (data.category) payload.category = data.category;
-    if (data.tax_inclusive !== undefined) payload.tax_inclusive = data.tax_inclusive;
+    const form = new FormData();
+    if (data.title) form.append('title', data.title);
+    if (data.price) form.append('price', data.price);
+    if (data.item_type) form.append('item_type', data.item_type);
+    if (data.description) form.append('description', data.description);
+    if (data.tax_inclusive !== undefined) form.append('tax_inclusive', String(data.tax_inclusive));
+    if (data.taxonomy_id) form.append('taxonomy_id', data.taxonomy_id);
+    if (data.images) {
+      data.images.forEach((img) => form.append('uploaded_images', img));
+    }
 
     const response = await apiClient.patch<ProductService>(
       API_ENDPOINTS.PRODUCTS.UPDATE(id),
-      payload
+      form
     );
     return response.data;
   },
@@ -82,11 +85,10 @@ export const productsService = {
 };
 
 export const categoriesService = {
-  /** Get all categories — returns [] if endpoint is not yet available (404/401) */
+  /** Get the full taxonomy tree — returns [] on error */
   async getCategories(): Promise<Category[]> {
     try {
       const response = await apiClient.get<any>(API_ENDPOINTS.CATEGORIES.LIST);
-      // API may return an array or a paginated { results: [] } shape
       const data = response.data;
       return Array.isArray(data) ? data : (data?.results ?? []);
     } catch {
@@ -94,8 +96,8 @@ export const categoriesService = {
     }
   },
 
-  /** Get single category */
-  async getCategory(id: number): Promise<Category> {
+  /** Get a single taxonomy node by UUID */
+  async getCategory(id: string): Promise<Category> {
     const response = await apiClient.get<Category>(
       API_ENDPOINTS.CATEGORIES.DETAIL(id)
     );

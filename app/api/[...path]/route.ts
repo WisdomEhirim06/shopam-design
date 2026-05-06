@@ -15,6 +15,10 @@ const DROP_RESPONSE_HEADERS = new Set([
   'keep-alive',
   'transfer-encoding',
   'upgrade',
+  // Node.js fetch auto-decompresses the body, so forwarding these headers would
+  // tell the browser to decompress an already-decompressed body.
+  'content-encoding',
+  'content-length', // length of the compressed payload no longer matches
 ]);
 
 async function proxy(request: NextRequest, segments: string[]): Promise<NextResponse> {

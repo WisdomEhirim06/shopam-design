@@ -102,10 +102,10 @@ export default function ProfilePage() {
   };
 
   // Derive unique categories from real products for the filter bar
-  const productCategories = ['All', ...Array.from(new Set(products.map(p => p.category).filter((c): c is string => !!c)))];
+  const productCategories = ['All', ...Array.from(new Set(products.map(p => p.taxonomy_path).filter((c): c is string => !!c)))];
 
   const filteredProducts = products.filter(product => {
-    const matchCategory = activeCategory === 'All' || product.category === activeCategory;
+    const matchCategory = activeCategory === 'All' || product.taxonomy_path === activeCategory;
     const matchSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase());
     return matchCategory && matchSearch;
   });

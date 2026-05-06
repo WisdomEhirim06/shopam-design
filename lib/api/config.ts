@@ -132,10 +132,10 @@ export const API_ENDPOINTS = {
     ADDON_DETAIL: (productId: string, id: string) => `/api/commerce/products/${productId}/addons/${id}/`,
   },
 
-  // Categories
+  // Categories (Taxonomy)
   CATEGORIES: {
-    LIST: '/api/commerce/categories/', // Assumed pattern
-    DETAIL: (id: number) => `/api/commerce/categories/${id}/`,
+    LIST: '/api/commerce/categories/',
+    DETAIL: (id: string) => `/api/commerce/categories/${id}/`,
   },
 
   // Discovery

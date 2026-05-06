@@ -21,6 +21,7 @@ export interface VendorRegister {
   cac_registration?: string;
   tin?: string;
   business_address: string;
+  logo?: File;
 }
 
 export interface LoginRequest {
@@ -90,17 +91,23 @@ export type BusinessCategory =
 // Product Types (matches API ProductService schema)
 export type ItemType = 'product' | 'service';
 
+export interface ProductImage {
+  id: string;
+  image_url: string;
+}
+
 export interface ProductService {
   id: string;
   owner: string;
   owner_name: string;
   title: string;
   description?: string;
-  category?: string;
+  taxonomy_path: string;
   price: string;
   tax_inclusive: boolean;
   item_type: ItemType;
   addons: AddOn[];
+  images: ProductImage[];
   created_at: string;
   updated_at: string;
   average_rating: string;
@@ -116,22 +123,21 @@ export interface ProductServiceCreate {
   price: string;
   tax_inclusive?: boolean;
   item_type: ItemType;
-  // Included for UI and future backend support (API accepts but currently ignores these)
-  stock?: number;
-  category?: string;
+  stock?: number; // local UI only — not persisted to backend
+  taxonomy_id?: string; // UUID of the selected Taxonomy node
   images?: File[];
 }
 
 // Backward-compat alias
 export type ProductCreate = ProductServiceCreate;
 
-// Category Types
+// Category / Taxonomy Types
+// The API uses a single self-referencing Taxonomy model with infinite nesting via `parent`.
 export interface Category {
   id: string;
   name: string;
-  description?: string;
-  image?: string;
-  is_active: boolean;
+  parent: string | null; // UUID of parent node, null for root categories
+  subcategories: any;    // nested children returned by the API (may be array or URL string)
 }
 
 // Cart Types
@@ -149,11 +155,12 @@ export interface Cart {
 }
 
 export interface CartItem {
-  id: string; // Updated from number to UUID string
+  id: string;
   subcart: string;
   product: string;
   product_details: Product;
   quantity: number;
+  variant: string | null;
   selected_addons: string[];
   addon_details: AddOn[];
   total_price: string;
@@ -170,13 +177,15 @@ export interface AddOn {
 }
 
 export interface AddToCartRequest {
-  product_id: string; // Per spec field name
+  product_id: string;
   quantity?: number;
-  addon_ids?: string[]; // Per spec field name
+  variant?: string | null;
+  addon_ids?: string[];
 }
 
 export interface UpdateCartItemRequest {
   quantity?: number;
+  variant?: string | null;
   selected_addons?: string[];
 }
 
@@ -230,6 +239,7 @@ export interface OrderItem {
   quantity: number;
   vendor_proposed_quantity: number | null;
   active_quantity: string;
+  variant: string | null;
   selected_addons: string[];
   addon_details: AddOn[];
   total_price: string;
