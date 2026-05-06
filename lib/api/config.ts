@@ -25,6 +25,9 @@ const PUBLIC_ENDPOINTS = [
   '/api/accounts/password/forgot/',
   '/api/accounts/password/reset',
   '/api/accounts/verify-email',
+  // Categories are public read-only — no auth token needed, and a stale token
+  // can cause the backend to return 500 instead of the expected 200.
+  '/api/commerce/categories',
 ];
 
 // Request interceptor - Add auth token
@@ -132,10 +135,11 @@ export const API_ENDPOINTS = {
     ADDON_DETAIL: (productId: string, id: string) => `/api/commerce/products/${productId}/addons/${id}/`,
   },
 
-  // Categories (Taxonomy)
+  // Categories (Taxonomy) — no trailing slash so Next.js trailingSlash:false
+  // does not issue a 308 redirect before the proxy can handle the request.
   CATEGORIES: {
-    LIST: '/api/commerce/categories/',
-    DETAIL: (id: string) => `/api/commerce/categories/${id}/`,
+    LIST: '/api/commerce/categories',
+    DETAIL: (id: string) => `/api/commerce/categories/${id}`,
   },
 
   // Discovery

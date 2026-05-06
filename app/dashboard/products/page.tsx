@@ -37,8 +37,7 @@ interface FormData {
   item_type: ItemType;
   tax_inclusive: boolean;
   stock: string;
-  taxonomy_id: string;   // UUID sent to API
-  taxonomy_name: string; // display name shown in the input
+  taxonomy_id: string;
   mainImage: File | null;
   subImages: File[];
   mainImagePreview: string | null;
@@ -53,7 +52,6 @@ const INITIAL_FORM: FormData = {
   tax_inclusive: false,
   stock: '',
   taxonomy_id: '',
-  taxonomy_name: '',
   mainImage: null,
   subImages: [],
   mainImagePreview: null,
@@ -69,24 +67,12 @@ export default function ProductsPage() {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
   const [categoryOptions, setCategoryOptions] = useState<TaxonomyOption[]>([]);
   const [categoriesLoaded, setCategoriesLoaded] = useState(false);
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const categoryRef = useRef<HTMLDivElement>(null);
 
   const mainImageRef = useRef<HTMLInputElement>(null);
   const subImagesRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadProducts(); loadCategories(); }, []);
 
-  // Close the category dropdown when clicking outside
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
-        setCategoryOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
 
   const loadCategories = async () => {
     try {
@@ -435,54 +421,23 @@ export default function ProductsPage() {
                           className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 placeholder:text-[11px] outline-none transition-all"
                         />
                       </div>
-                      <div ref={categoryRef} className="relative">
+                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
-                        <input
-                          type="text"
-                          value={formData.taxonomy_name}
-                          onChange={(e) => {
-                            setFormData({ ...formData, taxonomy_name: e.target.value, taxonomy_id: '' });
-                            setCategoryOpen(true);
-                          }}
-                          onFocus={() => setCategoryOpen(true)}
-                          placeholder={!categoriesLoaded ? 'Loading…' : categoryOptions.length ? 'Search category…' : 'No categories available'}
-                          className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 placeholder:text-[11px] outline-none transition-all"
-                        />
-                        <AnimatePresence>
-                          {categoryOpen && categoryOptions.length > 0 && (
-                            <motion.ul
-                              initial={{ opacity: 0, y: -4 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -4 }}
-                              transition={{ duration: 0.15 }}
-                              className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto py-1"
-                            >
-                              {categoryOptions
-                                .filter((opt) =>
-                                  !formData.taxonomy_name ||
-                                  opt.name.toLowerCase().includes(formData.taxonomy_name.toLowerCase())
-                                )
-                                .map((opt) => (
-                                  <li
-                                    key={opt.id}
-                                    onMouseDown={(e) => {
-                                      e.preventDefault();
-                                      setFormData({ ...formData, taxonomy_id: opt.id, taxonomy_name: opt.name });
-                                      setCategoryOpen(false);
-                                    }}
-                                    className={`px-4 py-2 text-sm cursor-pointer transition-colors ${formData.taxonomy_id === opt.id
-                                      ? 'bg-[#FA3728]/5 text-[#FA3728] font-semibold'
-                                      : 'text-gray-700 hover:bg-gray-50'
-                                    }`}
-                                    style={{ paddingLeft: `${1 + opt.depth * 0.75}rem` }}
-                                  >
-                                    {opt.depth > 0 && <span className="text-gray-400 mr-1">↳</span>}
-                                    {opt.name}
-                                  </li>
-                                ))}
-                            </motion.ul>
-                          )}
-                        </AnimatePresence>
+                        <select
+                          value={formData.taxonomy_id}
+                          onChange={(e) => setFormData({ ...formData, taxonomy_id: e.target.value })}
+                          disabled={!categoriesLoaded}
+                          className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none transition-all disabled:opacity-50"
+                        >
+                          <option value="">
+                            {!categoriesLoaded ? 'Loading…' : categoryOptions.length ? 'Select category' : 'No categories'}
+                          </option>
+                          {categoryOptions.map((opt) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.depth > 0 ? `${'  '.repeat(opt.depth)}↳ ` : ''}{opt.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
 

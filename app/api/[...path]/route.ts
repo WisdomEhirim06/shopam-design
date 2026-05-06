@@ -15,16 +15,17 @@ const DROP_RESPONSE_HEADERS = new Set([
   'keep-alive',
   'transfer-encoding',
   'upgrade',
-  // Node.js fetch auto-decompresses the body, so forwarding these headers would
-  // tell the browser to decompress an already-decompressed body.
+  // Node.js fetch auto-decompresses the body — forwarding content-encoding would
+  // tell the browser to decompress an already-decompressed payload (corrupt data).
   'content-encoding',
-  'content-length', // length of the compressed payload no longer matches
+  // Content-length reflects the compressed size; after decompression it no longer
+  // matches and must be omitted so the browser measures the actual body size.
+  'content-length',
 ]);
 
 async function proxy(request: NextRequest, segments: string[]): Promise<NextResponse> {
   // Redirect email verification links back into the frontend verify page so the
-  // user never lands on the raw DRF response. Requires the backend FRONTEND_URL
-  // env var to be set to this app's origin (e.g. http://localhost:3000).
+  // user never lands on the raw DRF response.
   if (
     request.method === 'GET' &&
     segments.join('/') === 'accounts/verify-email'
@@ -36,6 +37,9 @@ async function proxy(request: NextRequest, segments: string[]): Promise<NextResp
     return NextResponse.redirect(new URL(dest, request.url));
   }
 
+  // Always append a trailing slash — Django's APPEND_SLASH expects it and
+  // the Next.js trailingSlash:false setting would otherwise strip it before
+  // we ever reach here, producing a redirect loop.
   const path = '/api/' + segments.join('/') + '/';
   const search = request.nextUrl.search;
   const target = `${BACKEND}${path}${search}`;
@@ -50,24 +54,36 @@ async function proxy(request: NextRequest, segments: string[]): Promise<NextResp
   const hasBody = request.method !== 'GET' && request.method !== 'HEAD';
   const body = hasBody ? await request.arrayBuffer() : undefined;
 
-  const upstream = await fetch(target, {
-    method: request.method,
-    headers,
-    body,
-  });
+  try {
+    const upstream = await fetch(target, {
+      method: request.method,
+      headers,
+      body,
+    });
 
-  const responseHeaders = new Headers();
-  upstream.headers.forEach((value, key) => {
-    if (!DROP_RESPONSE_HEADERS.has(key.toLowerCase())) {
-      responseHeaders.set(key, value);
-    }
-  });
+    // Buffer the full body before building the response — streaming upstream.body
+    // directly into NextResponse causes silent truncation on some Node versions.
+    const responseBody = await upstream.arrayBuffer();
 
-  return new NextResponse(upstream.body, {
-    status: upstream.status,
-    statusText: upstream.statusText,
-    headers: responseHeaders,
-  });
+    const responseHeaders = new Headers();
+    upstream.headers.forEach((value, key) => {
+      if (!DROP_RESPONSE_HEADERS.has(key.toLowerCase())) {
+        responseHeaders.set(key, value);
+      }
+    });
+
+    return new NextResponse(responseBody, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: responseHeaders,
+    });
+  } catch (err) {
+    console.error(`[proxy] ${request.method} ${target} →`, err);
+    return NextResponse.json(
+      { detail: 'Upstream unreachable' },
+      { status: 502 }
+    );
+  }
 }
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
