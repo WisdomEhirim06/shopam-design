@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Send, MapPin, Truck, CreditCard, Building2, X, Check, CheckCircle2, Loader2, RefreshCcw } from 'lucide-react';
+import { ArrowLeft, Send, Lock, Truck, CreditCard, Building2, X, Check, CheckCircle2, Loader2, RefreshCcw } from 'lucide-react';
 import { authService, ordersService, messagesService, paymentsService } from '@/lib/api';
 import type { Order } from '@/lib/api';
 
@@ -60,6 +60,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
   /* ── Payment state ── */
   const [transactionRef, setTransactionRef] = useState<string>('');
   const [bankDetails, setBankDetails] = useState<{bankName: string; accountNumber: string; accountName: string} | null>(null);
+  const [bankDetailsLoading, setBankDetailsLoading] = useState(false);
   const [showPaymentSheet, setShowPaymentSheet] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank' | null>(null);
 
@@ -73,8 +74,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
 
   /* Bank transfer */
   const [bankStep, setBankStep] = useState<'details' | 'verifying' | 'success' | null>(null);
-  const [countdown, setCountdown] = useState(30);
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const pollRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -91,8 +91,8 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  /* Cleanup countdown on unmount */
-  useEffect(() => () => { if (countdownRef.current) clearInterval(countdownRef.current); }, []);
+  /* Cleanup poll on unmount */
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
   const refreshOrder = async () => {
     try {
@@ -260,6 +260,14 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
     catch(e) { console.error(e); setActionError('Failed to set shipping fee. Please try again.'); setIsLoading(false); }
   };
 
+  const confirmPaymentDecision = async () => {
+    try {
+      await ordersService.paymentDecision(orderId, { action: 'pay' });
+    } catch(e) {
+      console.error('paymentDecision error (non-fatal):', e);
+    }
+  };
+
   const openPayment = async () => {
     setActionError('');
     try {
@@ -276,12 +284,63 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
     }
   };
 
+  const handleSelectBankTransfer = async () => {
+    setPaymentMethod('bank');
+    setBankStep('details');
+    setBankDetails(null);
+    setBankDetailsLoading(true);
+    try {
+      const res = await paymentsService.bankTransfer({ transaction_reference: transactionRef }) as Record<string, unknown>;
+      setBankDetails({
+        bankName: (res.bankName ?? res.bank_name ?? 'Wema Bank') as string,
+        accountNumber: (res.accountNumber ?? res.account_number ?? '') as string,
+        accountName: (res.accountName ?? res.account_name ?? 'ShopAm') as string,
+      });
+    } catch(e) {
+      console.error(e);
+      setActionError('Failed to get transfer details. Please try again.');
+      setPaymentMethod(null);
+      setBankStep(null);
+    } finally {
+      setBankDetailsLoading(false);
+    }
+  };
+
+  const handleISentIt = async () => {
+    setBankStep('verifying');
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(async () => {
+      try {
+        const status = await paymentsService.getStatus(transactionRef) as Record<string, unknown>;
+        const paid =
+          status?.paymentStatus === 'PAID' ||
+          status?.status === 'PAID' ||
+          status?.status === 'successful';
+        if (paid) {
+          clearInterval(pollRef.current!);
+          await confirmPaymentDecision();
+          setBankStep('success');
+          refreshOrder();
+        }
+      } catch {
+        // keep polling — transient errors are expected
+      }
+    }, 5000);
+  };
+
+  const handleBankSuccess = () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    setBankStep(null);
+    setPaymentMethod(null);
+    setShowPaymentSheet(false);
+  };
+
   const handleCardPay = async () => {
     if (!cardNumber || !expiry || !cvv) return;
+    setActionError('');
     try {
       setIsLoading(true);
       const [expiryMonth, expiryYear] = expiry.split('/');
-      // Spec: POST /api/payments/direct-charge/ with correct card fields
       await paymentsService.directCharge({
         transaction_reference: transactionRef,
         number: cardNumber.replace(/\s/g, ''),
@@ -289,9 +348,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
         expiryYear: (expiryYear?.trim() || '').length === 2 ? `20${expiryYear.trim()}` : (expiryYear?.trim() || ''),
         cvv,
       });
-      // If backend responds normally it means no OTP needed → success
       setCardStep('success');
-      await refreshOrder();
     } catch (err: any) {
       const needsOTP =
         err.response?.data?.responseMessage?.toLowerCase().includes('otp') ||
@@ -307,58 +364,29 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
   };
 
   const handleVerifyOtp = async () => {
-    if (otp.every(d => d)) {
-      try {
-         setIsLoading(true);
-         // Submit OTP authorization per spec
-         await paymentsService.authorizeOTP({
-           transaction_reference: transactionRef,
-           token_id: 'otp',
-           token: otp.join(''),
-         });
-         setCardStep('success');
-         await refreshOrder();
-      } catch (e) {
-         console.error(e);
-         setActionError('OTP verification failed. Please try again.');
-         setIsLoading(false);
-      }
+    if (!otp.every(d => d)) return;
+    setActionError('');
+    try {
+      setIsLoading(true);
+      await paymentsService.authorizeOTP({
+        transaction_reference: transactionRef,
+        token_id: 'otp',
+        token: otp.join(''),
+      });
+      setCardStep('success');
+    } catch (e) {
+      console.error(e);
+      setActionError('OTP verification failed. Please try again.');
+      setIsLoading(false);
     }
   };
 
-  const handleCardSuccess = () => {
+  const handleCardSuccess = async () => {
+    await confirmPaymentDecision();
     setCardStep(null);
     setPaymentMethod(null);
     setShowPaymentSheet(false);
-  };
-
-  const handleISentIt = async () => {
-    setBankStep('verifying');
-    try {
-      // Spec: POST /api/payments/bank-transfer/ with { transaction_reference, bank_code }
-      await paymentsService.bankTransfer({ transaction_reference: transactionRef });
-    } catch (e) {
-      console.error(e);
-    }
-    
-    setCountdown(3);
-    countdownRef.current = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(countdownRef.current!);
-          setBankStep('success');
-          refreshOrder(); // update order state to paid
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  const handleBankSuccess = () => {
-    setBankStep(null);
-    setPaymentMethod(null);
-    setShowPaymentSheet(false);
+    refreshOrder();
   };
 
   const handleOtpChange = (val: string, idx: number) => {
@@ -704,141 +732,187 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
       </footer>
 
       {/* ══════════════════════════════════════════════════════════
-          PAYMENT BOTTOM SHEET
+          PAYMENT MODAL — method selection + bank transfer
+          Mobile: slides up from bottom
+          Desktop: centered dialog
       ══════════════════════════════════════════════════════════ */}
       <AnimatePresence>
         {showPaymentSheet && (
-          <>
-            {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 flex items-end sm:items-center justify-center sm:px-4 bg-black/50"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                if (pollRef.current) clearInterval(pollRef.current);
+                setShowPaymentSheet(false);
+                setPaymentMethod(null);
+              }
+            }}
+          >
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40"
-              onClick={() => { setShowPaymentSheet(false); setPaymentMethod(null); }}
-            />
-
-            {/* Sheet */}
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl px-5 pt-4 pb-10 max-w-lg mx-auto"
+              className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
             >
-              {/* Handle */}
-              <div className="w-10 h-1.5 rounded-full bg-gray-200 mx-auto mb-5" />
+              {/* Drag handle (mobile only) */}
+              <div className="sm:hidden flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1.5 rounded-full bg-gray-200" />
+              </div>
 
-              {!paymentMethod && (
-                <>
-                  <h2 className="text-lg font-bold text-gray-900 mb-1">Choose Payment Method</h2>
-                  <p className="text-sm text-gray-500 mb-6">
-                    Total: <span className="font-bold text-[#FA3728]">₦{payAmount.toLocaleString()}</span>
-                  </p>
+              <div className="px-6 pt-4 pb-[max(env(safe-area-inset-bottom),24px)] sm:pb-8">
 
-                  {/* Stacked horizontal cards */}
-                  <div className="flex flex-col gap-3">
-                    <button
-                      onClick={() => { setPaymentMethod('card'); setCardStep('details'); }}
-                      className="flex items-center gap-4 w-full p-4 border-2 border-gray-100 rounded-2xl hover:border-[#FA3728] hover:bg-[#FA3728]/5 transition-all group"
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-[#FA3728]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#FA3728]/15">
-                        <CreditCard size={22} className="text-[#FA3728]" />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-bold text-gray-900 text-sm">Card Payment</p>
-                        <p className="text-xs text-gray-500 mt-0.5">Credit or Debit card</p>
-                      </div>
-                      <div className="ml-auto text-gray-300 group-hover:text-[#FA3728] transition-colors">›</div>
-                    </button>
+                {/* ── Method Selection ── */}
+                {!paymentMethod && (
+                  <>
+                    <div className="flex items-center justify-between mb-1">
+                      <h2 className="text-xl font-bold text-gray-900">Pay for Order</h2>
+                      <button
+                        onClick={() => { setShowPaymentSheet(false); setPaymentMethod(null); }}
+                        className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                      >
+                        <X size={18} className="text-gray-500" />
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-6">
+                      Total due: <span className="font-bold text-[#FA3728] text-base">₦{payAmount.toLocaleString()}</span>
+                    </p>
 
-                    <button
-                      onClick={() => { setPaymentMethod('bank'); setBankStep('details'); }}
-                      className="flex items-center gap-4 w-full p-4 border-2 border-gray-100 rounded-2xl hover:border-blue-400 hover:bg-blue-50/50 transition-all group"
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100">
-                        <Building2 size={22} className="text-blue-500" />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-bold text-gray-900 text-sm">Bank Transfer</p>
-                        <p className="text-xs text-gray-500 mt-0.5">Transfer via Monnify</p>
-                      </div>
-                      <div className="ml-auto text-gray-300 group-hover:text-blue-400 transition-colors">›</div>
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {/* ── BANK TRANSFER: Details ── */}
-              {paymentMethod === 'bank' && bankStep === 'details' && (
-                <>
-                  <div className="flex items-center gap-2 mb-5">
-                    <button onClick={() => setPaymentMethod(null)} className="p-1.5 rounded-full hover:bg-gray-100">
-                      <ArrowLeft size={18} className="text-gray-600" />
-                    </button>
-                    <h2 className="text-lg font-bold text-gray-900">Bank Transfer</h2>
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 mb-5">
-                    <p className="text-[11px] font-semibold text-blue-600 uppercase tracking-wide mb-4">Transfer Details</p>
-                    <div className="space-y-3">
-                      {[
-                        { label: 'Bank Name', value: 'Wema Bank' },
-                        { label: 'Account Number', value: '8012345678' },
-                        { label: 'Account Name', value: 'ShopAm / ' + vendorName },
-                        { label: 'Amount', value: `₦${payAmount.toLocaleString()}` },
-                      ].map(({ label, value }) => (
-                        <div key={label} className="flex justify-between">
-                          <span className="text-xs text-gray-500">{label}</span>
-                          <span className={`text-xs font-bold ${label === 'Amount' ? 'text-[#FA3728]' : 'text-gray-900'}`}>{value}</span>
+                    <div className="flex flex-col gap-3">
+                      <button
+                        onClick={() => { setPaymentMethod('card'); setCardStep('details'); }}
+                        className="flex items-center gap-4 w-full p-4 border-2 border-gray-100 rounded-2xl hover:border-[#FA3728] hover:bg-[#FA3728]/5 active:scale-[0.98] transition-all group"
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-[#FA3728]/10 flex items-center justify-center flex-shrink-0">
+                          <CreditCard size={22} className="text-[#FA3728]" />
                         </div>
-                      ))}
+                        <div className="text-left flex-1">
+                          <p className="font-bold text-gray-900 text-sm">Card Payment</p>
+                          <p className="text-xs text-gray-500 mt-0.5">Debit or credit card</p>
+                        </div>
+                        <span className="text-gray-300 group-hover:text-[#FA3728] text-lg transition-colors">›</span>
+                      </button>
+
+                      <button
+                        onClick={handleSelectBankTransfer}
+                        className="flex items-center gap-4 w-full p-4 border-2 border-gray-100 rounded-2xl hover:border-blue-400 hover:bg-blue-50/50 active:scale-[0.98] transition-all group"
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                          <Building2 size={22} className="text-blue-500" />
+                        </div>
+                        <div className="text-left flex-1">
+                          <p className="font-bold text-gray-900 text-sm">Bank Transfer</p>
+                          <p className="text-xs text-gray-500 mt-0.5">Transfer to a virtual account</p>
+                        </div>
+                        <span className="text-gray-300 group-hover:text-blue-400 text-lg transition-colors">›</span>
+                      </button>
+                    </div>
+
+                    <p className="text-center text-xs text-gray-400 mt-5 flex items-center justify-center gap-1.5">
+                      <Lock size={11} />
+                      Secured by Monnify
+                    </p>
+                  </>
+                )}
+
+                {/* ── Bank Transfer: Loading ── */}
+                {paymentMethod === 'bank' && bankStep === 'details' && bankDetailsLoading && (
+                  <div className="flex flex-col items-center justify-center py-10 gap-4">
+                    <Loader2 size={32} className="animate-spin text-blue-500" />
+                    <p className="text-sm text-gray-500">Generating transfer details…</p>
+                  </div>
+                )}
+
+                {/* ── Bank Transfer: Details ── */}
+                {paymentMethod === 'bank' && bankStep === 'details' && !bankDetailsLoading && bankDetails && (
+                  <>
+                    <div className="flex items-center gap-3 mb-5">
+                      <button onClick={() => setPaymentMethod(null)} className="p-2 rounded-full hover:bg-gray-100 -ml-2 transition-colors">
+                        <ArrowLeft size={18} className="text-gray-600" />
+                      </button>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 leading-tight">Bank Transfer</h2>
+                        <p className="text-xs text-gray-500 mt-0.5">Transfer the exact amount below</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 mb-5">
+                      <p className="text-[11px] font-bold text-blue-500 uppercase tracking-widest mb-4">Transfer to this account</p>
+                      <div className="space-y-3.5">
+                        {[
+                          { label: 'Bank', value: bankDetails.bankName },
+                          { label: 'Account Number', value: bankDetails.accountNumber, mono: true },
+                          { label: 'Account Name', value: bankDetails.accountName },
+                          { label: 'Amount', value: `₦${payAmount.toLocaleString()}`, highlight: true },
+                        ].map(({ label, value, mono, highlight }) => (
+                          <div key={label} className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500">{label}</span>
+                            <span className={`text-sm font-bold ${highlight ? 'text-[#FA3728]' : 'text-gray-900'} ${mono ? 'font-mono tracking-wider' : ''}`}>
+                              {value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 mb-5 text-xs text-amber-700 font-medium">
+                      Transfer the exact amount. This account expires in 30 minutes.
+                    </div>
+
+                    <button
+                      onClick={handleISentIt}
+                      className="w-full py-4 bg-blue-500 hover:bg-blue-600 active:scale-[0.98] text-white rounded-2xl font-bold text-sm transition-all shadow-md"
+                    >
+                      I've Sent the Transfer
+                    </button>
+                  </>
+                )}
+
+                {/* ── Bank Transfer: Verifying ── */}
+                {paymentMethod === 'bank' && bankStep === 'verifying' && (
+                  <div className="flex flex-col items-center py-10 gap-5 text-center">
+                    <div className="relative w-20 h-20">
+                      <div className="absolute inset-0 rounded-full border-4 border-blue-100" />
+                      <Loader2 size={80} className="text-blue-400 animate-spin absolute inset-0" strokeWidth={1.5} />
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900 text-base">Confirming Transfer…</p>
+                      <p className="text-sm text-gray-500 mt-1">This may take a minute. Do not close this screen.</p>
                     </div>
                   </div>
+                )}
 
-                  <button
-                    onClick={handleISentIt}
-                    disabled={isLoading}
-                    className="w-full py-3.5 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-bold text-sm transition-all shadow-md flex justify-center items-center"
-                  >
-                    {isLoading ? <Loader2 className="animate-spin text-white" /> : "I've Sent It"}
-                  </button>
-                </>
-              )}
-
-              {/* ── BANK TRANSFER: Verifying ── */}
-              {paymentMethod === 'bank' && bankStep === 'verifying' && (
-                <div className="flex flex-col items-center py-6 gap-5">
-                  <div className="relative w-20 h-20">
-                    <div className="absolute inset-0 rounded-full border-4 border-blue-100" />
-                    <Loader2 size={80} className="text-blue-400 animate-spin absolute inset-0" strokeWidth={1.5} />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-lg font-black text-blue-600">{countdown}</span>
+                {/* ── Bank Transfer: Success ── */}
+                {paymentMethod === 'bank' && bankStep === 'success' && (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-5">
+                      <CheckCircle2 size={40} strokeWidth={1.5} />
                     </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">Payment Confirmed!</h3>
+                    <p className="text-sm text-gray-500 mb-6">Your transfer has been received and the order is now in progress.</p>
+                    <button
+                      onClick={handleBankSuccess}
+                      className="w-full py-4 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-2xl font-bold text-sm transition-all"
+                    >
+                      Done
+                    </button>
                   </div>
-                  <div className="text-center">
-                    <p className="font-bold text-gray-900 text-base">Verifying Transfer…</p>
-                  </div>
-                </div>
-              )}
+                )}
 
-              {/* ── BANK TRANSFER: Success ── */}
-              {paymentMethod === 'bank' && bankStep === 'success' && (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4">
-                    <CheckCircle2 size={32} />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">Transfer Successful</h3>
-                  <button onClick={handleBankSuccess} className="mt-4 w-full py-3 bg-blue-600 text-white rounded-xl font-bold">Done</button>
-                </div>
-              )}
+              </div>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
 
       {/* ══════════════════════════════════════════════════════════
-          CARD PAYMENT DIALOGS
+          CARD PAYMENT MODAL
+          Mobile: slides up from bottom
+          Desktop: centered dialog
       ══════════════════════════════════════════════════════════ */}
       <AnimatePresence>
         {paymentMethod === 'card' && cardStep && (
@@ -846,126 +920,154 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:px-4 bg-black/60"
+            onClick={(e) => { if (e.target === e.currentTarget) { setCardStep(null); setPaymentMethod(null); } }}
           >
             <motion.div
-              initial={{ scale: 0.95, y: 40 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 40 }}
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-              className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 pb-10 sm:pb-6 max-h-[90dvh] overflow-y-auto"
+              className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl max-h-[90dvh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
             >
-              {/* ── Card Details ── */}
-              {cardStep === 'details' && (
-                <>
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-bold text-gray-900">Card Payment</h2>
-                    <button
-                      onClick={() => { setCardStep(null); setPaymentMethod(null); }}
-                      className="p-1.5 rounded-full hover:bg-gray-100"
-                    >
-                      <X size={18} className="text-gray-500" />
-                    </button>
-                  </div>
+              {/* Drag handle (mobile only) */}
+              <div className="sm:hidden flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1.5 rounded-full bg-gray-200" />
+              </div>
 
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-xs font-semibold text-gray-600 block mb-1.5">Card Number</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={19}
-                        placeholder="0000 0000 0000 0000"
-                        value={cardNumber}
-                        onChange={e => setCardNumber(formatCardNumber(e.target.value))}
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono tracking-wider outline-none focus:border-[#FA3728] focus:ring-1 focus:ring-[#FA3728] transition-all"
-                      />
+              <div className="px-6 pt-4 pb-[max(env(safe-area-inset-bottom),24px)] sm:pb-8">
+
+                {/* ── Card Details ── */}
+                {cardStep === 'details' && (
+                  <>
+                    <div className="flex items-center justify-between mb-5">
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">Card Payment</h2>
+                        <p className="text-xs text-gray-500 mt-0.5">Total: <span className="font-bold text-[#FA3728]">₦{payAmount.toLocaleString()}</span></p>
+                      </div>
+                      <button
+                        onClick={() => { setCardStep(null); setPaymentMethod(null); }}
+                        className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                      >
+                        <X size={18} className="text-gray-500" />
+                      </button>
                     </div>
-                    <div className="flex gap-3">
-                      <div className="flex-1">
-                        <label className="text-xs font-semibold text-gray-600 block mb-1.5">Expiry Date</label>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-600 block mb-1.5">Card Number</label>
                         <input
                           type="text"
                           inputMode="numeric"
-                          maxLength={5}
-                          placeholder="MM/YY"
-                          value={expiry}
-                          onChange={e => setExpiry(formatExpiry(e.target.value))}
-                          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono outline-none focus:border-[#FA3728] focus:ring-1 focus:ring-[#FA3728] transition-all"
+                          maxLength={19}
+                          placeholder="0000 0000 0000 0000"
+                          value={cardNumber}
+                          onChange={e => setCardNumber(formatCardNumber(e.target.value))}
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-mono tracking-wider outline-none focus:border-[#FA3728] focus:ring-2 focus:ring-[#FA3728]/20 transition-all"
                         />
                       </div>
-                      <div className="flex-1">
-                        <label className="text-xs font-semibold text-gray-600 block mb-1.5">CVV</label>
-                        <input
-                          type="password"
-                          inputMode="numeric"
-                          maxLength={3}
-                          placeholder="•••"
-                          value={cvv}
-                          onChange={e => setCvv(e.target.value.replace(/\D/g, '').slice(0, 3))}
-                          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono outline-none focus:border-[#FA3728] focus:ring-1 focus:ring-[#FA3728] transition-all"
-                        />
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <label className="text-xs font-semibold text-gray-600 block mb-1.5">Expiry</label>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={5}
+                            placeholder="MM/YY"
+                            value={expiry}
+                            onChange={e => setExpiry(formatExpiry(e.target.value))}
+                            className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-mono outline-none focus:border-[#FA3728] focus:ring-2 focus:ring-[#FA3728]/20 transition-all"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-xs font-semibold text-gray-600 block mb-1.5">CVV</label>
+                          <input
+                            type="password"
+                            inputMode="numeric"
+                            maxLength={3}
+                            placeholder="•••"
+                            value={cvv}
+                            onChange={e => setCvv(e.target.value.replace(/\D/g, '').slice(0, 3))}
+                            className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-mono outline-none focus:border-[#FA3728] focus:ring-2 focus:ring-[#FA3728]/20 transition-all"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <button
-                    onClick={handleCardPay}
-                    disabled={!cardNumber || !expiry || !cvv}
-                    className="w-full mt-6 py-3.5 bg-[#FA3728] text-white rounded-2xl font-bold text-sm shadow-md hover:bg-[#E31B23] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  >
-                    Pay ₦{payAmount.toLocaleString()}
-                  </button>
-                </>
-              )}
-
-              {/* ── OTP ── */}
-              {cardStep === 'otp' && (
-                <>
-                  <div className="flex items-center gap-2 mb-6">
-                    <button onClick={() => setCardStep('details')} className="p-1.5 rounded-full hover:bg-gray-100 -ml-2">
-                      <ArrowLeft size={18} className="text-gray-600" />
+                    <button
+                      onClick={handleCardPay}
+                      disabled={!cardNumber || !expiry || !cvv || isLoading}
+                      className="w-full mt-6 py-4 bg-[#FA3728] text-white rounded-2xl font-bold text-sm shadow-md hover:bg-[#E31B23] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
+                    >
+                      {isLoading ? <Loader2 size={18} className="animate-spin" /> : `Pay ₦${payAmount.toLocaleString()}`}
                     </button>
-                    <h2 className="text-lg font-bold text-gray-900">Enter OTP</h2>
-                  </div>
-                  <p className="text-sm text-gray-500 mb-6 text-center">
-                    Enter any 6 digits to verify this dummy payment.
-                  </p>
-                  <div className="flex justify-between gap-2 sm:gap-3 mb-8">
-                    {otp.map((d, i) => (
-                      <input
-                        key={i}
-                        ref={el => { otpRefs.current[i] = el; }}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={d}
-                        onChange={e => handleOtpChange(e.target.value, i)}
-                        onKeyDown={e => handleOtpKeyDown(e, i)}
-                        className="w-10 h-10 sm:w-12 sm:h-12 border border-gray-200 rounded-xl text-center text-lg font-bold outline-none focus:border-[#FA3728] focus:ring-1 focus:ring-[#FA3728]"
-                      />
-                    ))}
-                  </div>
-                  <button
-                    onClick={handleVerifyOtp}
-                    disabled={!otp.every(d => d) || isLoading}
-                    className="w-full py-3.5 bg-[#FA3728] text-white rounded-2xl font-bold text-sm shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                     {isLoading ? <Loader2 className="animate-spin text-white" /> : "Verify Payment"}
-                  </button>
-                </>
-              )}
 
-              {/* ── Card Success ── */}
-              {cardStep === 'success' && (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
-                    <CheckCircle2 size={32} />
+                    <p className="text-center text-xs text-gray-400 mt-4 flex items-center justify-center gap-1.5">
+                      <Lock size={11} />
+                      Secured by Monnify
+                    </p>
+                  </>
+                )}
+
+                {/* ── OTP ── */}
+                {cardStep === 'otp' && (
+                  <>
+                    <div className="flex items-center gap-3 mb-5">
+                      <button onClick={() => setCardStep('details')} className="p-2 rounded-full hover:bg-gray-100 -ml-2 transition-colors">
+                        <ArrowLeft size={18} className="text-gray-600" />
+                      </button>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">Enter OTP</h2>
+                        <p className="text-xs text-gray-500 mt-0.5">Check your phone or email for the code</p>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between gap-2 sm:gap-3 mb-8">
+                      {otp.map((d, i) => (
+                        <input
+                          key={i}
+                          ref={el => { otpRefs.current[i] = el; }}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={d}
+                          onChange={e => handleOtpChange(e.target.value, i)}
+                          onKeyDown={e => handleOtpKeyDown(e, i)}
+                          className="w-11 h-14 sm:w-12 sm:h-14 border-2 border-gray-200 rounded-xl text-center text-xl font-bold outline-none focus:border-[#FA3728] focus:ring-2 focus:ring-[#FA3728]/20 transition-all text-gray-900"
+                        />
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={handleVerifyOtp}
+                      disabled={!otp.every(d => d) || isLoading}
+                      className="w-full py-4 bg-[#FA3728] text-white rounded-2xl font-bold text-sm shadow-md hover:bg-[#E31B23] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
+                    >
+                      {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Verify & Pay'}
+                    </button>
+                  </>
+                )}
+
+                {/* ── Card Success ── */}
+                {cardStep === 'success' && (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-5">
+                      <CheckCircle2 size={40} strokeWidth={1.5} />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">Payment Successful!</h3>
+                    <p className="text-sm text-gray-500 mb-6">Your order is now confirmed and in progress.</p>
+                    <button
+                      onClick={handleCardSuccess}
+                      disabled={isLoading}
+                      className="w-full py-4 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-2xl font-bold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Done'}
+                    </button>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">Payment Successful!</h3>
-                  <button onClick={handleCardSuccess} className="mt-4 w-full py-3 bg-[#FA3728] text-white rounded-xl font-bold">Done</button>
-                </div>
-              )}
+                )}
+
+              </div>
             </motion.div>
           </motion.div>
         )}

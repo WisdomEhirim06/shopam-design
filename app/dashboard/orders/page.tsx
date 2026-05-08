@@ -28,7 +28,7 @@ interface ConversationMessage {
   type: ConvMsgType;
   timestamp: string;
   fromBuyer?: boolean;
-  orderStatus?: 'Pending' | 'Accepted' | 'Declined' | 'Shipping Fee Set';
+  orderStatus?: 'Pending' | 'Accepted' | 'Declined' | 'Shipping Fee Set' | 'Shipped';
   buyerName?: string;
   items?: UIOrderItem[];
   total?: number;
@@ -81,6 +81,7 @@ function orderCardStatus(status: APIOrderStatus): ConversationMessage['orderStat
   if (status === 'pending_vendor_review') return 'Pending';
   if (status === 'cancelled') return 'Declined';
   if (status === 'awaiting_payment' || status === 'paid') return 'Shipping Fee Set';
+  if (status === 'shipped' || status === 'delivered' || status === 'completed') return 'Shipped';
   return 'Accepted';
 }
 
@@ -156,6 +157,7 @@ export default function OrdersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<UIOrder | null>(null);
   const [messageInput, setMessageInput] = useState('');
+  const [convError, setConvError] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const tabs: UIOrderStatus[] = ['All', 'Pending', 'Confirmed', 'Completed'];
@@ -204,12 +206,32 @@ export default function OrdersPage() {
     setSelectedOrder((prev) => (prev?.id === orderId ? applyTo(prev) : prev));
   };
 
+  /* ── Start delivery (Step 7) ── */
+  const handleStartDelivery = async (orderId: string) => {
+    try {
+      await ordersService.startDelivery(orderId);
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, apiStatus: 'shipped' } : o))
+      );
+      setSelectedOrder((prev) =>
+        prev?.id === orderId ? { ...prev, apiStatus: 'shipped' } : prev
+      );
+      const order = orders.find((o) => o.id === orderId);
+      if (order) {
+        const cardMsgId = `order-${orderId}`;
+        updateConvMsg(orderId, cardMsgId, { orderStatus: 'Shipped' });
+      }
+    } catch {
+      setConvError('Failed to mark as shipped. Please try again.');
+    }
+  };
+
   /* ── Accept order (Step 2) ── */
   const handleAccept = async (orderId: string, msgId: string) => {
     try {
       await ordersService.vendorReview(orderId, { action: 'accept' });
     } catch {
-      // optimistic update even if API call fails for UI responsiveness
+      setConvError('Failed to accept order. Please try again.');
     }
     updateConvMsg(orderId, msgId, { orderStatus: 'Accepted' });
     setOrders((prev) =>
@@ -225,7 +247,7 @@ export default function OrdersPage() {
     try {
       await ordersService.vendorReview(orderId, { action: 'decline' });
     } catch {
-      // optimistic update even if API call fails
+      setConvError('Failed to decline order. Please try again.');
     }
     updateConvMsg(orderId, msgId, { orderStatus: 'Declined' });
     setOrders((prev) =>
@@ -241,7 +263,8 @@ export default function OrdersPage() {
     try {
       await ordersService.setShippingFee(orderId, fee.toFixed(2));
     } catch {
-      // continue with UI update
+      setConvError('Failed to set shipping fee. Please try again.');
+      return;
     }
     updateConvMsg(orderId, msgId, { orderStatus: 'Shipping Fee Set', shippingFee: fee });
     appendMsg(orderId, {
@@ -291,6 +314,14 @@ export default function OrdersPage() {
             <MoreVertical size={20} />
           </button>
         </div>
+
+        {/* Error Banner */}
+        {convError && (
+          <div className="flex-shrink-0 bg-red-50 border-b border-red-100 px-4 py-2.5 flex items-center justify-between">
+            <span className="text-red-600 text-sm">{convError}</span>
+            <button onClick={() => setConvError('')} className="ml-3 font-bold text-red-400 hover:text-red-600 text-lg leading-none">×</button>
+          </div>
+        )}
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-5">
@@ -420,9 +451,27 @@ export default function OrdersPage() {
                         </div>
                       )}
 
-                      {msg.orderStatus === 'Shipping Fee Set' && (
+                      {msg.orderStatus === 'Shipping Fee Set' && selectedOrder.apiStatus === 'awaiting_payment' && (
                         <div className="mt-3 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-center">
                           <p className="text-xs font-semibold text-amber-700">Awaiting payment from buyer</p>
+                        </div>
+                      )}
+
+                      {msg.orderStatus === 'Shipping Fee Set' && selectedOrder.apiStatus === 'paid' && (
+                        <div className="mt-3">
+                          <button
+                            onClick={() => handleStartDelivery(selectedOrder.id)}
+                            className="w-full py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-lg text-xs font-semibold transition-colors flex justify-center items-center gap-1"
+                          >
+                            <Truck size={12} className="inline mr-1" />
+                            Mark as Shipped
+                          </button>
+                        </div>
+                      )}
+
+                      {msg.orderStatus === 'Shipped' && (
+                        <div className="mt-3 px-3 py-2 bg-blue-50 rounded-lg border border-blue-100 text-center">
+                          <p className="text-xs font-semibold text-blue-700">Order shipped — awaiting buyer confirmation</p>
                         </div>
                       )}
 
