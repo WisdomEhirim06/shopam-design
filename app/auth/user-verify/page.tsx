@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -18,10 +18,6 @@ function UserVerifyForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
-
-  const inputRefs = Array.from({ length: 6 }, () => useRef<HTMLInputElement>(null));
-  const [code, setCode] = useState(Array(6).fill(''));
-
   const [verifiedNeedsSignIn, setVerifiedNeedsSignIn] = useState(false);
 
   useEffect(() => {
@@ -48,53 +44,6 @@ function UserVerifyForm() {
     const t = setTimeout(() => setResendTimer((n) => n - 1), 1000);
     return () => clearTimeout(t);
   }, [resendTimer]);
-
-  const handleChange = (index: number, value: string) => {
-    if (value.length > 1 || !/^\d*$/.test(value)) return;
-    const next = [...code];
-    next[index] = value;
-    setCode(next);
-    if (value && index < 5) inputRefs[index + 1].current?.focus();
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !code[index] && index > 0) inputRefs[index - 1].current?.focus();
-  };
-
-  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData('text').slice(0, 6);
-    if (!/^\d+$/.test(pasted)) return;
-    const next = [...pasted.split(''), ...Array(6 - pasted.length).fill('')];
-    setCode(next);
-    inputRefs[Math.min(pasted.length, 5)].current?.focus();
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const token = code.join('');
-    if (token.length !== 6) { setError('Please enter all 6 digits'); return; }
-    setError('');
-    setIsSubmitting(true);
-    try {
-      const { authenticated } = await authService.verifyEmail(token);
-      setSuccess(true);
-      if (authenticated) {
-        setTimeout(() => router.push('/explore'), 2500);
-      } else {
-        setVerifiedNeedsSignIn(true);
-        setTimeout(() => router.push('/auth/user-signin?verified=1'), 2500);
-      }
-    } catch (err: any) {
-      setError(
-        err.response?.data?.detail ||
-        err.response?.data?.message ||
-        'Invalid code. Please check your email and try again.'
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleResend = () => {
     if (resendTimer > 0) return;
@@ -154,13 +103,13 @@ function UserVerifyForm() {
           >
             <h2 className="text-3xl font-bold mb-4 tracking-tight">Check Your Inbox</h2>
             <p className="text-base opacity-85 leading-relaxed font-light">
-              We've sent a verification link to your mailbox. Click it to activate your account, or enter the code below.
+              We've sent a verification link to your mailbox. Click it to activate your account.
             </p>
           </motion.div>
         </div>
       </div>
 
-      {/* Right form panel */}
+      {/* Right panel */}
       <div className="flex-1 flex flex-col min-h-screen bg-white overflow-y-auto">
         {/* Mobile-only top bar */}
         <div className="lg:hidden flex items-center justify-between px-5 pt-6 pb-4 border-b border-gray-100">
@@ -207,80 +156,59 @@ function UserVerifyForm() {
                 </p>
               </motion.div>
             ) : (
-              <>
-                <div className="mb-8 text-center lg:text-left">
-                  <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Enter Code</h2>
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="space-y-6"
+              >
+                <div className="text-center lg:text-left">
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Verify Your Email</h2>
                   <p className="text-sm sm:text-base text-gray-500">
                     {emailHint ? (
-                      <>Check the inbox for <span className="text-gray-800 font-semibold break-all">{emailHint}</span></>
+                      <>A verification link has been sent to <span className="text-gray-800 font-semibold break-all">{emailHint}</span>. Click the link in your inbox to activate your account.</>
                     ) : (
-                      'Check your inbox for the 6-digit verification code'
+                      'A verification link has been sent to your email address. Click the link in your inbox to activate your account.'
                     )}
                   </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {error && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-3.5 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-medium text-center"
-                    >
-                      {error}
-                    </motion.div>
-                  )}
-
-                  {/* OTP inputs */}
-                  <div className="flex gap-2 sm:gap-3 justify-center" onPaste={handlePaste}>
-                    {code.map((digit, i) => (
-                      <input
-                        key={i}
-                        ref={inputRefs[i]}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handleChange(i, e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(i, e)}
-                        className="w-10 h-13 sm:w-13 sm:h-16 text-center text-xl sm:text-2xl font-bold border-2 border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-[#FA3728]/20 focus:border-[#FA3728] focus:bg-white outline-none transition-all text-gray-900"
-                        style={{ width: 'clamp(40px, 13vw, 56px)', height: 'clamp(50px, 16vw, 68px)' }}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Resend */}
-                  <div className="text-center">
-                    <p className="text-sm text-gray-500 mb-2">Didn't receive an email?</p>
-                    {resendTimer > 0 ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400">
-                        <Loader2 size={11} className="animate-spin" />
-                        Resend in {resendTimer}s
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleResend}
-                        className="text-sm text-[#FA3728] hover:text-[#E31B23] font-semibold underline-offset-4 hover:underline transition-all"
-                      >
-                        Resend Verification Code
-                      </button>
-                    )}
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || code.join('').length !== 6}
-                    className="w-full py-3.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-xl font-semibold text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#FA3728]/20 flex items-center justify-center gap-2 active:scale-[0.98]"
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3.5 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-medium text-center"
                   >
-                    {isSubmitting ? <><Loader2 size={20} className="animate-spin" /> Verifying…</> : 'Verify Account'}
-                  </button>
+                    {error}
+                  </motion.div>
+                )}
 
-                  <p className="text-center text-xs text-gray-400">
-                    Need help?{' '}
-                    <Link href="/help" className="text-[#FA3728] hover:underline">Support Center</Link>
-                  </p>
-                </form>
-              </>
+                <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl text-sm text-gray-500 text-center">
+                  Didn't receive the email? Check your spam folder or request a new link below.
+                </div>
+
+                <div className="text-center">
+                  {resendTimer > 0 ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400">
+                      <Loader2 size={11} className="animate-spin" />
+                      Resend available in {resendTimer}s
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResend}
+                      className="text-sm text-[#FA3728] hover:text-[#E31B23] font-semibold underline-offset-4 hover:underline transition-all"
+                    >
+                      Resend Verification Link
+                    </button>
+                  )}
+                </div>
+
+                <p className="text-center text-xs text-gray-400">
+                  Need help?{' '}
+                  <Link href="/help" className="text-[#FA3728] hover:underline">Support Center</Link>
+                </p>
+              </motion.div>
             )}
           </div>
         </div>
