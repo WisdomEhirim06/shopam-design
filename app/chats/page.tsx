@@ -3,68 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, ShoppingBag } from 'lucide-react';
 import { ordersService } from '@/lib/api';
 import type { Order } from '@/lib/api';
-
-const DEMO_ORDERS: Order[] = [
-  {
-    id: 'demo-order-1',
-    customer: 'demo-customer',
-    vendor: 'demo-vendor-1',
-    vendor_name: "Mama Nkechi's Kitchen",
-    status: 'pending_vendor_review',
-    shipping_type: null,
-    shipping_address: null,
-    shipping_fee: '0',
-    grand_total: '3500',
-    items: [
-      {
-        id: 'demo-item-1',
-        product: 'demo-prod-1',
-        product_details: {
-          id: 'demo-prod-1', owner: 'demo-vendor-1', owner_name: "Mama Nkechi's Kitchen",
-          title: 'Jollof Rice Platter', description: '', price: '3500',
-          tax_inclusive: false, item_type: 'product', addons: [], images: [], taxonomy_path: '',
-          created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-          average_rating: '0', review_count: '0',
-        },
-        quantity: 1, vendor_proposed_quantity: null, active_quantity: '1',
-        variant: null, selected_addons: [], addon_details: [], total_price: '3500',
-      },
-    ],
-    confirmation_code: '', delivery_proof_image: null, delivered_at: null,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'demo-order-2',
-    customer: 'demo-customer',
-    vendor: 'demo-vendor-2',
-    vendor_name: 'TechHub NG',
-    status: 'awaiting_payment',
-    shipping_type: 'delivery',
-    shipping_address: '5 Adeola Odeku, Victoria Island, Lagos',
-    shipping_fee: '2000',
-    grand_total: '32000',
-    items: [
-      {
-        id: 'demo-item-2',
-        product: 'demo-prod-2',
-        product_details: {
-          id: 'demo-prod-2', owner: 'demo-vendor-2', owner_name: 'TechHub NG',
-          title: 'Wireless Earbuds Pro', description: '', price: '15000',
-          tax_inclusive: false, item_type: 'product', addons: [], images: [], taxonomy_path: '',
-          created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-          average_rating: '0', review_count: '0',
-        },
-        quantity: 2, vendor_proposed_quantity: null, active_quantity: '2',
-        variant: null, selected_addons: [], addon_details: [], total_price: '30000',
-      },
-    ],
-    confirmation_code: '', delivery_proof_image: null, delivered_at: null,
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-  },
-];
 
 function statusLabel(order: Order): string {
   switch (order.status) {
@@ -92,21 +33,14 @@ export default function ChatsListPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
     ordersService.getOrderHistory()
       .then((data) => {
-        if (data.results?.length) {
-          setOrders(data.results);
-        } else {
-          setOrders(DEMO_ORDERS);
-          setIsDemo(true);
-        }
+        setOrders(data.results ?? []);
       })
       .catch(() => {
-        setOrders(DEMO_ORDERS);
-        setIsDemo(true);
+        setError('Failed to load orders. Please try again.');
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -133,9 +67,21 @@ export default function ChatsListPage() {
           </div>
         ) : (
           <div className="md:my-6 md:bg-white md:rounded-2xl md:shadow-sm overflow-hidden">
-            {isDemo && (
-              <div className="mx-5 mt-5 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 font-medium">
-                Demo mode — place a real order to see it here.
+            {error && (
+              <div className="mx-5 mt-5 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600 font-medium">
+                {error}
+              </div>
+            )}
+            {!error && activeOrders.length === 0 && pastOrders.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
+                <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center">
+                  <ShoppingBag size={28} className="text-gray-400" />
+                </div>
+                <p className="font-semibold text-gray-700">No orders yet</p>
+                <p className="text-sm text-gray-400">When you place an order it will appear here.</p>
+                <Link href="/explore" className="mt-2 text-sm font-semibold text-[#FA3728] hover:underline">
+                  Start shopping
+                </Link>
               </div>
             )}
             {activeOrders.length > 0 && (

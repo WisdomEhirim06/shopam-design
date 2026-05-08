@@ -54,6 +54,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
   const [isVendor, setIsVendor] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [actionError, setActionError] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   /* ── Payment state ── */
@@ -223,6 +224,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
       refreshOrder();
     } catch(e) {
       console.error(e);
+      setActionError('Failed to send message. Please try again.');
     }
   };
 
@@ -231,26 +233,35 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
   /* ────────────────────────────────────────────────────────────────────────── */
 
   const handleVendorAccept = async () => {
-    try { setIsLoading(true); await ordersService.vendorReview(orderId, { accepted: true }); await refreshOrder(); } catch(e) { console.error(e); setIsLoading(false);}
+    setActionError('');
+    try { setIsLoading(true); await ordersService.vendorReview(orderId, { accepted: true }); await refreshOrder(); }
+    catch(e) { console.error(e); setActionError('Failed to accept order. Please try again.'); setIsLoading(false); }
   };
 
   const handleVendorDecline = async () => {
-    try { setIsLoading(true); await ordersService.vendorReview(orderId, { accepted: false, rejection_reason: 'Declined' }); await refreshOrder(); } catch(e) { console.error(e); setIsLoading(false);}
+    setActionError('');
+    try { setIsLoading(true); await ordersService.vendorReview(orderId, { accepted: false, rejection_reason: 'Declined' }); await refreshOrder(); }
+    catch(e) { console.error(e); setActionError('Failed to decline order. Please try again.'); setIsLoading(false); }
   };
 
   const handleSetDeliveryAddress = async (msgId: string | number) => {
     const address = (document.getElementById(`address-${msgId}`) as HTMLInputElement)?.value;
     if (!address) return;
-    try { setIsLoading(true); await ordersService.setShipping(orderId, { shipping_type: 'delivery', shipping_address: address }); await refreshOrder(); } catch(e) { console.error(e); setIsLoading(false);}
+    setActionError('');
+    try { setIsLoading(true); await ordersService.setShipping(orderId, { shipping_type: 'delivery', shipping_address: address }); await refreshOrder(); }
+    catch(e) { console.error(e); setActionError('Failed to submit delivery details. Please try again.'); setIsLoading(false); }
   };
 
   const handleSetShippingFee = async (msgId: string | number) => {
     const fee = parseInt((document.getElementById(`fee-${msgId}`) as HTMLInputElement)?.value || '0');
     if (fee <= 0) return;
-    try { setIsLoading(true); await ordersService.setShippingFee(orderId, fee.toString()); await refreshOrder(); } catch(e) { console.error(e); setIsLoading(false);}
+    setActionError('');
+    try { setIsLoading(true); await ordersService.setShippingFee(orderId, fee.toString()); await refreshOrder(); }
+    catch(e) { console.error(e); setActionError('Failed to set shipping fee. Please try again.'); setIsLoading(false); }
   };
 
   const openPayment = async () => {
+    setActionError('');
     try {
       const res = await paymentsService.initCheckout({ order_id: orderId });
       setTransactionRef(res.transaction_reference);
@@ -261,7 +272,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
       setBankDetails(null);
     } catch(e) {
       console.error(e);
-      alert('Error initializing checkout');
+      setActionError('Failed to initialize payment. Please try again.');
     }
   };
 
@@ -282,9 +293,15 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
       setCardStep('success');
       await refreshOrder();
     } catch (err: any) {
-      // Backend may respond with OTP_REQUIRED — treat as OTP step
-      setCardStep('otp');
-    } finally {
+      const needsOTP =
+        err.response?.data?.responseMessage?.toLowerCase().includes('otp') ||
+        err.response?.data?.type === 'OTP_REQUIRED' ||
+        err.response?.status === 400;
+      if (needsOTP) {
+        setCardStep('otp');
+      } else {
+        setActionError('Card payment failed. Please check your details and try again.');
+      }
       setIsLoading(false);
     }
   };
@@ -303,6 +320,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
          await refreshOrder();
       } catch (e) {
          console.error(e);
+         setActionError('OTP verification failed. Please try again.');
          setIsLoading(false);
       }
     }
@@ -390,6 +408,14 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
           </div>
         </div>
       </header>
+
+      {/* ── Error Banner ── */}
+      {actionError && (
+        <div className="flex-shrink-0 bg-red-50 border-b border-red-100 px-4 py-2.5 flex items-center justify-between max-w-3xl mx-auto w-full">
+          <span className="text-red-600 text-sm">{actionError}</span>
+          <button onClick={() => setActionError('')} className="ml-3 font-bold text-red-400 hover:text-red-600 text-lg leading-none">×</button>
+        </div>
+      )}
 
       {/* ── Messages ── */}
       <main className="flex-1 overflow-y-auto px-3 sm:px-4 py-5 max-w-3xl mx-auto w-full">
