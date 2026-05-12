@@ -33,8 +33,16 @@ export default function ChatsListPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setIsAuthenticated(false);
+      setIsLoading(false);
+      return;
+    }
+    setIsAuthenticated(true);
     ordersService.getOrderHistory()
       .then((data) => {
         setOrders(data.results ?? []);
@@ -61,7 +69,21 @@ export default function ChatsListPage() {
         </div>
       </header>
       <main className="flex-1 max-w-3xl mx-auto w-full">
-        {isLoading ? (
+        {isAuthenticated === false ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center px-6">
+            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center">
+              <ShoppingBag size={28} className="text-gray-400" />
+            </div>
+            <p className="font-semibold text-gray-700">Sign in to view your orders</p>
+            <p className="text-sm text-gray-400">Track your purchases and chat with vendors.</p>
+            <Link
+              href={`/auth/user-signin?redirect=/chats`}
+              className="mt-2 px-6 py-2.5 bg-[#FA3728] text-white rounded-full font-semibold text-sm hover:bg-[#E31B23] transition-colors"
+            >
+              Sign In
+            </Link>
+          </div>
+        ) : isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 size={32} className="animate-spin text-[#FA3728]" />
           </div>

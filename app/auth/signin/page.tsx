@@ -11,6 +11,7 @@ import { authService } from '@/lib/api';
 function VendorSignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const returnUrl = searchParams.get('redirect') || '/dashboard';
   const justVerified = searchParams.get('verified') === '1';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -41,8 +42,8 @@ function VendorSignInForm() {
         return;
       }
 
-      // Redirect to vendor dashboard
-      router.push('/dashboard');
+      // Redirect to the page they were trying to reach, or dashboard
+      router.push(returnUrl);
     } catch (err: any) {
       const data = err.response?.data;
       console.error('Login error:', err.response?.status, data);

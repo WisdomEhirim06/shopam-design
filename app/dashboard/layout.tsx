@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Search, Bell, Home, Package, MessageSquare, User, X } from 'lucide-react';
 import MobileBottomNav from '../components/MobileBottomNav';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function DashboardLayout({
   children,
@@ -14,6 +14,22 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    // Guard: dashboard is vendor-only. Check localStorage directly — this is
+    // the actual source of truth for token state. Middleware cookies are unreliable
+    // because they can be out of sync with the real token lifecycle.
+    if (!localStorage.getItem('access_token')) {
+      window.location.replace('/auth/signin?redirect=' + encodeURIComponent(pathname));
+      return;
+    }
+    setAuthChecked(true);
+  }, [pathname]);
+
+  // Don't render the dashboard shell until we've confirmed the token exists.
+  // This prevents a flash of dashboard content before the redirect fires.
+  if (!authChecked) return null;
 
   const navItems = [
     { href: '/dashboard', label: 'Home' },

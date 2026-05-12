@@ -73,20 +73,23 @@ apiClient.interceptors.response.use(
       url.startsWith('/api/accounts/token/refresh') ||
       url.startsWith('/api/accounts/verify-email');
 
+    // Only enter the refresh flow when there is a refresh token to try.
+    // If there is no refresh token the user was never authenticated — propagate
+    // the error so the page can handle it (inline sign-in card, error message)
+    // without a forced navigation away from the page.
+    const storedRefreshToken = localStorage.getItem('refresh_token');
+
     // If error is 401 and we haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint && storedRefreshToken) {
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) throw new Error('No refresh token');
-
         // If a refresh is already in flight, await the same promise rather than
         // issuing a second request. This prevents the race condition where N
         // concurrent 401s each consume the (rotation-invalidated) refresh token.
         if (!tokenRefreshPromise) {
           tokenRefreshPromise = axios
-            .post('/api/accounts/token/refresh/', { refresh: refreshToken })
+            .post('/api/accounts/token/refresh/', { refresh: storedRefreshToken })
             .then((res) => {
               const raw = res.data ?? {};
               // The backend wraps tokens the same way as login:
@@ -117,13 +120,29 @@ apiClient.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
         }
         return apiClient(originalRequest);
-      } catch {
-        // Refresh failed — clear all auth state and send user to sign-in
+      } catch (refreshError: any) {
+        // Only redirect when the refresh endpoint itself returned 401/403,
+        // meaning the session is definitively expired or revoked.
+        // Transient failures (network timeout, backend 500) clear tokens but
+        // do NOT redirect — the user may just be temporarily offline, and
+        // kicking them to signin on a network hiccup is bad UX.
+        const sessionDefinitelyExpired =
+          refreshError?.response?.status === 401 ||
+          refreshError?.response?.status === 403;
+
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        const storedUser = (() => {
+          try { return JSON.parse(localStorage.getItem('user') ?? 'null'); } catch { return null; }
+        })();
         localStorage.removeItem('user');
         tokenRefreshPromise = null;
-        window.location.href = '/auth/signin';
+
+        if (sessionDefinitelyExpired) {
+          const signinPage = storedUser?.is_vendor ? '/auth/signin' : '/auth/user-signin';
+          window.location.href = signinPage;
+        }
+
         return Promise.reject(error);
       }
     }

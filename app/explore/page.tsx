@@ -52,6 +52,7 @@ export default function ExplorePage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalProducts, setTotalProducts] = useState(0);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Fetch categories on mount
   useEffect(() => {
@@ -169,6 +170,11 @@ export default function ExplorePage() {
     }
   };
 
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const addToCart = async (productId: string) => {
     if (!authService.isAuthenticated()) {
       window.location.href = '/auth/user-signin';
@@ -180,20 +186,30 @@ export default function ExplorePage() {
         product_id: productId,
         quantity: 1,
       });
-
-      // Update cart count
       loadCartCount();
-
-      // Show success feedback (you can add a toast notification here)
-      alert('Product added to cart!');
+      showToast('Added to cart!', 'success');
     } catch (err: any) {
       console.error('Failed to add to cart:', err);
-      alert('Failed to add to cart. Please try again.');
+      showToast('Failed to add to cart. Please try again.', 'error');
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Toast notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`fixed top-4 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-xl shadow-lg text-sm font-semibold text-white ${toast.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`}
+          >
+            {toast.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Fixed Top Navigation - IMPROVED */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
