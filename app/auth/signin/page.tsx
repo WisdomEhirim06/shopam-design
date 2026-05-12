@@ -33,8 +33,6 @@ function VendorSignInForm() {
         password: formData.password,
       });
 
-      console.log('Login successful:', response.user);
-
       // Only block if the backend explicitly says is_vendor: false.
       // If the field is absent from the login response, allow through.
       if (response.user.is_vendor === false) {

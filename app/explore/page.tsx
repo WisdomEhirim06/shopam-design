@@ -78,36 +78,40 @@ export default function ExplorePage() {
     setError('');
 
     try {
-      const filters: any = {
-        page,
-        page_size: 20,
-      };
-
-      if (selectedCategories.length > 0) {
-        // Pass category slugs (comma-joined) to the API
-        filters.category = selectedCategories.join(',');
-      }
+      // The products list endpoint (/api/commerce/products/) does NOT support ?search.
+      // Keyword queries must go to /api/commerce/search/?q= instead.
+      let response;
 
       if (searchQuery) {
-        filters.search = searchQuery;
-      }
+        response = await productsService.searchProducts(searchQuery, {
+          page,
+          page_size: 20,
+        } as any);
+      } else {
+        const filters: any = {
+          page,
+          page_size: 20,
+        };
 
-      // Map sortBy to API ordering
-      switch (sortBy) {
-        case 'price-low':
-          filters.ordering = 'price';
-          break;
-        case 'price-high':
-          filters.ordering = '-price';
-          break;
-        case 'newest':
-          filters.ordering = '-created_at';
-          break;
-        default:
-          filters.ordering = '-created_at';
-      }
+        if (selectedCategories.length > 0) {
+          filters.category = selectedCategories.join(',');
+        }
 
-      const response = await productsService.getProducts(filters);
+        // Map sortBy to API ordering
+        switch (sortBy) {
+          case 'price-low':
+            filters.ordering = 'price';
+            break;
+          case 'price-high':
+            filters.ordering = '-price';
+            break;
+          case 'newest':
+          default:
+            filters.ordering = '-created_at';
+        }
+
+        response = await productsService.getProducts(filters);
+      }
 
       // Use API results when available, fall back to dummy data on first page
       const results = response.results.length > 0 ? response.results : (page === 1 ? DUMMY_PRODUCTS : []);

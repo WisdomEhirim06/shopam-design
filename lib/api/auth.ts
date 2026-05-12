@@ -62,6 +62,10 @@ export const authService = {
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
       localStorage.setItem('user', JSON.stringify(user));
+      // Set a session indicator cookie so Next.js middleware can protect routes
+      // without needing to read localStorage (which isn't available server-side).
+      // This is NOT the actual token — just a flag readable by the edge runtime.
+      document.cookie = 'shopam_session=1; path=/; max-age=604800; SameSite=Lax';
     }
 
     return { access, refresh, user };
@@ -83,6 +87,7 @@ export const authService = {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
+      document.cookie = 'shopam_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     }
   },
 
@@ -211,5 +216,6 @@ export const authService = {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
+    document.cookie = 'shopam_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   },
 };

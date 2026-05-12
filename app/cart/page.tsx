@@ -37,6 +37,12 @@ export default function CartPage() {
   };
 
   useEffect(() => {
+    // Guard: if there's no token at all, redirect immediately rather than
+    // letting the API call hit a 401 and trigger the logout flow.
+    if (!localStorage.getItem('access_token')) {
+      window.location.replace('/auth/user-signin?redirect=/cart');
+      return;
+    }
     fetchCart();
   }, []);
 

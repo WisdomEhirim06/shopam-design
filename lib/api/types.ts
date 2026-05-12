@@ -1,27 +1,34 @@
 // User & Authentication Types
+
+// Matches /api/accounts/register/customer/ → UserRegisterRequest schema
 export interface UserRegister {
   username: string;
   email: string;
   password: string;
-  phone: string;
   first_name?: string;
+  middle_name?: string;
   last_name?: string;
+  phone_country_code?: string;
+  phone?: string;
+  profile_pic?: File;
 }
 
+// Matches /api/accounts/register/vendor/ → VendorRegisterRequest schema
+// Required: email, password, first_name, last_name, phone, business_name, business_category
 export interface VendorRegister {
   email: string;
   password: string;
   first_name: string;
   last_name: string;
   middle_name?: string;
-  phone_country_code?: string;
+  phone_country_code?: string;  // default: '234' per spec
   phone: string;
   business_name: string;
   business_category: BusinessCategory;
-  cac_registration?: string;
-  tin?: string;
-  business_address: string;
-  logo?: File;
+  cac_registration?: string;    // writeOnly — sent only on registration
+  tin?: string;                 // writeOnly
+  business_address?: string;    // writeOnly — optional per spec
+  logo?: File;                  // binary — sent as multipart when present
 }
 
 export interface LoginRequest {
@@ -80,13 +87,15 @@ export interface FullProfile {
   vendor_profile?: VendorProfile;
 }
 
+// Exact values from BusinessCategoryEnum in the API spec
 export type BusinessCategory =
   | 'fashion'
-  | 'food'
   | 'beauty_hair'
   | 'home_living'
+  | 'food_drinks'
   | 'baby_kids'
-  | 'other';
+  | 'books_stationery'
+  | 'health_wellness';
 
 // Product Types (matches API ProductService schema)
 export type ItemType = 'product' | 'service';

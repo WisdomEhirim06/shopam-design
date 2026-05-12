@@ -98,9 +98,29 @@ export const productsService = {
     await apiClient.delete(API_ENDPOINTS.PRODUCTS.DELETE(id));
   },
 
-  /** Search products */
+  /**
+   * Search products and vendors.
+   * Uses /api/commerce/search/?q= (the dedicated search endpoint) which also
+   * returns matching vendors. The products list endpoint does NOT support ?search.
+   */
   async searchProducts(query: string, filters?: ProductFilters): Promise<PaginatedResponse<ProductService>> {
-    return this.getProducts({ ...filters, search: query });
+    const response = await apiClient.get<any>(API_ENDPOINTS.SEARCH, {
+      params: {
+        q: query,
+        ...(filters?.item_type && { item_type: filters.item_type }),
+        ...(filters?.min_price && { min_price: filters.min_price }),
+        ...(filters?.max_price && { max_price: filters.max_price }),
+      },
+    });
+    // /search/ returns { products: { results, count, ... }, vendors: [...] }
+    const data = response.data;
+    const products = data?.products ?? data;
+    return {
+      results: Array.isArray(products) ? products : (products?.results ?? []),
+      count: products?.count ?? 0,
+      next: products?.next ?? null,
+      previous: products?.previous ?? null,
+    };
   },
 };
 

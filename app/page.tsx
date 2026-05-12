@@ -228,15 +228,6 @@ export default function LandingPage() {
 
       {/* HERO - Responsive height */}
       <section className="relative h-[65vh] sm:h-[70vh] lg:h-[90vh] min-h-[420px] sm:min-h-[500px] max-h-[900px] overflow-hidden">
-        {heroSlides.map((slide, i) => (
-          <link
-            key={i}
-            rel={i == 0 ? 'preload' : 'prefetch'}
-            as='image'
-            href={slide.image}
-          />
-        ))}
-
         {/* Render all slides stacked, crossfade via opacity */}
         {heroSlides.map((slide, index) => (
           <motion.div
@@ -247,13 +238,17 @@ export default function LandingPage() {
             style={{ zIndex: index === currentSlide ? 1 : 0 }}
           >
             <div className="absolute inset-0">
-              <img
+              {/* priority on slide 0 = LCP image gets a high-priority preload.
+                  Next.js also converts local JPGs to WebP/AVIF, which paint
+                  atomically instead of rendering progressively line-by-line. */}
+              <Image
                 src={slide.image}
                 alt="Shopping"
-                className="w-full h-full object-cover object-center"
-                onError={(e) => {
-                  e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"%3E%3Crect fill="%23f3f4f6" width="1920" height="1080"/%3E%3C/svg%3E';
-                }}
+                fill
+                sizes="100vw"
+                quality={85}
+                priority={index === 0}
+                className="object-cover object-center"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/70 to-gray-900/40 sm:bg-gradient-to-r sm:from-gray-900/90 sm:via-gray-900/70 sm:to-gray-900/50"></div>
             </div>
@@ -356,7 +351,9 @@ export default function LandingPage() {
                       src={phrase.image}
                       alt="Shopping experience"
                       fill
+                      sizes="(max-width: 640px) 100vw, 50vw"
                       quality={75}
+                      priority={index === 0}
                       className="object-cover"
                     />
                   </motion.div>

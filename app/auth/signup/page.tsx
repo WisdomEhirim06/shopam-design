@@ -21,7 +21,7 @@ import { authService } from '@/lib/api';
 import Image from 'next/image';
 
 type Step = 'personal' | 'business' | 'success';
-type BusinessCategory = 'fashion' | 'food' | 'beauty_hair' | 'home_living' | 'baby_kids' | 'other';
+type BusinessCategory = 'fashion' | 'food_drinks' | 'beauty_hair' | 'home_living' | 'baby_kids' | 'books_stationery' | 'health_wellness';
 
 export default function VendorSignUpPage() {
   const router = useRouter();
@@ -54,13 +54,15 @@ export default function VendorSignUpPage() {
     logoPreview: '',
   });
 
+  // Values must match BusinessCategoryEnum in the API spec exactly
   const businessCategories = [
     { value: 'fashion', label: 'Fashion' },
-    { value: 'food', label: 'Food & Drinks' },
-    { value: 'beauty_hair', label: 'Beauty, Hair and Personal Care' },
+    { value: 'food_drinks', label: 'Food & Drinks' },
+    { value: 'beauty_hair', label: 'Beauty, Hair & Personal Care' },
     { value: 'home_living', label: 'Home & Living' },
     { value: 'baby_kids', label: 'Baby & Kids' },
-    { value: 'other', label: 'Other' },
+    { value: 'books_stationery', label: 'Books & Stationery' },
+    { value: 'health_wellness', label: 'Health & Wellness' },
   ];
 
   // Handle form submission

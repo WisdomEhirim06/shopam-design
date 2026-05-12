@@ -35,8 +35,6 @@ function UserSignInForm() {
         password: formData.password,
       });
 
-      console.log('Login successful:', response.user);
-
       // Check if user is a customer (not vendor)
       if (response.user.is_vendor) {
         setError('Please use vendor sign-in page');

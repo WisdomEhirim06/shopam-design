@@ -50,6 +50,12 @@ apiClient.interceptors.request.use(
   }
 );
 
+// Shared promise that deduplicates concurrent token refresh requests.
+// Without this, multiple simultaneous 401s each fire their own refresh call.
+// Backends that use refresh token rotation invalidate the token after first use,
+// so the second concurrent refresh returns 401 → clears storage → logs user out.
+let tokenRefreshPromise: Promise<string> | null = null;
+
 // Response interceptor - Handle errors globally
 apiClient.interceptors.response.use(
   (response) => {
@@ -72,29 +78,53 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // Try to refresh token
         const refreshToken = localStorage.getItem('refresh_token');
+        if (!refreshToken) throw new Error('No refresh token');
 
-        if (refreshToken) {
-          const response = await axios.post(`/api/accounts/token/refresh/`, {
-            refresh: refreshToken,
-          });
+        // If a refresh is already in flight, await the same promise rather than
+        // issuing a second request. This prevents the race condition where N
+        // concurrent 401s each consume the (rotation-invalidated) refresh token.
+        if (!tokenRefreshPromise) {
+          tokenRefreshPromise = axios
+            .post('/api/accounts/token/refresh/', { refresh: refreshToken })
+            .then((res) => {
+              const raw = res.data ?? {};
+              // The backend wraps tokens the same way as login:
+              // { tokens: { access, refresh } } OR flat { access, refresh }.
+              // Normalize both formats — if only access comes back (legacy), fall through.
+              const access: string = raw.tokens?.access ?? raw.access ?? '';
+              const refresh: string = raw.tokens?.refresh ?? raw.refresh ?? '';
 
-          const { access } = response.data;
-          localStorage.setItem('access_token', access);
+              if (!access) throw new Error('Refresh response contained no access token');
 
-          // Retry original request with new token
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${access}`;
-          }
-          return apiClient(originalRequest);
+              localStorage.setItem('access_token', access);
+              // Always persist the new refresh token — the backend rotates the
+              // token pair on every refresh call (TokenSessionMiddleware updates
+              // the Redis session with the NEW pair). Keeping the old refresh
+              // token means the next expiry cycle sends a consumed token → SESSION_INVALID.
+              if (refresh) localStorage.setItem('refresh_token', refresh);
+
+              return access;
+            })
+            .finally(() => {
+              tokenRefreshPromise = null;
+            });
         }
-      } catch (refreshError) {
-        // Refresh failed, redirect to login
+
+        const newToken = await tokenRefreshPromise;
+
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        }
+        return apiClient(originalRequest);
+      } catch {
+        // Refresh failed — clear all auth state and send user to sign-in
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
+        tokenRefreshPromise = null;
         window.location.href = '/auth/signin';
-        return Promise.reject(refreshError);
+        return Promise.reject(error);
       }
     }
 
@@ -120,7 +150,7 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: '/api/accounts/password/reset',
     VERIFY_EMAIL: '/api/accounts/verify-email',
     TOKEN_REFRESH: '/api/accounts/token/refresh/',
-    VENDOR_PROFILE_UPDATE: '/api/accounts/vendor-update/',
+    VENDOR_PROFILE_UPDATE: '/api/accounts/path/vendor-update/',
   },
 
   // Products
@@ -142,7 +172,8 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string) => `/api/commerce/categories/${id}`,
   },
 
-  // Discovery
+  // Discovery — use /search/ for keyword queries (takes ?q=); products list
+  // supports ?ordering, ?page, ?page_size, ?item_type, ?owner but NOT ?search.
   SEARCH: '/api/commerce/search/',
   VENDORS: '/api/commerce/vendors/',
   VENDOR_DETAIL: (id: string | number) => `/api/commerce/vendors/${id}/`,
