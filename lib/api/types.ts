@@ -384,6 +384,7 @@ export interface APISuccess<T> {
 export interface ProductFilters {
   category?: string; // Updated to string (UUID)
   vendor?: string;
+  item_type?: ItemType;
   min_price?: number;
   max_price?: number;
   search?: string;

@@ -160,12 +160,27 @@ export default function ProductsPage() {
       setIsAddModalOpen(false);
     } catch (err: unknown) {
       const axiosErr = err as any;
+      const status = axiosErr?.response?.status;
       const data = axiosErr?.response?.data;
-      const msg = data?.detail || data?.message || data?.error
-        || (typeof data === 'object' ? JSON.stringify(data) : null)
-        || axiosErr?.message
-        || 'Failed to create product';
-      setSubmitError(msg);
+
+      if (status === 403) {
+        // Backend returns 403 when the authenticated user lacks a VendorProfile
+        // (i.e. the account is registered as a vendor but the profile record was
+        // not created by the backend). This is a backend setup issue — the vendor
+        // profile needs to exist before products can be created.
+        const backendMsg = data?.detail || data?.message || data?.error;
+        setSubmitError(
+          backendMsg && backendMsg !== 'You do not have permission to perform this action.'
+            ? backendMsg
+            : 'Your vendor account is not fully set up yet. Please complete your vendor profile or contact support.'
+        );
+      } else {
+        const msg = data?.detail || data?.message || data?.error
+          || (typeof data === 'object' ? JSON.stringify(data) : null)
+          || axiosErr?.message
+          || 'Failed to create product';
+        setSubmitError(msg);
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -3,13 +3,17 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 // Base URL for the API — empty string routes through Next.js rewrites (/api/* → https://api.shopam.net/api/*)
 export const API_BASE_URL = '';
 
-// Create axios instance
+// Create axios instance.
+// Do NOT set a default Content-Type here.
+// Axios auto-sets  application/json  for plain-object bodies and lets the
+// browser set  multipart/form-data; boundary=…  for FormData bodies.
+// A hard-coded application/json default causes Axios 1.x to run
+// FormDataToJSON() + JSON.stringify() on FormData payloads — File objects
+// serialise as {} (empty dicts), which is why the backend was receiving
+// uploaded_images as a dictionary instead of a binary list.
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000, // 30 seconds
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Public endpoints that must NOT carry an Authorization header.
@@ -50,100 +54,47 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Shared promise that deduplicates concurrent token refresh requests.
-// Without this, multiple simultaneous 401s each fire their own refresh call.
-// Backends that use refresh token rotation invalidate the token after first use,
-// so the second concurrent refresh returns 401 → clears storage → logs user out.
-let tokenRefreshPromise: Promise<string> | null = null;
-
-// Response interceptor - Handle errors globally
+// Response interceptor - Handle 401 globally
+//
+// The backend uses TokenSessionMiddleware: on every successful login it stores
+// the session in Redis and sets an HttpOnly cookie. That cookie is forwarded
+// transparently by the Next.js proxy so the browser never needs to call
+// /token/refresh/ manually — the backend handles session persistence.
+//
+// A 401 therefore means the Redis session has genuinely expired. The correct
+// response is to clear local auth state and send the user back to sign-in.
+// We do NOT attempt a refresh — there is nothing to refresh from the frontend.
 apiClient.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+  (response) => response,
+  (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _redirected?: boolean };
 
-    // Never attempt a token refresh for auth endpoints — they don't use tokens and
-    // a redirect loop would swallow the real error before the page can show it.
     const url = originalRequest.url || '';
+    // Never intercept auth-endpoint errors — those pages display their own
+    // error messages and a forced redirect would swallow the real reason.
     const isAuthEndpoint =
       url.startsWith('/api/accounts/login') ||
       url.startsWith('/api/accounts/register') ||
       url.startsWith('/api/accounts/token/refresh') ||
       url.startsWith('/api/accounts/verify-email');
 
-    // Only enter the refresh flow when there is a refresh token to try.
-    // If there is no refresh token the user was never authenticated — propagate
-    // the error so the page can handle it (inline sign-in card, error message)
-    // without a forced navigation away from the page.
-    const storedRefreshToken = localStorage.getItem('refresh_token');
+    if (error.response?.status === 401 && !isAuthEndpoint && !originalRequest._redirected) {
+      // Only redirect when the user had an active session (access_token present).
+      // Unauthenticated users hitting a protected endpoint get the error
+      // propagated so the page can show an inline sign-in prompt instead of a
+      // jarring redirect.
+      const hadSession = !!localStorage.getItem('access_token');
 
-    // If error is 401 and we haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint && storedRefreshToken) {
-      originalRequest._retry = true;
-
-      try {
-        // If a refresh is already in flight, await the same promise rather than
-        // issuing a second request. This prevents the race condition where N
-        // concurrent 401s each consume the (rotation-invalidated) refresh token.
-        if (!tokenRefreshPromise) {
-          tokenRefreshPromise = axios
-            .post('/api/accounts/token/refresh/', { refresh: storedRefreshToken })
-            .then((res) => {
-              const raw = res.data ?? {};
-              // The backend wraps tokens the same way as login:
-              // { tokens: { access, refresh } } OR flat { access, refresh }.
-              // Normalize both formats — if only access comes back (legacy), fall through.
-              const access: string = raw.tokens?.access ?? raw.access ?? '';
-              const refresh: string = raw.tokens?.refresh ?? raw.refresh ?? '';
-
-              if (!access) throw new Error('Refresh response contained no access token');
-
-              localStorage.setItem('access_token', access);
-              // Always persist the new refresh token — the backend rotates the
-              // token pair on every refresh call (TokenSessionMiddleware updates
-              // the Redis session with the NEW pair). Keeping the old refresh
-              // token means the next expiry cycle sends a consumed token → SESSION_INVALID.
-              if (refresh) localStorage.setItem('refresh_token', refresh);
-
-              return access;
-            })
-            .finally(() => {
-              tokenRefreshPromise = null;
-            });
-        }
-
-        const newToken = await tokenRefreshPromise;
-
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        }
-        return apiClient(originalRequest);
-      } catch (refreshError: any) {
-        // Only redirect when the refresh endpoint itself returned 401/403,
-        // meaning the session is definitively expired or revoked.
-        // Transient failures (network timeout, backend 500) clear tokens but
-        // do NOT redirect — the user may just be temporarily offline, and
-        // kicking them to signin on a network hiccup is bad UX.
-        const sessionDefinitelyExpired =
-          refreshError?.response?.status === 401 ||
-          refreshError?.response?.status === 403;
-
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+      if (hadSession) {
+        originalRequest._redirected = true;
         const storedUser = (() => {
           try { return JSON.parse(localStorage.getItem('user') ?? 'null'); } catch { return null; }
         })();
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
         localStorage.removeItem('user');
-        tokenRefreshPromise = null;
-
-        if (sessionDefinitelyExpired) {
-          const signinPage = storedUser?.is_vendor ? '/auth/signin' : '/auth/user-signin';
-          window.location.href = signinPage;
-        }
-
-        return Promise.reject(error);
+        const signinPage = storedUser?.is_vendor ? '/auth/signin' : '/auth/user-signin';
+        window.location.href = signinPage;
       }
     }
 

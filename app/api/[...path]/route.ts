@@ -70,7 +70,37 @@ async function proxy(request: NextRequest, segments: string[]): Promise<NextResp
 
     const responseHeaders = new Headers();
     upstream.headers.forEach((value, key) => {
-      if (!DROP_RESPONSE_HEADERS.has(key.toLowerCase())) {
+      if (DROP_RESPONSE_HEADERS.has(key.toLowerCase())) return;
+
+      if (key.toLowerCase() === 'set-cookie') {
+        // The backend sets cookies with Domain=api.shopam.net.
+        // The browser stores that cookie for api.shopam.net and NEVER sends it
+        // back on requests to localhost:3000 — so the proxy never forwards the
+        // cookie to the backend, the middleware sees no session, and returns 401.
+        //
+        // Fix: strip the Domain attribute so the browser scopes the cookie to
+        // the proxy's own origin (localhost in dev, shopam.net in prod).
+        // Also strip Secure so the cookie works over HTTP on localhost.
+        // Use append (not set) so multiple Set-Cookie headers are all kept.
+        const rewritten = value
+          .split(';')
+          .filter((part) => {
+            const attr = part.trim().toLowerCase();
+            // Strip Domain (would scope cookie to api.shopam.net, not localhost).
+            // Strip Secure (HTTP on localhost doesn't qualify, and Chrome's
+            // localhost exception only helps when SameSite=None is absent).
+            // Strip SameSite (SameSite=None requires Secure; without it the
+            // browser rejects the cookie entirely).
+            return (
+              !attr.startsWith('domain=') &&
+              attr !== 'secure' &&
+              !attr.startsWith('samesite=')
+            );
+          })
+          .concat(['SameSite=Lax']) // Lax is correct for same-origin proxy requests
+          .join('; ');
+        responseHeaders.append('set-cookie', rewritten);
+      } else {
         responseHeaders.set(key, value);
       }
     });

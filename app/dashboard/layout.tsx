@@ -17,15 +17,19 @@ export default function DashboardLayout({
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    // Guard: dashboard is vendor-only. Check localStorage directly — this is
-    // the actual source of truth for token state. Middleware cookies are unreliable
-    // because they can be out of sync with the real token lifecycle.
+    // Guard: dashboard is vendor-only. Runs ONCE on mount — intentionally NOT
+    // re-running on every pathname change. Re-running on pathname was causing
+    // a redirect loop: if the 401 interceptor cleared access_token in the
+    // background (e.g. a momentary API glitch), the next navigation would
+    // instantly kick the user to sign-in even though they were actively using
+    // the dashboard. The interceptor handles genuine session expiry redirects;
+    // the layout only needs to gate the initial render.
     if (!localStorage.getItem('access_token')) {
       window.location.replace('/auth/signin?redirect=' + encodeURIComponent(pathname));
       return;
     }
     setAuthChecked(true);
-  }, [pathname]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Don't render the dashboard shell until we've confirmed the token exists.
   // This prevents a flash of dashboard content before the redirect fires.

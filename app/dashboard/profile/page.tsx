@@ -6,7 +6,6 @@ import {
   Camera,
   Edit3,
   MapPin,
-  CheckCircle2,
   Phone,
   Mail,
   Search,
@@ -14,7 +13,9 @@ import {
   X,
   ChevronRight,
   Loader2,
+  LogOut,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { authService, productsService } from '@/lib/api';
 import type { ProductService } from '@/lib/api/types';
 
@@ -42,10 +43,12 @@ const settingsItems = [
 ];
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<ProfileTab>('products');
   const [activeCategory, setActiveCategory] = useState('All');
   const [editingName, setEditingName] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Real data state
@@ -99,6 +102,17 @@ export default function ProfilePage() {
   const handleSaveName = () => {
     if (tempName.trim()) setBusinessName(tempName.trim());
     setEditingName(false);
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await authService.logout();
+    } finally {
+      // authService.logout() already clears localStorage even if the API fails.
+      // Always redirect to sign-in regardless.
+      router.replace('/auth/signin');
+    }
   };
 
   // Derive unique categories from real products for the filter bar
@@ -378,6 +392,27 @@ export default function ProfilePage() {
                         <ChevronRight size={16} className="text-gray-400" />
                       </button>
                     ))}
+                  </div>
+
+                  {/* Logout */}
+                  <div className="mt-5 pt-4 border-t border-gray-100">
+                    <button
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="w-full flex items-center justify-center gap-2.5 py-3.5 bg-red-50 hover:bg-[#FA3728] text-[#FA3728] hover:text-white rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed border border-[#FA3728]/20 hover:border-[#FA3728]"
+                    >
+                      {isLoggingOut ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          Signing out…
+                        </>
+                      ) : (
+                        <>
+                          <LogOut size={16} strokeWidth={2.5} />
+                          Sign Out
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               </motion.div>
