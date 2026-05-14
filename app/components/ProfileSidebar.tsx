@@ -20,10 +20,15 @@ export default function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps)
     setUser(currentUser);
   }, [isOpen]);
 
-  const handleLogout = () => {
-    authService.logout();
-    setUser(null);
-    onClose();
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      setUser(null);
+      onClose();
+      const signinPage = user?.is_vendor ? '/auth/signin' : '/auth/user-signin';
+      window.location.href = signinPage;
+    }
   };
 
   return (

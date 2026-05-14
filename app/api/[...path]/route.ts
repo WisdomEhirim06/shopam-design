@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Force this route to always run dynamically — never cache responses.
+// The proxy Vary header includes RSC and next-router-* headers, meaning
+// Next.js could serve a cached 401 response to Axios requests (which carry
+// those headers) while raw fetch() calls from the console get fresh upstream
+// responses. force-dynamic + no-store prevents that split-cache behaviour.
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 const BACKEND = 'https://api.shopam.net';
 
 // Headers that Next.js adds during proxying which cause DisallowedHost on the

@@ -57,7 +57,7 @@ export default function DashboardLayout({
       // boot the user — the interceptor's normal token-refresh path will handle
       // genuine session expiry on the next real user-initiated request.
       apiClient
-        .get(API_ENDPOINTS.AUTH.PROFILE, { headers: { 'X-Keepalive': '1' } })
+        .get(API_ENDPOINTS.AUTH.PROFILE, { headers: { 'X-Keepalive': 'true' } })
         .catch(() => {
           // Errors silently ignored here. Genuine session expiry will be caught
           // by the interceptor on the next non-keepalive request.
