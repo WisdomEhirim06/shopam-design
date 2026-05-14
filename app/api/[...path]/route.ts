@@ -40,10 +40,14 @@ async function proxy(request: NextRequest, segments: string[]): Promise<NextResp
     return NextResponse.redirect(new URL(dest, request.url));
   }
 
-  // Always append a trailing slash — Django's APPEND_SLASH expects it and
-  // the Next.js trailingSlash:false setting would otherwise strip it before
-  // we ever reach here, producing a redirect loop.
-  const path = '/api/' + segments.join('/') + '/';
+  // Append a trailing slash if not already present — Django's APPEND_SLASH
+  // expects it. We must not double-append: if the client URL already ends
+  // with '/', the last element in segments will be an empty string, which
+  // would produce a double slash (e.g. /api/commerce/cart/add//) causing
+  // Django to issue a 308 redirect that strips the Authorization header,
+  // resulting in a 401 even for authenticated requests.
+  const rawPath = segments.join('/');
+  const path = '/api/' + (rawPath.endsWith('/') ? rawPath : rawPath + '/');
   const search = request.nextUrl.search;
   const target = `${BACKEND}${path}${search}`;
 

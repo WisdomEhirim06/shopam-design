@@ -5,7 +5,8 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Search, Bell, Home, Package, MessageSquare, User, X } from 'lucide-react';
 import MobileBottomNav from '../components/MobileBottomNav';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import apiClient, { API_ENDPOINTS } from '@/lib/api/config';
 
 export default function DashboardLayout({
   children,
@@ -15,6 +16,14 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  // Strict Mode (reactStrictMode: true) mounts → unmounts → remounts every
+  // component in development. Without this ref gate, the auth guard useEffect
+  // runs twice. If the 401 interceptor clears access_token between the two
+  // runs (e.g. a concurrent API call just failed), the second run finds no
+  // token and fires a spurious redirect even though the user is logged in.
+  // The ref persists across the Strict Mode remount cycle within the same
+  // component instance, so the guard runs exactly once per true mount.
+  const authCheckRan = useRef(false);
 
   useEffect(() => {
     // Guard: dashboard is vendor-only. Runs ONCE on mount — intentionally NOT
@@ -24,12 +33,39 @@ export default function DashboardLayout({
     // instantly kick the user to sign-in even though they were actively using
     // the dashboard. The interceptor handles genuine session expiry redirects;
     // the layout only needs to gate the initial render.
+    if (authCheckRan.current) return; // already ran — Strict Mode remount, skip
+    authCheckRan.current = true;
+
     if (!localStorage.getItem('access_token')) {
       window.location.replace('/auth/signin?redirect=' + encodeURIComponent(pathname));
       return;
     }
     setAuthChecked(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Session keepalive: ping the profile endpoint every 4 minutes while on the
+  // dashboard. The backend's TokenSessionMiddleware resets the Redis SESSION_TTL
+  // via proactive token rotation only when a request arrives while
+  // 0 < TTL < REFRESH_THRESHOLD. Without this, a short SESSION_TTL expires
+  // silently during periods of low API activity (e.g. the dashboard home page
+  // makes no API calls of its own), causing SESSION_INVALID on the next action.
+  useEffect(() => {
+    const ping = () => {
+      if (document.hidden) return; // don't ping hidden/background tabs
+      // X-Keepalive marks this request so the 401 response interceptor skips
+      // the forced redirect. A transient 401 on a background ping should not
+      // boot the user — the interceptor's normal token-refresh path will handle
+      // genuine session expiry on the next real user-initiated request.
+      apiClient
+        .get(API_ENDPOINTS.AUTH.PROFILE, { headers: { 'X-Keepalive': '1' } })
+        .catch(() => {
+          // Errors silently ignored here. Genuine session expiry will be caught
+          // by the interceptor on the next non-keepalive request.
+        });
+    };
+    const id = setInterval(ping, 4 * 60 * 1000); // every 4 minutes
+    return () => clearInterval(id);
+  }, []);
 
   // Don't render the dashboard shell until we've confirmed the token exists.
   // This prevents a flash of dashboard content before the redirect fires.

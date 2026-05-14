@@ -54,51 +54,120 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor - Handle 401 globally
-//
-// The backend uses TokenSessionMiddleware: on every successful login it stores
-// the session in Redis and sets an HttpOnly cookie. That cookie is forwarded
-// transparently by the Next.js proxy so the browser never needs to call
-// /token/refresh/ manually — the backend handles session persistence.
-//
-// A 401 therefore means the Redis session has genuinely expired. The correct
-// response is to clear local auth state and send the user back to sign-in.
-// We do NOT attempt a refresh — there is nothing to refresh from the frontend.
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _redirected?: boolean };
+// Track whether a token refresh is already in flight to prevent concurrent
+// refresh attempts when multiple requests fail with 401 simultaneously.
+let _refreshPromise: Promise<string> | null = null;
 
-    const url = originalRequest.url || '';
-    // Never intercept auth-endpoint errors — those pages display their own
-    // error messages and a forced redirect would swallow the real reason.
+async function refreshAccessToken(): Promise<string> {
+  const refresh = localStorage.getItem('refresh_token');
+  if (!refresh) throw new Error('No refresh token');
+
+  const response = await fetch('/api/accounts/token/refresh/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh }),
+  });
+
+  if (!response.ok) throw new Error('Refresh failed');
+
+  const data = await response.json();
+  // Backend returns { access } or { tokens: { access } }
+  const newAccess: string = data.tokens?.access ?? data.access ?? '';
+  if (!newAccess) throw new Error('No access token in refresh response');
+
+  localStorage.setItem('access_token', newAccess);
+  return newAccess;
+}
+
+// Module-level flag that prevents concurrent 401 responses (e.g. a keepalive
+// ping + a page data fetch both failing at the same instant) from each
+// independently clearing localStorage and firing window.location.href.
+// Resets to false on any successful response so future legitimate 401s are
+// still handled correctly after the user logs back in.
+let isRedirecting = false;
+
+function clearSessionAndRedirect() {
+  if (isRedirecting) return; // another 401 already triggered the redirect
+  isRedirecting = true;
+  const storedUser = (() => {
+    try { return JSON.parse(localStorage.getItem('user') ?? 'null'); } catch { return null; }
+  })();
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('user');
+  const signinPage = storedUser?.is_vendor ? '/auth/signin' : '/auth/user-signin';
+  window.location.href = signinPage;
+}
+
+// Response interceptor — handle 401 globally.
+//
+// Strategy:
+//   1. If the failing request is an auth endpoint (login, register, refresh,
+//      verify-email, logout, password routes), propagate the error directly so
+//      those pages can display their own messages.
+//   2. Otherwise, if the user has a refresh token, attempt a silent token
+//      refresh exactly once and replay the original request.
+//   3. If the refresh itself fails (or there is no refresh token), clear local
+//      auth state and redirect to the appropriate sign-in page.
+apiClient.interceptors.response.use(
+  (response) => {
+    // Any successful response means the session is alive — reset the redirect
+    // guard so a future genuine 401 (after the user logs back in) is still
+    // handled correctly.
+    isRedirecting = false;
+    return response;
+  },
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retried?: boolean };
+
+    const url = originalRequest?.url || '';
+
+    // Auth endpoints manage their own error messages — never intercept them.
     const isAuthEndpoint =
       url.startsWith('/api/accounts/login') ||
+      url.startsWith('/api/accounts/logout') ||
       url.startsWith('/api/accounts/register') ||
       url.startsWith('/api/accounts/token/refresh') ||
-      url.startsWith('/api/accounts/verify-email');
+      url.startsWith('/api/accounts/verify-email') ||
+      url.startsWith('/api/accounts/password');
 
-    if (error.response?.status === 401 && !isAuthEndpoint && !originalRequest._redirected) {
-      // Only redirect when the user had an active session (access_token present).
-      // Unauthenticated users hitting a protected endpoint get the error
-      // propagated so the page can show an inline sign-in prompt instead of a
-      // jarring redirect.
-      const hadSession = !!localStorage.getItem('access_token');
+    // Keepalive pings (tagged with X-Keepalive) must not trigger a redirect.
+    // A transient 401 on a background ping is handled by the normal
+    // token-refresh path on the next real user-initiated request.
+    const isKeepalivePing = !!originalRequest?.headers?.['X-Keepalive'];
 
-      if (hadSession) {
-        originalRequest._redirected = true;
-        const storedUser = (() => {
-          try { return JSON.parse(localStorage.getItem('user') ?? 'null'); } catch { return null; }
-        })();
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
-        const signinPage = storedUser?.is_vendor ? '/auth/signin' : '/auth/user-signin';
-        window.location.href = signinPage;
-      }
+    if (error.response?.status !== 401 || isAuthEndpoint || isKeepalivePing || originalRequest?._retried) {
+      return Promise.reject(error);
     }
 
-    return Promise.reject(error);
+    // Only attempt refresh when the user had an active session.
+    // Unauthenticated users hitting a protected endpoint get the error
+    // propagated so the page can show an inline sign-in prompt instead of
+    // a jarring redirect.
+    const hadSession = !!localStorage.getItem('access_token');
+    if (!hadSession) return Promise.reject(error);
+
+    originalRequest._retried = true;
+
+    try {
+      // Deduplicate: if a refresh is already in flight, wait for it.
+      if (!_refreshPromise) {
+        _refreshPromise = refreshAccessToken().finally(() => {
+          _refreshPromise = null;
+        });
+      }
+      const newToken = await _refreshPromise;
+
+      // Retry the original request with the fresh token.
+      if (originalRequest.headers) {
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+      }
+      return apiClient(originalRequest);
+    } catch {
+      // Refresh failed — session is genuinely over.
+      clearSessionAndRedirect();
+      return Promise.reject(error);
+    }
   }
 );
 
