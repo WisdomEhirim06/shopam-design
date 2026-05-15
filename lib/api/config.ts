@@ -136,7 +136,15 @@ apiClient.interceptors.response.use(
     // token-refresh path on the next real user-initiated request.
     const isKeepalivePing = !!originalRequest?.headers?.['X-Keepalive'];
 
-    if (error.response?.status !== 401 || isAuthEndpoint || isKeepalivePing || originalRequest?._retried) {
+    // Commerce endpoints (cart, products, search) currently return 401 due to
+    // a backend misconfiguration — the commerce Django app uses a different
+    // authentication class than accounts, so JWT Bearer tokens are rejected
+    // even when valid. Logging the user out on a cart 401 is incorrect;
+    // propagate the error so the page can show an inline message instead.
+    // REMOVE this once the backend aligns commerce auth with accounts auth.
+    const isCommerceEndpoint = url.startsWith('/api/commerce/');
+
+    if (error.response?.status !== 401 || isAuthEndpoint || isKeepalivePing || isCommerceEndpoint || originalRequest?._retried) {
       return Promise.reject(error);
     }
 
