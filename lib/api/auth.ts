@@ -152,22 +152,23 @@ export const authService = {
    * to the sign-in page with ?verified=1.
    */
   async verifyEmail(token: string): Promise<{ authenticated: boolean }> {
+  try {
     const response = await apiClient.get<any>(API_ENDPOINTS.AUTH.VERIFY_EMAIL, { params: { token } });
     const raw = response.data ?? {};
 
-    const access: string = raw.tokens?.access ?? raw.access ?? '';
-    const refresh: string = raw.tokens?.refresh ?? raw.refresh ?? '';
-    const user = raw.user ?? null;
-
-    if (access) {
-      localStorage.setItem('access_token', access);
-      localStorage.setItem('refresh_token', refresh);
-      if (user) localStorage.setItem('user', JSON.stringify(user));
-      return { authenticated: true };
+    // Backend returns { message: "Email verified successfully." } on 200
+    if (raw.message) {
+      return { authenticated: false };
     }
-    return { authenticated: false };
-  },
 
+    // Shouldn't reach here on a 200, but just in case
+    throw new Error('Verification failed.');
+  } catch (err: any) {
+    // Axios throws on 4xx — pull the error message from the response body
+    const message = err?.response?.data?.error ?? 'Verification link is invalid or has expired.';
+    throw new Error(message);
+  }
+},
   /**
    * Fetch the full profile from the server and update localStorage
    */

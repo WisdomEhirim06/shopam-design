@@ -27,15 +27,15 @@ function UserVerifyForm() {
       .then(({ authenticated }) => {
         setSuccess(true);
         if (authenticated) {
-          setTimeout(() => router.push('/explore'), 2500);
+          setTimeout(() => router.push('/explore'), 5000);
         } else {
           setVerifiedNeedsSignIn(true);
-          setTimeout(() => router.push('/auth/user-signin?verified=1'), 2500);
+          setTimeout(() => router.push('/auth/user-signin?verified=1'), 5000);
         }
       })
-      .catch(() => {
-        setError('Verification link is invalid or has expired. Please request a new one.');
-      })
+      .catch((err: any) => {
+        setError(err?.message ?? 'Verification link is invalid or has expired.');
+          })
       .finally(() => setIsSubmitting(false));
   }, [urlToken, router]);
 
