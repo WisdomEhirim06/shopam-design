@@ -12,7 +12,7 @@ export const API_BASE_URL = '';
 // serialise as {} (empty dicts), which is why the backend was receiving
 // uploaded_images as a dictionary instead of a binary list.
 const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: "api.shopam.net",
   timeout: 30000, // 30 seconds
 });
 
