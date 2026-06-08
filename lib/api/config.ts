@@ -23,10 +23,10 @@ const apiClient: AxiosInstance = axios.create({
 // token on a public GET is harmless; not sending one on a vendor POST
 // causes a 403 Forbidden from the backend.
 const PUBLIC_ENDPOINTS = [
-  '/api/accounts/register/',
-  '/api/accounts/login/',
-  '/api/accounts/token/refresh/',
-  '/api/accounts/password/forgot/',
+  '/api/accounts/register',
+  '/api/accounts/login',
+  '/api/accounts/token/refresh',
+  '/api/accounts/password/forgot',
   '/api/accounts/password/reset',
   '/api/accounts/verify-email',
   // Categories are public read-only — no auth token needed, and a stale token
@@ -185,19 +185,19 @@ export default apiClient;
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
-    USER_REGISTER: '/api/accounts/register/customer/',
-    VENDOR_REGISTER: '/api/accounts/register/vendor/',
-    LOGIN: '/api/accounts/login/',
-    LOGOUT: '/api/accounts/logout/',
-    PROFILE: '/api/accounts/profile/',
-    PROFILE_UPDATE: '/api/accounts/profile/update/',
-    PROFILE_DEACTIVATE: '/api/accounts/profile/deactivate/',
-    PASSWORD_CHANGE: '/api/accounts/password/change/',
-    FORGOT_PASSWORD: '/api/accounts/password/forgot/',
+    USER_REGISTER: '/api/accounts/register/customer',
+    VENDOR_REGISTER: '/api/accounts/register/vendor',
+    LOGIN: '/api/accounts/login',
+    LOGOUT: '/api/accounts/logout',
+    PROFILE: '/api/accounts/profile',
+    PROFILE_UPDATE: '/api/accounts/profile/update',
+    PROFILE_DEACTIVATE: '/api/accounts/profile/deactivate',
+    PASSWORD_CHANGE: '/api/accounts/password/change',
+    FORGOT_PASSWORD: '/api/accounts/password/forgot',
     RESET_PASSWORD: '/api/accounts/password/reset',
     VERIFY_EMAIL: '/api/accounts/verify-email',
-    TOKEN_REFRESH: '/api/accounts/token/refresh/',
-    VENDOR_PROFILE_UPDATE: '/api/accounts/path/vendor-update/',
+    TOKEN_REFRESH: '/api/accounts/token/refresh',
+    VENDOR_PROFILE_UPDATE: '/api/accounts/path/vendor-update',
   },
 
   // Products
@@ -236,90 +236,90 @@ export const API_ENDPOINTS = {
 
   // Orders
   ORDERS: {
-    VENDOR_LIST: '/api/commerce/vendor/orders/',
-    LIST: '/api/commerce/orders/',
-    PLACE: '/api/commerce/orders/place/',
+    VENDOR_LIST: '/api/commerce/vendor/orders',
+    LIST: '/api/commerce/orders',
+    PLACE: '/api/commerce/orders/place',
     FILTER: '/api/commerce/orders/filter',
-    HISTORY: '/api/commerce/orders/history/',
+    HISTORY: '/api/commerce/orders/history',
     DETAIL: (id: string) => `/api/commerce/orders/filter?order_id=${id}`,
     UPDATE: (id: string) => `/api/commerce/orders/${id}/`,
-    VENDOR_REVIEW: (id: string) => `/api/commerce/orders/${id}/vendor-review/`,
-    CUSTOMER_APPROVE: (id: string) => `/api/commerce/orders/${id}/customer-approve/`,
-    SET_SHIPPING: (id: string) => `/api/commerce/orders/${id}/set-shipping/`,
-    SET_SHIPPING_FEE: (id: string) => `/api/commerce/orders/${id}/set-shipping-fee/`,
-    PAYMENT_DECISION: (id: string) => `/api/commerce/orders/${id}/payment-decision/`,
-    START_DELIVERY: (id: string) => `/api/commerce/orders/${id}/start-delivery/`,
-    CONFIRM_HANDOVER: (id: string) => `/api/commerce/orders/${id}/confirm-handover/`,
-    RAISE_DISPUTE: (id: string) => `/admins/dispute/create/${id}/`,
+    VENDOR_REVIEW: (id: string) => `/api/commerce/orders/${id}/vendor-review`,
+    CUSTOMER_APPROVE: (id: string) => `/api/commerce/orders/${id}/customer-approve`,
+    SET_SHIPPING: (id: string) => `/api/commerce/orders/${id}/set-shipping`,
+    SET_SHIPPING_FEE: (id: string) => `/api/commerce/orders/${id}/set-shipping-fee`,
+    PAYMENT_DECISION: (id: string) => `/api/commerce/orders/${id}/payment-decision`,
+    START_DELIVERY: (id: string) => `/api/commerce/orders/${id}/start-delivery`,
+    CONFIRM_HANDOVER: (id: string) => `/api/commerce/orders/${id}/confirm-handover`,
+    RAISE_DISPUTE: (id: string) => `/admins/dispute/create/${id}`,
     DISPUTES: '/api/commerce/disputes/',
   },
 
   // Payments (Monnify)
   PAYMENTS: {
-    INIT: '/api/payments/checkout/init/',
-    DIRECT_CHARGE: '/api/payments/direct-charge/',
-    BANK_TRANSFER: '/api/payments/bank-transfer/',
-    AUTHORIZE_OTP: '/api/payments/authorize-otp/',
-    HISTORY: '/api/payments/history/',
-    PENDING: '/api/payments/pending/',
-    STATUS: (txRef: string) => `/api/payments/status/${txRef}/`,
-    DETAIL: (txRef: string) => `/api/payments/detail/${txRef}/`,
+    INIT: '/api/payments/checkout/init',
+    DIRECT_CHARGE: '/api/payments/direct-charge',
+    BANK_TRANSFER: '/api/payments/bank-transfer',
+    AUTHORIZE_OTP: '/api/payments/authorize-otp',
+    HISTORY: '/api/payments/history',
+    PENDING: '/api/payments/pending',
+    STATUS: (txRef: string) => `/api/payments/status/${txRef}`,
+    DETAIL: (txRef: string) => `/api/payments/detail/${txRef}`,
   },
 
   // Notifications
   NOTIFICATIONS: {
-    LIST: '/api/notifications/notifications/',
-    DETAIL: (id: number) => `/api/notifications/notifications/${id}/`,
-    MARK_READ: (id: number) => `/api/notifications/notifications/${id}/mark_read/`,
-    MARK_ALL_READ: '/api/notifications/notifications/mark_all_read/',
+    LIST: '/api/notifications/notifications',
+    DETAIL: (id: number) => `/api/notifications/notifications/${id}`,
+    MARK_READ: (id: number) => `/api/notifications/notifications/${id}/mark_read`,
+    MARK_ALL_READ: '/api/notifications/notifications/mark_all_read',
   },
 
   // Messages / DM
   MESSAGES: {
-    LIST: '/api/posts/messages/',
-    THREAD: '/api/posts/messages/thread/',
-    DETAIL: (id: string) => `/api/posts/messages/${id}/`,
+    LIST: '/api/posts/messages',
+    THREAD: '/api/posts/messages/thread',
+    DETAIL: (id: string) => `/api/posts/messages/${id}`,
   },
 
   REVIEWS: {
-    LIST: '/api/commerce/vendors/reviews/',
-    CREATE: '/api/commerce/vendors/reviews/',
-    UPDATE: (id: number) => `/api/commerce/vendors/reviews/${id}/`,
-    DELETE: (id: number) => `/api/commerce/vendors/reviews/${id}/`,
+    LIST: '/api/commerce/vendors/reviews',
+    CREATE: '/api/commerce/vendors/reviews',
+    UPDATE: (id: number) => `/api/commerce/vendors/reviews/${id}`,
+    DELETE: (id: number) => `/api/commerce/vendors/reviews/${id}`,
   },
 
   // Social - Posts
   POSTS: {
-    LIST: '/api/socialposts/',
-    CREATE: '/api/socialposts/',
-    DETAIL: (id: number) => `/api/socialposts/${id}/`,
-    UPDATE: (id: number) => `/api/socialposts/${id}/`,
-    DELETE: (id: number) => `/api/socialposts/${id}/`,
+    LIST: '/api/socialposts',
+    CREATE: '/api/socialposts',
+    DETAIL: (id: number) => `/api/socialposts/${id}`,
+    UPDATE: (id: number) => `/api/socialposts/${id}`,
+    DELETE: (id: number) => `/api/socialposts/${id}`,
   },
 
   // Social - Likes
   LIKES: {
-    CREATE: '/api/sociallikes/',
-    DELETE: (id: number) => `/api/sociallikes/${id}/`,
+    CREATE: '/api/sociallikes',
+    DELETE: (id: number) => `/api/sociallikes/${id}`,
   },
 
   // Social - Comments
   COMMENTS: {
     LIST: '/api/socialcomments/',
     CREATE: '/api/socialcomments/',
-    UPDATE: (id: number) => `/api/socialcomments/${id}/`,
-    DELETE: (id: number) => `/api/socialcomments/${id}/`,
+    UPDATE: (id: number) => `/api/socialcomments/${id}`,
+    DELETE: (id: number) => `/api/socialcomments/${id}`,
   },
 
   // Social - Follows
   FOLLOWS: {
-    CREATE: '/api/socialfollows/',
-    DELETE: (id: number) => `/api/socialfollows/${id}/`,
+    CREATE: '/api/socialfollows',
+    DELETE: (id: number) => `/api/socialfollows/${id}`,
   },
 
   // Transactions
   TRANSACTIONS: {
     LIST: '/api/commercetransactions/',
-    DETAIL: (id: string) => `/api/commercetransactions/${id}/`,
+    DETAIL: (id: string) => `/api/commercetransactions/${id}`,
   },
 };
