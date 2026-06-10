@@ -37,27 +37,6 @@ const DROP_RESPONSE_HEADERS = new Set([
 async function proxy(request: NextRequest, segments: string[]): Promise<NextResponse> {
   // Redirect email verification links back into the frontend verify page so the
   // user never lands on the raw DRF response.
-  if (
-    request.method === 'GET' &&
-    segments.join('/') === 'accounts/verify-email'
-  ) {
-    const token = request.nextUrl.searchParams.get('token');
-    const dest = token
-      ? `/auth/user-verify?token=${encodeURIComponent(token)}`
-      : '/auth/user-verify';
-
-    // Use x-forwarded-host (set by Amplify's ALB) to build the correct
-    // base URL. Fall back to request.url only in local dev where the
-    // header is absent and request.url is already correct.
-    const forwardedHost = request.headers.get('x-forwarded-host');
-    const proto = request.headers.get('x-forwarded-proto') ?? 'https';
-    const base = forwardedHost
-      ? `${proto}://${forwardedHost}`
-      : request.nextUrl.origin;
-
-    return NextResponse.redirect(new URL(dest, base));
-  }
-
   // Append a trailing slash if not already present — Django's APPEND_SLASH
   // expects it. We must not double-append: if the client URL already ends
   // with '/', the last element in segments will be an empty string, which
