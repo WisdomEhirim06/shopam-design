@@ -37,17 +37,6 @@ const DROP_RESPONSE_HEADERS = new Set([
 async function proxy(request: NextRequest, segments: string[]): Promise<NextResponse> {
   // Redirect email verification links back into the frontend verify page so the
   // user never lands on the raw DRF response.
-  if (
-    request.method === 'GET' &&
-    segments.join('/') === 'accounts/verify-email'
-  ) {
-    const token = request.nextUrl.searchParams.get('token');
-    const dest = token
-      ? `/auth/user-verify?token=${encodeURIComponent(token)}`
-      : '/auth/user-verify';
-    return NextResponse.redirect(new URL(dest, request.url));
-  }
-
   // Append a trailing slash if not already present — Django's APPEND_SLASH
   // expects it. We must not double-append: if the client URL already ends
   // with '/', the last element in segments will be an empty string, which

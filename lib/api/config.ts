@@ -195,7 +195,7 @@ export const API_ENDPOINTS = {
     PASSWORD_CHANGE: '/api/accounts/password/change',
     FORGOT_PASSWORD: '/api/accounts/password/forgot',
     RESET_PASSWORD: '/api/accounts/password/reset',
-    VERIFY_EMAIL: '/api/accounts/verify-email',
+    VERIFY_EMAIL: '/api/accounts/user-verify',
     TOKEN_REFRESH: '/api/accounts/token/refresh',
     VENDOR_PROFILE_UPDATE: '/api/accounts/path/vendor-update',
   },
