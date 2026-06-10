@@ -154,7 +154,6 @@ export const authService = {
   async verifyEmail(token: string): Promise<{ authenticated: boolean }> {
   try {
     const response = await apiClient.get<any>(API_ENDPOINTS.AUTH.VERIFY_EMAIL, { params: { token } });
-    console.log('Email verification response:', response.data);
     const raw = response.data ?? {};
 
     // Backend returns { message: "Email verified successfully." } on 200
