@@ -3,25 +3,12 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 // Base URL for the API — empty string routes through Next.js rewrites (/api/* → https://api.shopam.net/api/*)
 export const API_BASE_URL = '';
 
-// Create axios instance.
-// Do NOT set a default Content-Type here.
-// Axios auto-sets  application/json  for plain-object bodies and lets the
-// browser set  multipart/form-data; boundary=…  for FormData bodies.
-// A hard-coded application/json default causes Axios 1.x to run
-// FormDataToJSON() + JSON.stringify() on FormData payloads — File objects
-// serialise as {} (empty dicts), which is why the backend was receiving
-// uploaded_images as a dictionary instead of a binary list.
+
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000, // 30 seconds
 });
 
-// Public endpoints that must NOT carry an Authorization header.
-// Only list auth/registration routes here — commerce browse endpoints
-// (products, categories, vendors) intentionally omitted so that vendor
-// write requests (POST/PATCH/DELETE) receive the auth token. Sending a
-// token on a public GET is harmless; not sending one on a vendor POST
-// causes a 403 Forbidden from the backend.
 const PUBLIC_ENDPOINTS = [
   '/api/accounts/register',
   '/api/accounts/login',
@@ -29,12 +16,9 @@ const PUBLIC_ENDPOINTS = [
   '/api/accounts/password/forgot',
   '/api/accounts/password/reset',
   '/api/accounts/verify-email',
-  // Categories are public read-only — no auth token needed, and a stale token
-  // can cause the backend to return 500 instead of the expected 200.
+  '/api/accounts/user-verify',
   '/api/commerce/categories',
 ];
-
-// Request interceptor - Add auth token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const url = config.url || '';
@@ -62,9 +46,14 @@ async function refreshAccessToken(): Promise<string> {
   const refresh = localStorage.getItem('refresh_token');
   if (!refresh) throw new Error('No refresh token');
 
-  const response = await fetch('/api/accounts/token/refresh/', {
+  
+  const access = localStorage.getItem('access_token');
+  const response = await fetch('/api/accounts/token/refresh', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(access ? { Authorization: `Bearer ${access}` } : {}),
+    },
     body: JSON.stringify({ refresh }),
   });
 
@@ -76,44 +65,31 @@ async function refreshAccessToken(): Promise<string> {
   if (!newAccess) throw new Error('No access token in refresh response');
 
   localStorage.setItem('access_token', newAccess);
+
+ 
+  const newRefresh: string = data.tokens?.refresh ?? data.refresh ?? '';
+  if (newRefresh) localStorage.setItem('refresh_token', newRefresh);
+
   return newAccess;
 }
 
-// Module-level flag that prevents concurrent 401 responses (e.g. a keepalive
-// ping + a page data fetch both failing at the same instant) from each
-// independently clearing localStorage and firing window.location.href.
-// Resets to false on any successful response so future legitimate 401s are
-// still handled correctly after the user logs back in.
 let isRedirecting = false;
 
 function clearSessionAndRedirect() {
   if (isRedirecting) return; // another 401 already triggered the redirect
   isRedirecting = true;
-  const storedUser = (() => {
-    try { return JSON.parse(localStorage.getItem('user') ?? 'null'); } catch { return null; }
-  })();
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
   localStorage.removeItem('user');
-  const signinPage = storedUser?.is_vendor ? '/auth/signin' : '/auth/user-signin';
-  window.location.href = signinPage;
+  // Expire the role-hint cookie set by authService.login.
+  document.cookie = 'shopam_role=; Path=/; Max-Age=0; SameSite=Lax';
+  // Single sign-in page for all roles — no need to guess the role from
+  // (possibly already-cleared) localStorage to pick a destination.
+  window.location.href = '/auth/signin';
 }
 
-// Response interceptor — handle 401 globally.
-//
-// Strategy:
-//   1. If the failing request is an auth endpoint (login, register, refresh,
-//      verify-email, logout, password routes), propagate the error directly so
-//      those pages can display their own messages.
-//   2. Otherwise, if the user has a refresh token, attempt a silent token
-//      refresh exactly once and replay the original request.
-//   3. If the refresh itself fails (or there is no refresh token), clear local
-//      auth state and redirect to the appropriate sign-in page.
 apiClient.interceptors.response.use(
   (response) => {
-    // Any successful response means the session is alive — reset the redirect
-    // guard so a future genuine 401 (after the user logs back in) is still
-    // handled correctly.
     isRedirecting = false;
     return response;
   },
@@ -129,36 +105,21 @@ apiClient.interceptors.response.use(
       url.startsWith('/api/accounts/register') ||
       url.startsWith('/api/accounts/token/refresh') ||
       url.startsWith('/api/accounts/verify-email') ||
+      url.startsWith('/api/accounts/user-verify') ||
       url.startsWith('/api/accounts/password');
 
-    // Keepalive pings (tagged with X-Keepalive) must not trigger a redirect.
-    // A transient 401 on a background ping is handled by the normal
-    // token-refresh path on the next real user-initiated request.
     const isKeepalivePing = !!originalRequest?.headers?.['X-Keepalive'];
 
-    // Commerce endpoints (cart, products, search) currently return 401 due to
-    // a backend misconfiguration — the commerce Django app uses a different
-    // authentication class than accounts, so JWT Bearer tokens are rejected
-    // even when valid. Logging the user out on a cart 401 is incorrect;
-    // propagate the error so the page can show an inline message instead.
-    // REMOVE this once the backend aligns commerce auth with accounts auth.
-    const isCommerceEndpoint = url.startsWith('/api/commerce/');
-
-    if (error.response?.status !== 401 || isAuthEndpoint || isKeepalivePing || isCommerceEndpoint || originalRequest?._retried) {
+    if (error.response?.status !== 401 || isAuthEndpoint || isKeepalivePing || originalRequest?._retried) {
       return Promise.reject(error);
     }
 
-    // Only attempt refresh when the user had an active session.
-    // Unauthenticated users hitting a protected endpoint get the error
-    // propagated so the page can show an inline sign-in prompt instead of
-    // a jarring redirect.
     const hadSession = !!localStorage.getItem('access_token');
     if (!hadSession) return Promise.reject(error);
 
     originalRequest._retried = true;
 
     try {
-      // Deduplicate: if a refresh is already in flight, wait for it.
       if (!_refreshPromise) {
         _refreshPromise = refreshAccessToken().finally(() => {
           _refreshPromise = null;

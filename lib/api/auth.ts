@@ -13,20 +13,22 @@ import type {
   UpdateProfileRequest,
 } from './types';
 
+
+function setRoleCookie(isVendor: boolean) {
+  const secure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `shopam_role=${isVendor ? 'vendor' : 'customer'}; Path=/; Max-Age=2592000; SameSite=Lax${secure}`;
+}
+
+export function clearRoleCookie() {
+  document.cookie = 'shopam_role=; Path=/; Max-Age=0; SameSite=Lax';
+}
+
 export const authService = {
-  /**
-   * Register a new user (customer). Backend sends a verification email — user must verify
-   * before they can log in. Redirect to /auth/user-verify after calling this.
-   */
+
   async registerUser(data: UserRegister): Promise<void> {
     await apiClient.post(API_ENDPOINTS.AUTH.USER_REGISTER, data);
   },
 
-  /**
-   * Register a new vendor. Backend sends a verification email — user must verify before
-   * they can log in. Redirect to /auth/user-verify after calling this.
-   * Sends multipart/form-data when a logo file is included.
-   */
   async registerVendor(data: VendorRegister): Promise<void> {
     if (data.logo) {
       const form = new FormData();
@@ -43,9 +45,7 @@ export const authService = {
     }
   },
 
-  /**
-   * Login user or vendor
-   */
+ 
   async login(data: LoginRequest | { username: string; password: string }): Promise<LoginResponse> {
     const payload = 'username' in data && !('email' in data)
       ? { email: (data as any).username, password: data.password }
@@ -62,14 +62,13 @@ export const authService = {
       localStorage.setItem('access_token', access);
       if (refresh) localStorage.setItem('refresh_token', refresh);
       localStorage.setItem('user', JSON.stringify(user));
+      setRoleCookie(!!user?.is_vendor);
     }
 
     return { access, refresh, user };
   },
 
-  /**
-   * Logout user
-   */
+  
   async logout(): Promise<void> {
     try {
       const refresh = localStorage.getItem('refresh_token');
@@ -83,12 +82,11 @@ export const authService = {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
+      clearRoleCookie();
     }
   },
 
-  /**
-   * Change user password
-   */
+  
   async changePassword(data: PasswordChangeRequest): Promise<void> {
     await apiClient.post(API_ENDPOINTS.AUTH.PASSWORD_CHANGE, data);
   },
@@ -102,16 +100,12 @@ export const authService = {
     return response.data?.user ?? response.data;
   },
 
-  /**
-   * Check if user is authenticated
-   */
+  // Check if user is authenticated
   isAuthenticated(): boolean {
     return !!localStorage.getItem('access_token');
   },
 
-  /**
-   * Get stored user data
-   */
+  // Get stored user data
   getCurrentUser(): UserProfile | null {
     const userStr = localStorage.getItem('user');
     if (!userStr) return null;
@@ -144,13 +138,7 @@ export const authService = {
     await apiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, data);
   },
 
-  /**
-   * Verify email using token from query param or 6-digit code.
-   * If the backend returns tokens in the response, stores them and returns
-   * { authenticated: true } so the caller can skip the sign-in step.
-   * Otherwise returns { authenticated: false } — the caller should redirect
-   * to the sign-in page with ?verified=1.
-   */
+  
   async verifyEmail(token: string): Promise<{ authenticated: boolean }> {
   try {
     const response = await apiClient.get<any>(API_ENDPOINTS.AUTH.VERIFY_EMAIL, { params: { token } });
@@ -212,5 +200,6 @@ export const authService = {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
+    clearRoleCookie();
   },
 };

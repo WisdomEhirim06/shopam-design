@@ -170,7 +170,7 @@ export default function VendorsPage() {
 
   const handleFollow = (vendorId: number) => {
     if (!authService.isAuthenticated()) {
-      window.location.href = '/auth/user-signin';
+      window.location.href = '/auth/signin';
       return;
     }
     // Implement follow logic here

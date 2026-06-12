@@ -7,6 +7,19 @@ const nextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },
   trailingSlash: false,
+
+  // The customer and vendor sign-in pages were merged into /auth/signin.
+  // Old links (bookmarks, verification emails) still point at /auth/user-signin;
+  // query params (?redirect=, ?verified=1) are preserved automatically.
+  async redirects() {
+    return [
+      {
+        source: '/auth/user-signin',
+        destination: '/auth/signin',
+        permanent: false,
+      },
+    ];
+  },
   // Proxying is handled by app/api/[...path]/route.ts and app/admins/[...path]/route.ts
   // so that X-Forwarded-Host is NOT forwarded (the backend rejects localhost:3000).
 

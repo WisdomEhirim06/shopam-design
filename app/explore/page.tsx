@@ -177,7 +177,7 @@ export default function ExplorePage() {
 
   const addToCart = async (productId: string) => {
     if (!authService.isAuthenticated()) {
-      window.location.href = '/auth/user-signin';
+      window.location.href = '/auth/signin';
       return;
     }
 

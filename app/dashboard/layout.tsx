@@ -40,27 +40,24 @@ export default function DashboardLayout({
       window.location.replace('/auth/signin?redirect=' + encodeURIComponent(pathname));
       return;
     }
+    
+    try {
+      const storedUser = JSON.parse(localStorage.getItem('user') ?? 'null');
+      if (storedUser && storedUser.is_vendor === false) {
+        window.location.replace('/explore');
+        return;
+      }
+    } catch { /* corrupt user blob — let API-level auth decide */ }
     setAuthChecked(true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Session keepalive: ping the profile endpoint every 4 minutes while on the
-  // dashboard. The backend's TokenSessionMiddleware resets the Redis SESSION_TTL
-  // via proactive token rotation only when a request arrives while
-  // 0 < TTL < REFRESH_THRESHOLD. Without this, a short SESSION_TTL expires
-  // silently during periods of low API activity (e.g. the dashboard home page
-  // makes no API calls of its own), causing SESSION_INVALID on the next action.
+  }, []); 
   useEffect(() => {
     const ping = () => {
-      if (document.hidden) return; // don't ping hidden/background tabs
-      // X-Keepalive marks this request so the 401 response interceptor skips
-      // the forced redirect. A transient 401 on a background ping should not
-      // boot the user — the interceptor's normal token-refresh path will handle
-      // genuine session expiry on the next real user-initiated request.
+      if (document.hidden) return; 
+      
       apiClient
         .get(API_ENDPOINTS.AUTH.PROFILE, { headers: { 'X-Keepalive': 'true' } })
         .catch(() => {
-          // Errors silently ignored here. Genuine session expiry will be caught
-          // by the interceptor on the next non-keepalive request.
+        
         });
     };
     const id = setInterval(ping, 4 * 60 * 1000); // every 4 minutes

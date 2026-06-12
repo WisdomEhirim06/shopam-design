@@ -40,13 +40,7 @@ export default function CartPage() {
     // Guard: if there's no token at all, redirect immediately rather than
     // letting the API call hit a 401 and trigger the logout flow.
     if (!localStorage.getItem('access_token')) {
-      // Route to the correct sign-in page based on the stored user type so
-      // that vendors are not sent to the customer-only sign-in page.
-      const storedUser = (() => {
-        try { return JSON.parse(localStorage.getItem('user') ?? 'null'); } catch { return null; }
-      })();
-      const signinPage = storedUser?.is_vendor ? '/auth/signin' : '/auth/user-signin';
-      window.location.replace(signinPage + '?redirect=/cart');
+      window.location.replace('/auth/signin?redirect=/cart');
       return;
     }
     fetchCart();

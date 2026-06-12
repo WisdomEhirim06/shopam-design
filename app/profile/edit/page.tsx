@@ -34,7 +34,7 @@ export default function ProfileEditPage() {
       } catch {
         // Fall back to localStorage
         const cached = authService.getCurrentUser();
-        if (!cached) { router.push('/auth/user-signin'); return; }
+        if (!cached) { router.push('/auth/signin'); return; }
         setForm({
           first_name: cached.first_name || '',
           last_name: cached.last_name || '',

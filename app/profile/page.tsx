@@ -42,7 +42,7 @@ export default function UserProfilePage() {
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
     if (!currentUser) {
-      window.location.href = '/auth/user-signin';
+      window.location.href = '/auth/signin';
       return;
     }
     setUser(currentUser);

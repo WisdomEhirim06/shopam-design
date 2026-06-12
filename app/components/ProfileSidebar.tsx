@@ -26,8 +26,7 @@ export default function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps)
     } finally {
       setUser(null);
       onClose();
-      const signinPage = user?.is_vendor ? '/auth/signin' : '/auth/user-signin';
-      window.location.href = signinPage;
+      window.location.href = '/auth/signin';
     }
   };
 
@@ -111,7 +110,7 @@ export default function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps)
                 ) : (
                   <>
                     <Link
-                      href="/auth/user-signin"
+                      href="/auth/signin"
                       onClick={onClose}
                       className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 group"
                     >

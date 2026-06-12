@@ -345,7 +345,7 @@ function UserSignUpForm() {
             {/* Sign In Link */}
             <p className="text-center text-sm text-gray-600">
               Already have an account?{' '}
-              <Link href="/auth/user-signin" className="text-[#FA3728] hover:underline font-semibold">
+              <Link href="/auth/signin" className="text-[#FA3728] hover:underline font-semibold">
                 Sign In
               </Link>
             </p>

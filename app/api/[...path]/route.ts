@@ -1,20 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Force this route to always run dynamically — never cache responses.
-// The proxy Vary header includes RSC and next-router-* headers, meaning
-// Next.js could serve a cached 401 response to Axios requests (which carry
-// those headers) while raw fetch() calls from the console get fresh upstream
-// responses. force-dynamic + no-store prevents that split-cache behaviour.
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
 const BACKEND = 'https://api.shopam.net';
 
-// Headers that Next.js adds during proxying which cause DisallowedHost on the
-// Django backend (it has USE_X_FORWARDED_HOST=True, ALLOWED_HOSTS=['.shopam.net']).
 const DROP_REQUEST_HEADERS = new Set([
-  // Let fetch set Host to match the target URL (api.shopam.net).
-  // Forwarding Host: localhost:3000 causes nginx to redirect to www.shopam.net.
   'host',
   'x-forwarded-host',
   'x-forwarded-proto',
@@ -26,25 +17,24 @@ const DROP_RESPONSE_HEADERS = new Set([
   'keep-alive',
   'transfer-encoding',
   'upgrade',
-  // Node.js fetch auto-decompresses the body — forwarding content-encoding would
-  // tell the browser to decompress an already-decompressed payload (corrupt data).
   'content-encoding',
-  // Content-length reflects the compressed size; after decompression it no longer
-  // matches and must be omitted so the browser measures the actual body size.
   'content-length',
 ]);
 
 async function proxy(request: NextRequest, segments: string[]): Promise<NextResponse> {
-  // Redirect email verification links back into the frontend verify page so the
-  // user never lands on the raw DRF response.
-  // Append a trailing slash if not already present — Django's APPEND_SLASH
-  // expects it. We must not double-append: if the client URL already ends
-  // with '/', the last element in segments will be an empty string, which
-  // would produce a double slash (e.g. /api/commerce/cart/add//) causing
-  // Django to issue a 308 redirect that strips the Authorization header,
-  // resulting in a 401 even for authenticated requests.
   const rawPath = segments.join('/');
-  const path = '/api/' + (rawPath.endsWith('/') ? rawPath : rawPath + '/');
+
+  if (segments.some((s) => s === '.' || s === '..' || s.includes('..'))) {
+    return NextResponse.json({ detail: 'Invalid path' }, { status: 400 });
+  }
+
+  const stripped = rawPath.replace(/\/+$/, '');
+  const needsTrailingSlash =
+    /^(accounts|notifications|posts|support)(\/|$)/.test(stripped) ||
+    ['commerce/disputes', 'commerce/vendor/orders', 'commerce/vendors/reviews'].some(
+      (p) => stripped === p || stripped.startsWith(p + '/')
+    );
+  const path = '/api/' + stripped + (needsTrailingSlash ? '/' : '');
   const search = request.nextUrl.search;
   const target = `${BACKEND}${path}${search}`;
 
@@ -74,31 +64,16 @@ async function proxy(request: NextRequest, segments: string[]): Promise<NextResp
       if (DROP_RESPONSE_HEADERS.has(key.toLowerCase())) return;
 
       if (key.toLowerCase() === 'set-cookie') {
-        // The backend sets cookies with Domain=api.shopam.net.
-        // The browser stores that cookie for api.shopam.net and NEVER sends it
-        // back on requests to localhost:3000 — so the proxy never forwards the
-        // cookie to the backend, the middleware sees no session, and returns 401.
-        //
-        // Fix: strip the Domain attribute so the browser scopes the cookie to
-        // the proxy's own origin (localhost in dev, shopam.net in prod).
-        // Also strip Secure so the cookie works over HTTP on localhost.
-        // Use append (not set) so multiple Set-Cookie headers are all kept.
+        const isDev = process.env.NODE_ENV !== 'production';
         const rewritten = value
           .split(';')
           .filter((part) => {
             const attr = part.trim().toLowerCase();
-            // Strip Domain (would scope cookie to api.shopam.net, not localhost).
-            // Strip Secure (HTTP on localhost doesn't qualify, and Chrome's
-            // localhost exception only helps when SameSite=None is absent).
-            // Strip SameSite (SameSite=None requires Secure; without it the
-            // browser rejects the cookie entirely).
-            return (
-              !attr.startsWith('domain=') &&
-              attr !== 'secure' &&
-              !attr.startsWith('samesite=')
-            );
+            if (attr.startsWith('domain=')) return false;
+            if (isDev && (attr === 'secure' || attr.startsWith('samesite='))) return false;
+            return true;
           })
-          .concat(['SameSite=Lax']) // Lax is correct for same-origin proxy requests
+          .concat(isDev ? ['SameSite=Lax'] : [])
           .join('; ');
         responseHeaders.append('set-cookie', rewritten);
       } else {

@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Force dynamic — never cache proxy responses. See app/api/[...path]/route.ts
-// for the full explanation of why this is needed.
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
 const BACKEND = 'https://api.shopam.net';
 
-// Headers that Next.js adds during proxying which cause DisallowedHost on the
-// Django backend (it has USE_X_FORWARDED_HOST=True, ALLOWED_HOSTS=['.shopam.net']).
 const DROP_REQUEST_HEADERS = new Set([
   'host',
   'x-forwarded-host',
@@ -30,10 +26,6 @@ const DROP_RESPONSE_HEADERS = new Set([
 ]);
 
 async function proxy(request: NextRequest, segments: string[]): Promise<NextResponse> {
-  // Append a trailing slash if not already present — same logic as the main
-  // api proxy. Unconditionally appending produces double slashes (e.g.
-  // /admins/users//) when the client URL already ends with '/', causing Django
-  // to issue a 308 redirect that strips the Authorization header → 401.
   const rawPath = segments.join('/');
   const path = '/admins/' + (rawPath.endsWith('/') ? rawPath : rawPath + '/');
   const search = request.nextUrl.search;

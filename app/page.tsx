@@ -175,7 +175,7 @@ export default function LandingPage() {
             {/* CTA Buttons */}
             <div className="flex items-center gap-1.5 sm:gap-3">
               <Link
-                href="/auth/user-signin"
+                href="/auth/signin"
                 className="hidden sm:block text-white/90 hover:text-white font-medium transition-colors px-3 py-2 text-sm"
               >
                 Sign in
@@ -216,7 +216,7 @@ export default function LandingPage() {
                   <Link href="/vendors" className="block text-white/90 hover:text-white font-medium py-2.5 px-3 text-sm" onClick={() => setMobileMenuOpen(false)}>
                     Vendors
                   </Link>
-                  <Link href="/auth/user-signin" className="block text-white/90 hover:text-white font-medium py-2.5 px-3 text-sm" onClick={() => setMobileMenuOpen(false)}>
+                  <Link href="/auth/signin" className="block text-white/90 hover:text-white font-medium py-2.5 px-3 text-sm" onClick={() => setMobileMenuOpen(false)}>
                     Sign in
                   </Link>
                 </div>

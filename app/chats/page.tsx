@@ -77,7 +77,7 @@ export default function ChatsListPage() {
             <p className="font-semibold text-gray-700">Sign in to view your orders</p>
             <p className="text-sm text-gray-400">Track your purchases and chat with vendors.</p>
             <Link
-              href={`/auth/user-signin?redirect=/chats`}
+              href={`/auth/signin?redirect=/chats`}
               className="mt-2 px-6 py-2.5 bg-[#FA3728] text-white rounded-full font-semibold text-sm hover:bg-[#E31B23] transition-colors"
             >
               Sign In

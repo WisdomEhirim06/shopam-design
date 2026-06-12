@@ -4,21 +4,25 @@ import { useState, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
 import Image from 'next/image';
 import { authService } from '@/lib/api';
 
-function VendorSignInForm() {
+
+function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnUrl = searchParams.get('redirect') || '/dashboard';
+  const rawRedirect = searchParams.get('redirect');
+  const returnUrl =
+    rawRedirect && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//')
+      ? rawRedirect
+      : null;
   const justVerified = searchParams.get('verified') === '1';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    rememberMe: false,
   });
   const [error, setError] = useState('');
 
@@ -28,27 +32,17 @@ function VendorSignInForm() {
     setIsSubmitting(true);
 
     try {
-      // Real API call
       const response = await authService.login({
-        username: formData.email, // Backend accepts email as username
+        username: formData.email,
         password: formData.password,
       });
 
-      // Only block if the backend explicitly says is_vendor: false.
-      // If the field is absent from the login response, allow through.
-      if (response.user.is_vendor === false) {
-        setError('This account is not a vendor account. Please use the customer sign-in page.');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Redirect to the page they were trying to reach, or dashboard
-      router.push(returnUrl);
+      const isVendor = !!response.user?.is_vendor;
+      router.push(returnUrl ?? (isVendor ? '/dashboard' : '/explore'));
     } catch (err: any) {
       const data = err.response?.data;
       console.error('Login error:', err.response?.status, data);
 
-      // Handle EMAIL_NOT_VERIFIED error
       if (data?.error === 'EMAIL_NOT_VERIFIED' || data?.code === 'EMAIL_NOT_VERIFIED' || data?.detail === 'Email not verified') {
         router.push('/auth/user-verify');
         return;
@@ -59,7 +53,7 @@ function VendorSignInForm() {
       if (msg) {
         setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
       } else if (err.response?.status === 401) {
-        setError('Invalid email or password. If you just verified your email, try again — vendor accounts may require admin approval.');
+        setError('Invalid email or password.');
       } else if (err.response?.status === 400) {
         setError(data ? JSON.stringify(data) : 'Please check your credentials');
       } else {
@@ -78,7 +72,7 @@ function VendorSignInForm() {
         <div className="absolute inset-0 z-0">
           <Image
             src="/images/hero-man-shopping.JPG"
-            alt="Vendors background"
+            alt="ShopAm background"
             fill
             className="object-cover opacity-20"
           />
@@ -88,7 +82,7 @@ function VendorSignInForm() {
         {/* Content - Aligned with Form */}
         <div className="relative z-10 flex flex-col justify-center items-start p-16 text-white w-full">
           {/* Logo - Top */}
-          <Link href="/auth" className="absolute top-10 left-12">
+          <Link href="/" className="absolute top-10 left-12">
             <Image
               src="/images/logo.png"
               alt="ShopAm Logo"
@@ -109,7 +103,7 @@ function VendorSignInForm() {
                 Welcome Back!
               </h2>
               <p className="text-base opacity-85 font-light">
-                Securely manage your store and reach more customers today.
+                Shop securely in your community — or manage your store and reach more customers.
               </p>
             </motion.div>
 
@@ -121,10 +115,10 @@ function VendorSignInForm() {
               className="grid grid-cols-2 gap-4 pt-4"
             >
               {[
-                { value: '..', label: 'Trusted Vendors' },
-                { value: '..', label: 'Monthly Traffic' },
-                { value: 'Secure', label: 'Vendor Payouts' },
-                { value: 'Swift', label: 'Payments' },
+                { value: 'Trusted', label: 'Local Vendors' },
+                { value: 'Secure', label: 'Payments' },
+                { value: 'Swift', label: 'Delivery' },
+                { value: 'Verified', label: 'Commerce' },
               ].map((stat, index) => (
                 <div key={index} className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-colors">
                   <p className="text-xl font-bold mb-0.5">{stat.value}</p>
@@ -158,10 +152,8 @@ function VendorSignInForm() {
               transition={{ delay: 0.3 }}
             >
               <div className="mb-6">
-                <h2 className="text-2xl font-bold mb-1 text-gray-900">Sign In</h2>
-                <p className="text-sm text-gray-500">
-                  Welcome back! Please enter your credentials
-                </p>
+                <h2 className="text-2xl lg:text-3xl font-bold mb-1 text-gray-900">Sign In to ShopAm</h2>
+                <p className="text-sm text-gray-600">Connect with your community</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -181,35 +173,41 @@ function VendorSignInForm() {
 
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-900">
-                    Email
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
                   </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-[#FA3728] outline-none transition-colors bg-white text-gray-900"
-                    required
-                  />
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="Enter your email"
+                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] outline-none transition-all text-gray-900"
+                    />
+                  </div>
                 </div>
 
                 {/* Password */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-900">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Password
                   </label>
                   <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                     <input
                       type={showPassword ? 'text' : 'password'}
+                      required
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full pl-4 pr-12 py-3 border-2 border-gray-300 rounded-xl focus:border-[#FA3728] outline-none transition-colors bg-white text-gray-900"
-                      required
+                      placeholder="Enter your password"
+                      className="w-full pl-12 pr-12 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] outline-none transition-all text-gray-900"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:opacity-80 transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
@@ -229,33 +227,20 @@ function VendorSignInForm() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={isSubmitting || !formData.email || !formData.password}
-                  className="w-full py-4 mt-8 bg-gradient-to-r from-[#FA3728] to-[#E31B23] text-white rounded-xl font-bold text-lg transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                  disabled={isSubmitting}
+                  className="w-full py-3.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 size={20} className="animate-spin" />
-                      Signing In...
-                    </>
-                  ) : (
-                    'Sign In'
-                  )}
+                  {isSubmitting ? 'Signing in...' : 'Sign In'}
                 </button>
-              </form>
 
-              {/* Footer Links */}
-              <div className="mt-10 pt-6 border-t border-gray-100 flex flex-col items-center gap-4 text-sm text-gray-500">
-                <p>
+                {/* Sign Up Link */}
+                <p className="text-center text-sm text-gray-600">
                   New to ShopAm?{' '}
-                  <Link href="/auth/signup" className="text-[#FA3728] hover:underline font-semibold text-base">
-                    Create Vendor Account
+                  <Link href="/auth/user-signup" className="text-[#FA3728] hover:underline font-semibold">
+                    Create Account
                   </Link>
                 </p>
-                <p>
-                  Need help?{' '}
-                  <a href="#" className="text-[#FA3728] hover:underline font-medium">Contact Support</a>
-                </p>
-              </div>
+              </form>
             </motion.div>
           </div>
         </div>
@@ -264,10 +249,10 @@ function VendorSignInForm() {
   );
 }
 
-export default function VendorSignInPage() {
+export default function SignInPage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 size={32} className="animate-spin text-[#FA3728]" /></div>}>
-      <VendorSignInForm />
+      <SignInForm />
     </Suspense>
   );
 }

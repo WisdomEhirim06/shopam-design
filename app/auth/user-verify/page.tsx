@@ -30,7 +30,7 @@ function UserVerifyForm() {
           setTimeout(() => router.push('/explore'), 5000);
         } else {
           setVerifiedNeedsSignIn(true);
-          setTimeout(() => router.push('/auth/user-signin?verified=1'), 5000);
+          setTimeout(() => router.push('/auth/signin?verified=1'), 5000);
         }
       })
       .catch((err: any) => {
@@ -113,7 +113,7 @@ function UserVerifyForm() {
       <div className="flex-1 flex flex-col min-h-screen bg-white overflow-y-auto">
         {/* Mobile-only top bar */}
         <div className="lg:hidden flex items-center justify-between px-5 pt-6 pb-4 border-b border-gray-100">
-          <Link href="/auth/user-signin" className="flex items-center gap-1.5 text-gray-500 hover:text-[#FA3728] transition-colors text-sm font-medium">
+          <Link href="/auth/signin" className="flex items-center gap-1.5 text-gray-500 hover:text-[#FA3728] transition-colors text-sm font-medium">
             <ArrowLeft size={16} />
             Sign In
           </Link>
@@ -127,7 +127,7 @@ function UserVerifyForm() {
           <div className="w-full max-w-md">
 
             {/* Desktop back link */}
-            <Link href="/auth/user-signin" className="hidden lg:inline-flex items-center gap-2 text-gray-500 hover:text-[#FA3728] transition-colors text-sm font-medium mb-8">
+            <Link href="/auth/signin" className="hidden lg:inline-flex items-center gap-2 text-gray-500 hover:text-[#FA3728] transition-colors text-sm font-medium mb-8">
               <ArrowLeft size={16} />
               Back to Sign In
             </Link>

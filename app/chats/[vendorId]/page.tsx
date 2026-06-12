@@ -78,7 +78,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
-      router.push(`/auth/user-signin?redirect=/chats/${orderId}`);
+      router.push(`/auth/signin?redirect=/chats/${orderId}`);
       return;
     }
     const user = authService.getCurrentUser();
