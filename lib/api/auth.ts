@@ -11,6 +11,7 @@ import type {
   ForgotPasswordRequest,
   ResetPasswordRequest,
   UpdateProfileRequest,
+  VendorUpgradeRequest,
 } from './types';
 
 
@@ -45,7 +46,29 @@ export const authService = {
     }
   },
 
- 
+
+   async upgradeToVendor(data: VendorUpgradeRequest): Promise<FullProfile> {
+    let response;
+    if (data.logo) {
+      const form = new FormData();
+      (Object.keys(data) as (keyof VendorUpgradeRequest)[]).forEach((key) => {
+        if (key === 'logo') return;
+        const val = data[key];
+        if (val !== undefined) form.append(key, val as string);
+      });
+      form.append('logo', data.logo);
+      response = await apiClient.post<any>(API_ENDPOINTS.AUTH.VENDOR_UPGRADE, form);
+    } else {
+      const { logo: _logo, ...rest } = data;
+      response = await apiClient.post<any>(API_ENDPOINTS.AUTH.VENDOR_UPGRADE, rest);
+    }
+
+    const raw = response.data ?? {};
+    const user: UserProfile = raw.user ?? raw;
+    const vendor_profile: VendorProfile | undefined = raw.vendor_profile ?? raw.profile ?? undefined;
+    localStorage.setItem('user', JSON.stringify(user));
+    return { user, vendor_profile };
+  },
   async login(data: LoginRequest | { username: string; password: string }): Promise<LoginResponse> {
     const payload = 'username' in data && !('email' in data)
       ? { email: (data as any).username, password: data.password }

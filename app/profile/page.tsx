@@ -188,7 +188,7 @@ export default function UserProfilePage() {
                 <MenuItem 
                   icon={<Store size={18} />} 
                   title="Become a Vendor" 
-                  href="/auth/signup"
+                  href="/auth/become-vendor"
                   highlight
                 />
                 <MenuItem 

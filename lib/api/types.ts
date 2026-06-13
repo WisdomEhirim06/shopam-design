@@ -31,6 +31,15 @@ export interface VendorRegister {
   logo?: File;                  // binary — sent as multipart when present
 }
 
+export interface VendorUpgradeRequest {
+  business_name?: string;
+  business_category?: BusinessCategory;
+  business_address?: string;
+  logo?: File;
+  cac_registration?: string;
+  tin?: string;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
