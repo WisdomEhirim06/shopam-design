@@ -159,7 +159,7 @@ export const API_ENDPOINTS = {
     VERIFY_EMAIL: '/api/accounts/user-verify',
     TOKEN_REFRESH: '/api/accounts/token/refresh',
     VENDOR_PROFILE_UPDATE: '/api/accounts/path/vendor-update',
-    VENDOR_UPGRADE: '/api/accounts/register/vendor-upgrade',
+    VENDOR_UPGRADE: '/api/accounts/register/existing-vendor',
   },
 
   // Products
