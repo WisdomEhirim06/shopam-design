@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -16,6 +17,7 @@ import {
   Check,
 } from 'lucide-react';
 import { productsService, categoriesService, cartService, authService } from '@/lib/api';
+import {getRoleCookie} from '@/lib/api/auth';
 import type { Product, Category } from '@/lib/api';
 
 /* ── Dummy products shown while real vendor listings are pending ── */
@@ -36,6 +38,8 @@ const DUMMY_PRODUCTS: Product[] = [
 import ProfileButton from '../components/ProfileButton';
 
 export default function ExplorePage() {
+  const role = getRoleCookie();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState('All');
@@ -53,6 +57,10 @@ export default function ExplorePage() {
   const [hasMore, setHasMore] = useState(true);
   const [totalProducts, setTotalProducts] = useState(0);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  if (role === 'vendor') {
+    router.push('/dashboard');
+  }
 
   // Fetch categories on mount
   useEffect(() => {

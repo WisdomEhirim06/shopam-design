@@ -89,7 +89,7 @@ export default function BecomeVendorPage() {
   };
 
   const goToVendorDashboard = () => {
-    router.push('/vendor/dashboard');
+    router.push('/vendors/dashboard');
   };
 
   return (

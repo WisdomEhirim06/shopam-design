@@ -24,6 +24,15 @@ export function clearRoleCookie() {
   document.cookie = 'shopam_role=; Path=/; Max-Age=0; SameSite=Lax';
 }
 
+export function getRoleCookie(): 'vendor' | 'customer' | null {
+  if (typeof document === 'undefined') return null;
+ 
+  const match = document.cookie.match(/(?:^|;\s*)shopam_role=([^;]*)/);
+  if (!match) return null;
+ 
+  const value = decodeURIComponent(match[1]);
+  return value === 'vendor' || value === 'customer' ? value : null;
+}
 export const authService = {
 
   async registerUser(data: UserRegister): Promise<void> {

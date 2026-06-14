@@ -4,10 +4,18 @@ import { motion } from 'framer-motion';
 import { Wallet, ShoppingBag, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { getRoleCookie } from '@/lib/api/auth';
 import { authService } from '@/lib/api';
 
 export default function DashboardHome() {
-  const [userName, setUserName] = useState('Sarah');
+  const [userName, setUserName] = useState('User');
+  const router = useRouter();
+  const role = getRoleCookie();
+
+  if (role !== 'vendor') {
+    router.push('/explore');
+  }
 
   useEffect(() => {
     const user = authService.getCurrentUser();
