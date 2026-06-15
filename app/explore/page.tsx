@@ -58,9 +58,13 @@ export default function ExplorePage() {
   const [totalProducts, setTotalProducts] = useState(0);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  if (role === 'vendor') {
-    router.push('/dashboard');
-  }
+  useEffect(() => {
+    // Check the role only when mounted in the browser
+    const role = getRoleCookie();
+    if (role === 'vendor') {
+      router.push('/dashboard');
+    }
+  }, [router]);
 
   // Fetch categories on mount
   useEffect(() => {

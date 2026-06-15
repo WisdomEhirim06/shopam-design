@@ -12,10 +12,15 @@ export default function DashboardHome() {
   const [userName, setUserName] = useState('User');
   const router = useRouter();
   const role = getRoleCookie();
-  console.log('[DASHBOARD PAGE] User role from cookie:', role);
-  if (role !== 'vendor') {
-    router.push('/explore');
-  }
+  useEffect(() => {
+    // Check the role only when mounted in the browser
+    const role = getRoleCookie();
+    console.log('[DASHBOARD PAGE] User role from cookie:', role);
+    
+    if (role !== 'vendor') {
+      router.push('/explore');
+    }
+  }, [router]);
 
   useEffect(() => {
     // 1. Define an async function inside the effect
