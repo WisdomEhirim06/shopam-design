@@ -12,7 +12,7 @@ export default function ProfileEditPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-  const[cached, setCached] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
 
   const [form, setForm] = useState({
     first_name: '',
@@ -20,6 +20,19 @@ export default function ProfileEditPage() {
     phone: '',
     username: '',
   });
+  const fetchUser = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        
+        // Using optional chaining (?.) is a safe way to check if user exists
+        if (user) {
+          setUser(user);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
+ 
 
   useEffect(() => {
     const load = async () => {
@@ -34,24 +47,13 @@ export default function ProfileEditPage() {
         });
       } catch {
         // Fall back to localStorage
-        const fetchUser = async () => {
-      try {
-        const user = await authService.getCurrentUser();
-        
-        // Using optional chaining (?.) is a safe way to check if user exists
-        if (user) {
-          setCached(user);
-        }
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
-      }
-    };
-        if (!cached) { router.push('/auth/signin'); return; }
+        fetchUser();
+        if (!user) { router.push('/auth/signin'); return; }
         setForm({
-          first_name: cached.first_name || '',
-          last_name: cached.last_name || '',
-          phone: cached.phone || '',
-          username: cached.username || '',
+          first_name: user.first_name || '',
+          last_name: user.last_name || '',
+          phone: user.phone || '',
+          username: user.username || '',
         });
       } finally {
         setIsLoading(false);
