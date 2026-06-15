@@ -43,6 +43,7 @@ export default function UserProfilePage() {
     const fetchUser = async () => {
       try {
        const currentUser  = await authService.getCurrentUser();
+       
         
         // Using optional chaining (?.) is a safe way to check if user exists
         if (!currentUser) {

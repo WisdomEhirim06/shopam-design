@@ -12,7 +12,7 @@ export default function DashboardHome() {
   const [userName, setUserName] = useState('User');
   const router = useRouter();
   const role = getRoleCookie();
-
+  console.log('[DASHBOARD PAGE] User role from cookie:', role);
   if (role !== 'vendor') {
     router.push('/explore');
   }
@@ -22,6 +22,7 @@ export default function DashboardHome() {
     const fetchUser = async () => {
       try {
         const user = await authService.getCurrentUser();
+        console.log('[PROFILE PAGE] Fetched user:', user);
         
         // Using optional chaining (?.) is a safe way to check if user exists
         if (user?.first_name) {

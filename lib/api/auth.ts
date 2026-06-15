@@ -87,6 +87,7 @@ export const authService = {
 
     const user: UserProfile = raw.user ?? raw;
     setRoleCookie(!!user.is_vendor);
+    console.log('[AUTH] Login successful for user: %s (Vendor: %s)', user.username, user.is_vendor);
 
 
     return { user };
