@@ -86,6 +86,7 @@ export const authService = {
     const raw = response.data;
 
     const user: UserProfile = raw.user ?? raw;
+    localStorage.setItem('user', JSON.stringify(user));
     setRoleCookie(!!user.is_vendor);
     console.log('[AUTH] Login successful for user: %s (Vendor: %s)', user.username, user.is_vendor);
 
