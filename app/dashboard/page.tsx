@@ -18,10 +18,22 @@ export default function DashboardHome() {
   }
 
   useEffect(() => {
-    const user = authService.getCurrentUser();
-    if (user && user.first_name) {
-      setUserName(user.first_name);
-    }
+    // 1. Define an async function inside the effect
+    const fetchUser = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        
+        // Using optional chaining (?.) is a safe way to check if user exists
+        if (user?.first_name) {
+          setUserName(user.first_name);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
+
+    // 2. Call the function immediately
+    fetchUser();
   }, []);
 
   return (

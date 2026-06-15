@@ -63,8 +63,6 @@ export interface UpdateProfileRequest {
 }
 
 export interface LoginResponse {
-  access: string;
-  refresh: string;
   user: UserProfile;
 }
 

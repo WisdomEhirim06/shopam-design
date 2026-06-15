@@ -85,19 +85,10 @@ export const authService = {
     const response = await apiClient.post<any>(API_ENDPOINTS.AUTH.LOGIN, payload);
     const raw = response.data;
 
-    // API wraps tokens: { tokens: { access, refresh }, user } — normalise to flat LoginResponse
-    const access: string = raw.tokens?.access ?? raw.access ?? '';
-    const refresh: string = raw.tokens?.refresh ?? raw.refresh ?? '';
     const user: UserProfile = raw.user ?? raw;
 
-    if (access) {
-      localStorage.setItem('access_token', access);
-      if (refresh) localStorage.setItem('refresh_token', refresh);
-      localStorage.setItem('user', JSON.stringify(user));
-      setRoleCookie(!!user?.is_vendor);
-    }
 
-    return { access, refresh, user };
+    return { user };
   },
 
   
@@ -110,9 +101,6 @@ export const authService = {
         await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT);
       }
     } finally {
-      // Clear tokens even if API call fails
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
       clearRoleCookie();
     }
@@ -138,15 +126,12 @@ export const authService = {
   },
 
   // Get stored user data
-  getCurrentUser(): UserProfile | null {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) return null;
-    
-    try {
-      return JSON.parse(userStr);
-    } catch {
-      return null;
-    }
+  async getCurrentUser(): Promise<UserProfile | null> {
+    const response = await apiClient.get<any>(API_ENDPOINTS.AUTH.PROFILE);
+    const raw = response.data ?? {};
+    const user: UserProfile = raw.user ?? raw;
+    localStorage.setItem('user', JSON.stringify(user));
+    return user;
   },
 
   /**
