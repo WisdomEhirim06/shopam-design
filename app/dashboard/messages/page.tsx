@@ -20,9 +20,21 @@ export default function MessagesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const currentUser = authService.getCurrentUser();
-
+  const fetchUser = async () => {
+      try {
+       const currentUser  = await authService.getCurrentUser();
+        
+        // Using optional chaining (?.) is a safe way to check if user exists
+        if (currentUser) {
+          setCurrentUser(currentUser);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
+    fetchUser();
   useEffect(() => {
     loadConversations();
   }, []);

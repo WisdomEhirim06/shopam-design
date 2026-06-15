@@ -81,9 +81,19 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
       router.push(`/auth/signin?redirect=/chats/${orderId}`);
       return;
     }
-    const user = authService.getCurrentUser();
-    setCurrentUser(user);
-    setIsVendor(user?.is_vendor || false);
+    const fetchUser = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        
+        // Using optional chaining (?.) is a safe way to check if user exists
+        if (user) {
+          setIsVendor(user?.is_vendor || false);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
+    fetchUser();
     refreshOrder();
   }, [router, orderId]);
 

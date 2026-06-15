@@ -16,8 +16,19 @@ export default function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps)
   const isAuthenticated = !!user;
 
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
+   const fetchUser = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        
+        // Using optional chaining (?.) is a safe way to check if user exists
+        if (user) {
+          setUser(user);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
+  fetchUser();
   }, [isOpen]);
 
   const handleLogout = async () => {

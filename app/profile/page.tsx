@@ -40,13 +40,23 @@ export default function UserProfilePage() {
   const [formSuccess, setFormSuccess] = useState(false);
 
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    if (!currentUser) {
-      window.location.href = '/auth/signin';
-      return;
-    }
-    setUser(currentUser);
-    setLoading(false);
+    const fetchUser = async () => {
+      try {
+       const currentUser  = await authService.getCurrentUser();
+        
+        // Using optional chaining (?.) is a safe way to check if user exists
+        if (!currentUser) {
+        window.location.href = '/auth/signin';
+        return;
+        }
+        setUser(currentUser);
+        setLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
+    fetchUser();
+    
   }, []);
 
   if (loading || !user) {

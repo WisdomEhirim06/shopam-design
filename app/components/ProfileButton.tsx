@@ -11,22 +11,36 @@ export default function ProfileButton() {
   const [userInitial, setUserInitial] = useState('');
 
   useEffect(() => {
-    const user = authService.getCurrentUser();
-    setIsAuthenticated(!!user);
-    if (user) {
-      const firstPart = (user.first_name || user.username || '');
-      const firstInitial = firstPart.charAt(0);
-      let lastInitial = (user.last_name || '').charAt(0);
+    const fetchUser = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        
+        // Using optional chaining (?.) is a safe way to check if user exists
+        if (user) {
+          setIsAuthenticated(true);
+          const firstPart = (user.first_name || user.username || '');
+          const firstInitial = firstPart.charAt(0);
+          let lastInitial = (user.last_name || '').charAt(0);
 
-      if (!lastInitial && firstPart.includes(' ')) {
-        const parts = firstPart.trim().split(/\s+/);
-        if (parts.length > 1) {
-          lastInitial = parts[parts.length - 1].charAt(0);
-        }
-      }
+          if (!lastInitial && firstPart.includes(' ')) {
+            const parts = firstPart.trim().split(/\s+/);
+            if (parts.length > 1) {
+              lastInitial = parts[parts.length - 1].charAt(0);
+            }
 
       setUserInitial(`${firstInitial}${lastInitial}`.toUpperCase().trim());
     }
+        }
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
+    
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    
   }, []);
 
   return (
