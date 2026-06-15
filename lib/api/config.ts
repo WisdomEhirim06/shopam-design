@@ -4,9 +4,11 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 export const API_BASE_URL = '';
 
 
+
+
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 seconds
+  timeout: 30000,
 });
 
 const PUBLIC_ENDPOINTS = [
@@ -19,17 +21,14 @@ const PUBLIC_ENDPOINTS = [
   '/api/accounts/user-verify',
   '/api/commerce/categories',
 ];
+
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const url = config.url || '';
-    const isPublic = PUBLIC_ENDPOINTS.some((p) => url.startsWith(p));
-
-    if (!isPublic) {
-      const token = localStorage.getItem('access_token');
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
+    // 2. REMOVED the localStorage 'access_token' logic. 
+    // We don't need it because withCredentials handles the session cookie automatically.
+    
+    // You can keep CSRF token logic here if Django requires it for POST requests
+    // Example: config.headers['X-CSRFToken'] = getCsrfTokenCookie();
 
     return config;
   },
@@ -38,110 +37,25 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Track whether a token refresh is already in flight to prevent concurrent
-// refresh attempts when multiple requests fail with 401 simultaneously.
-let _refreshPromise: Promise<string> | null = null;
-
-async function refreshAccessToken(): Promise<string> {
-  const refresh = localStorage.getItem('refresh_token');
-  if (!refresh) throw new Error('No refresh token');
-
-  
-  const access = localStorage.getItem('access_token');
-  const response = await fetch('/api/accounts/token/refresh', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(access ? { Authorization: `Bearer ${access}` } : {}),
-    },
-    body: JSON.stringify({ refresh }),
-  });
-
-  if (!response.ok) throw new Error('Refresh failed');
-
-  const data = await response.json();
-  // Backend returns { access } or { tokens: { access } }
-  const newAccess: string = data.tokens?.access ?? data.access ?? '';
-  if (!newAccess) throw new Error('No access token in refresh response');
-
-  localStorage.setItem('access_token', newAccess);
-
- 
-  const newRefresh: string = data.tokens?.refresh ?? data.refresh ?? '';
-  if (newRefresh) localStorage.setItem('refresh_token', newRefresh);
-
-  return newAccess;
-}
-
-let isRedirecting = false;
-
-function clearSessionAndRedirect() {
-  if (isRedirecting) return; // another 401 already triggered the redirect
-  isRedirecting = true;
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-  localStorage.removeItem('user');
-  // Expire the role-hint cookie set by authService.login.
-  document.cookie = 'shopam_role=; Path=/; Max-Age=0; SameSite=Lax';
-  // Single sign-in page for all roles — no need to guess the role from
-  // (possibly already-cleared) localStorage to pick a destination.
-  window.location.href = '/auth/signin';
-}
-
+// 3. Add a RESPONSE interceptor to handle expired sessions
 apiClient.interceptors.response.use(
-  (response) => {
-    isRedirecting = false;
-    return response;
-  },
-  async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retried?: boolean };
-
-    const url = originalRequest?.url || '';
-
-    // Auth endpoints manage their own error messages — never intercept them.
-    const isAuthEndpoint =
-      url.startsWith('/api/accounts/login') ||
-      url.startsWith('/api/accounts/logout') ||
-      url.startsWith('/api/accounts/register') ||
-      url.startsWith('/api/accounts/token/refresh') ||
-      url.startsWith('/api/accounts/verify-email') ||
-      url.startsWith('/api/accounts/user-verify') ||
-      url.startsWith('/api/accounts/password');
-
-    const isKeepalivePing = !!originalRequest?.headers?.['X-Keepalive'];
-
-    if (error.response?.status !== 401 || isAuthEndpoint || isKeepalivePing || originalRequest?._retried) {
-      return Promise.reject(error);
-    }
-
-    const hadSession = !!localStorage.getItem('access_token');
-    if (!hadSession) return Promise.reject(error);
-
-    originalRequest._retried = true;
-
-    try {
-      if (!_refreshPromise) {
-        _refreshPromise = refreshAccessToken().finally(() => {
-          _refreshPromise = null;
-        });
+  (response) => response,
+  (error: AxiosError) => {
+    // If the backend says the cookie is invalid or expired
+    if (error.response?.status === 401) {
+      // Clear frontend user data
+      localStorage.removeItem('user');
+      
+      // Redirect to login only if we aren't already there
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/signin')) {
+        window.location.href = '/auth/signin';
       }
-      const newToken = await _refreshPromise;
-
-      // Retry the original request with the fresh token.
-      if (originalRequest.headers) {
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-      }
-      return apiClient(originalRequest);
-    } catch {
-      // Refresh failed — session is genuinely over.
-      clearSessionAndRedirect();
-      return Promise.reject(error);
     }
+    return Promise.reject(error);
   }
 );
 
 export default apiClient;
-
 // API Endpoints
 export const API_ENDPOINTS = {
   // Auth
