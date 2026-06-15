@@ -38,6 +38,7 @@ function SignInForm() {
       });
 
       const isVendor = !!response.user?.is_vendor;
+      console.log("pushing to:", returnUrl ?? (isVendor ? '/dashboard' : '/explore'));
       router.push(returnUrl ?? (isVendor ? '/dashboard' : '/explore'));
     } catch (err: any) {
       const data = err.response?.data;
