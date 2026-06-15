@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 // Middleware is intentionally a passthrough.
 // Route protection is handled client-side:
@@ -7,10 +8,16 @@ import { NextResponse } from 'next/server';
 // Token refresh + forced-logout on expiry is handled by the Axios interceptor
 // in lib/api/config.ts. Mixing cookie-based middleware guards with
 // localStorage-based token state caused redirect loops.
-export function middleware() {
+export function middleware(request: NextRequest) {
+  // 1. Log the path the user is trying to hit
+  console.log(`[MIDDLEWARE] Incoming request for: ${request.nextUrl.pathname}`);
+
+
+  
+
+  console.log('[MIDDLEWARE] ✅ Route allowed');
   return NextResponse.next();
 }
-
 export const config = {
   matcher: [],
 };

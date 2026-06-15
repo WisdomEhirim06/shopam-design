@@ -24,6 +24,7 @@ const PUBLIC_ENDPOINTS = [
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    console.log(`[AXIOS] Request to: ${config.url}`);
     // 2. REMOVED the localStorage 'access_token' logic. 
     // We don't need it because withCredentials handles the session cookie automatically.
     
@@ -38,23 +39,27 @@ apiClient.interceptors.request.use(
 );
 
 // 3. Add a RESPONSE interceptor to handle expired sessions
+// lib/api/config.ts
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    // If the backend says the cookie is invalid or expired
+    console.log(`[AXIOS] Error triggered on request to: ${error.config?.url}`);
+    console.log(`[AXIOS] Status Code: ${error.response?.status}`);
+
     if (error.response?.status === 401) {
-      // Clear frontend user data
+      console.log('[AXIOS] 🚨 BOUNCE TRIGGERED: Backend returned 401 Unauthorized.');
+      console.log('[AXIOS] Are withCredentials enabled? Were cookies sent? Check the Network tab!');
+      
       localStorage.removeItem('user');
       
-      // Redirect to login only if we aren't already there
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/signin')) {
+        console.log('[AXIOS] Redirecting browser to /auth/signin now...');
         window.location.href = '/auth/signin';
       }
     }
     return Promise.reject(error);
   }
 );
-
 export default apiClient;
 // API Endpoints
 export const API_ENDPOINTS = {
