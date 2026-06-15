@@ -86,6 +86,7 @@ export const authService = {
     const raw = response.data;
 
     const user: UserProfile = raw.user ?? raw;
+    setRoleCookie(!!user.is_vendor);
 
 
     return { user };
