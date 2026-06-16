@@ -113,6 +113,7 @@ export default function ProductsPage() {
       const relevantBranch = ven_profile?.business_category_id
     ? getRelevantTaxonomy(data, ven_profile.business_category_id) 
     : data;
+    console.log(relevantBranch);
       setCategoryOptions(flattenTaxonomy(relevantBranch));
     } catch {
       // leave options empty
