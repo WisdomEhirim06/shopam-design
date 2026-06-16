@@ -84,7 +84,7 @@ export default function ProductsPage() {
       setCategoriesLoaded(true);
     }
   };
-
+ ;
   const loadProducts = async () => {
     setIsLoading(true);
     try {
@@ -447,11 +447,24 @@ export default function ProductsPage() {
                           <option value="">
                             {!categoriesLoaded ? 'Loading…' : categoryOptions.length ? 'Select category' : 'No categories'}
                           </option>
-                          {categoryOptions.map((opt) => (
-                            <option key={opt.id} value={opt.id}>
-                              {opt.depth > 0 ? `${'  '.repeat(opt.depth)}↳ ` : ''}{opt.name}
-                            </option>
-                          ))}
+                          {categoryOptions.map((option) => {
+                            // A parent node is any node that is at depth 0
+                            // OR if you want to allow parents to be headers only, 
+                            // you check if it has subcategories (or depth === 0)
+                            const isParent = option.depth === 0;
+
+                            return (
+                              <option 
+                                key={option.id} 
+                                value={option.id} 
+                                disabled={isParent} // 👈 This makes the parent unselectable
+                                className={isParent ? "font-bold text-gray-400 bg-gray-100" : "pl-4"}
+                              >
+                                {/* Adds indentation based on depth to show hierarchy visually */}
+                                {"--".repeat(option.depth)} {option.name}
+                              </option>
+                            );
+                          })}
                         </select>
                       </div>
                     </div>

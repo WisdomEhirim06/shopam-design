@@ -61,6 +61,7 @@ export const productsService = {
     if (data.taxonomy_id) payload.taxonomy_id = data.taxonomy_id;
 
     const response = await apiClient.post<ProductService>(API_ENDPOINTS.PRODUCTS.CREATE, payload);
+    console.log('RESPONSE', response.data);
     return response.data;
   },
 

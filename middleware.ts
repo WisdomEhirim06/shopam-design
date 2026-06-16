@@ -10,12 +10,6 @@ import type { NextRequest } from 'next/server';
 // localStorage-based token state caused redirect loops.
 export function middleware(request: NextRequest) {
   // 1. Log the path the user is trying to hit
-  console.log(`[MIDDLEWARE] Incoming request for: ${request.nextUrl.pathname}`);
-
-
-  
-
-  console.log('[MIDDLEWARE] ✅ Route allowed');
   return NextResponse.next();
 }
 export const config = {
