@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, MoreVertical, X, ImageIcon, Package, Loader2, Camera, Grid2x2 } from 'lucide-react';
 import { productsService, categoriesService } from '../../../lib/api/products';
 import type { ProductService, ItemType } from '../../../lib/api/types';
+import {authService} from '@/lib/api';
 
 interface TaxonomyOption {
   id: string;
@@ -12,7 +13,19 @@ interface TaxonomyOption {
   depth: number;
 }
 
+function getRelevantTaxonomy(categories: any[], businessCategoryId: string) {
+  // 1. Find the specific parent node for the user's business category
+  const rootNode = categories.find(c => c.id === businessCategoryId);
+  
+  if (!rootNode) return [];
+
+  // 2. Return an array containing only that subtree, 
+  // or just the subcategories if you want to skip the parent itself
+  return [rootNode]; 
+}
+
 function flattenTaxonomy(items: any[], depth = 0): TaxonomyOption[] {
+  
   const result: TaxonomyOption[] = [];
   for (const item of items) {
     result.push({ id: item.id, name: item.name, depth });
@@ -67,9 +80,29 @@ export default function ProductsPage() {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
   const [categoryOptions, setCategoryOptions] = useState<TaxonomyOption[]>([]);
   const [categoriesLoaded, setCategoriesLoaded] = useState(false);
+  const [ven_profile, setVen_profile] = useState<any>(null);
 
   const mainImageRef = useRef<HTMLInputElement>(null);
   const subImagesRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+      // 1. Define an async function inside the effect
+      const fetchUser = async () => {
+        try {
+          const user = await authService.getFullProfile();
+          console.log('[PROFILE PAGE] Fetched user:', user);
+          
+          // Using optional chaining (?.) is a safe way to check if user exists
+          if (user?.vendor_profile) {
+            setVen_profile(user.vendor_profile);
+          }
+        } catch (error) {
+          console.error("Failed to fetch user:", error);
+        }
+      };
+  
+      // 2. Call the function immediately
+      fetchUser();
+    }, []);
 
   useEffect(() => { loadProducts(); loadCategories(); }, []);
 
@@ -77,7 +110,10 @@ export default function ProductsPage() {
   const loadCategories = async () => {
     try {
       const data = await categoriesService.getCategories();
-      setCategoryOptions(flattenTaxonomy(data));
+      const relevantBranch = ven_profile?.business_category_id
+    ? getRelevantTaxonomy(data, ven_profile.business_category_id) 
+    : data;
+      setCategoryOptions(flattenTaxonomy(relevantBranch));
     } catch {
       // leave options empty
     } finally {
