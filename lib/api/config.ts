@@ -48,12 +48,10 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 401) {
       console.log('[AXIOS] 🚨 BOUNCE TRIGGERED: Backend returned 401 Unauthorized.');
-      console.log('[AXIOS] Are withCredentials enabled? Were cookies sent? Check the Network tab!');
       
       localStorage.removeItem('user');
       
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/signin')) {
-        console.log('[AXIOS] Redirecting browser to /auth/signin now...');
         window.location.href = '/auth/signin';
       }
     }

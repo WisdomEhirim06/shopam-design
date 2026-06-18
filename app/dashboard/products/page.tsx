@@ -13,16 +13,28 @@ interface TaxonomyOption {
   depth: number;
 }
 
-function getRelevantTaxonomy(categories: any[], businessCategoryId: string) {
-  // 1. Find the specific parent node for the user's business category
-  const rootNode = categories.find(c => c.id === businessCategoryId);
-  
-  if (!rootNode) return [];
+const CATEGORY_MAP = {
+  'fashion': 'Fashion',
+  'beauty_hair': 'Beauty, Hair & Personal Care',
+  'home_living': 'Home & Living',
+  'food_drinks': 'Food & Drinks',
+  'baby_kids': 'Baby & Kids',
+  'books_stationery': 'Books & Stationery',
+  'health_wellness': 'Health & Wellness'
+};
 
-  // 2. Return an array containing only that subtree, 
-  // or just the subcategories if you want to skip the parent itself
-  return [rootNode]; 
-}
+const getRelevantTaxonomy = (data, categoryId) => {
+  // 1. Get the exact taxonomy name (e.g., "Home & Living")
+  const targetName = CATEGORY_MAP[categoryId];
+  
+  if (!targetName) return data; // Fallback to all data if ID is unknown
+
+  // 2. Find the top-level node in the API response that matches
+  const relevantBranch = data.find(category => category.name === targetName);
+
+  // 3. Return it as an array (so flattenTaxonomy can process it consistently)
+  return relevantBranch ? [relevantBranch] : data;
+};
 
 function flattenTaxonomy(items: any[], depth = 0): TaxonomyOption[] {
   
@@ -110,9 +122,9 @@ export default function ProductsPage() {
   const loadCategories = async () => {
     try {
       const data = await categoriesService.getCategories();
-      const relevantBranch = ven_profile?.business_category_id
-    ? getRelevantTaxonomy(data, ven_profile.business_category_id) 
-    : data;
+      const relevantBranch = ven_profile?.business_category
+      ? getRelevantTaxonomy(data, ven_profile.business_category) 
+      : data;
     console.log(relevantBranch);
       setCategoryOptions(flattenTaxonomy(relevantBranch));
     } catch {
