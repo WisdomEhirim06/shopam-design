@@ -86,19 +86,9 @@ export default function DashboardLayout({
             <div className="px-4 py-2 border-b border-gray-50 mb-1">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Account</p>
             </div>
-            
-            {/* View My Products */}
-            <Link 
-              href="/dashboard/products" 
-              onClick={() => setIsProfileMenuOpen(false)} 
-              className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#FA3728] transition-colors"
-            >
-              View My Products
-            </Link>
-            
             {/* Business Information */}
             <Link 
-              href="/dashboard/business-info" 
+              href="/dashboard/profilr" 
               onClick={() => setIsProfileMenuOpen(false)} 
               className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#FA3728] transition-colors"
             >
