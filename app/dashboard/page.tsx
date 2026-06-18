@@ -27,7 +27,6 @@ export default function DashboardHome() {
     const fetchUser = async () => {
       try {
         const user = await authService.getCurrentUser();
-        console.log('[PROFILE PAGE] Fetched user:', user);
         
         // Using optional chaining (?.) is a safe way to check if user exists
         if (user?.first_name) {

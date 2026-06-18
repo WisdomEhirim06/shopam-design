@@ -13,7 +13,7 @@ interface TaxonomyOption {
   depth: number;
 }
 
-const CATEGORY_MAP = {
+const CATEGORY_MAP: Record<string, string> = {
   'fashion': 'Fashion',
   'beauty_hair': 'Beauty, Hair & Personal Care',
   'home_living': 'Home & Living',
@@ -22,15 +22,16 @@ const CATEGORY_MAP = {
   'books_stationery': 'Books & Stationery',
   'health_wellness': 'Health & Wellness'
 };
-
-const getRelevantTaxonomy = (data, categoryId) => {
+const getRelevantTaxonomy = (data: any[], categoryId: string) => {
   // 1. Get the exact taxonomy name (e.g., "Home & Living")
   const targetName = CATEGORY_MAP[categoryId];
+  console.log('Mapping category ID to name:', categoryId, '→', targetName);
   
   if (!targetName) return data; // Fallback to all data if ID is unknown
 
   // 2. Find the top-level node in the API response that matches
   const relevantBranch = data.find(category => category.name === targetName);
+  console.log('Found relevant taxonomy branch:', relevantBranch ? relevantBranch.name : 'None');
 
   // 3. Return it as an array (so flattenTaxonomy can process it consistently)
   return relevantBranch ? [relevantBranch] : data;
