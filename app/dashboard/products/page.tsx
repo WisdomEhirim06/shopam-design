@@ -577,6 +577,7 @@ export default function ProductsPage() {
 }
 
 /* ── Product Card ── */
+/* ── Product Card ── */
 function ProductCard({
   product,
   formatPrice,
@@ -584,29 +585,74 @@ function ProductCard({
   product: UIProduct;
   formatPrice: (p: string) => string;
 }) {
+  // 1. Add state to track if the menu is open
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const primaryImage = product.mainImagePreview || product.images?.[0]?.image_url;
   const hasImage = !!primaryImage;
   const hasStock = product.localStock !== undefined;
   const categoryLabel = product.taxonomy_path || '';
   const hasDescription = !!product.description;
 
-  // Sub-images: prefer local previews (freshly created), fall back to API images[1+]
   const subImages: string[] =
     product.subImagePreviews && product.subImagePreviews.length > 0
       ? product.subImagePreviews
       : (product.images?.slice(1).map((i) => i.image_url) ?? []);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:border-red-100 hover:shadow-md transition-all relative overflow-hidden">
-      {/* Status + menu */}
+    // Note: Removed 'overflow-hidden' from the main container so the dropdown can overflow if needed
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:border-red-100 hover:shadow-md transition-all relative">
+      
+      {/* Status */}
       <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-2">
         <span className="text-[10px] md:text-xs font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full">
           Active
         </span>
       </div>
-      <button className="absolute bottom-3 right-3 z-10 text-gray-400 hover:text-gray-900 transition-colors">
-        <MoreVertical size={20} />
-      </button>
+
+      {/* 2. Update the menu container */}
+      <div className="absolute bottom-3 right-3 z-20">
+        <button 
+          onClick={() => setIsMenuOpen(!isMenuOpen)} // Toggle state on click
+          className="p-1 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+        >
+          <MoreVertical size={20} />
+        </button>
+
+        {/* 3. The Dropdown Menu UI */}
+        {isMenuOpen && (
+          <>
+            {/* Invisible overlay to close menu when clicking outside */}
+            <div 
+              className="fixed inset-0 z-10" 
+              onClick={() => setIsMenuOpen(false)}
+            />
+            <div className="absolute bottom-full right-0 mb-2 w-36 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-20 overflow-hidden">
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  // Add your edit logic here later
+                  console.log('Edit product:', product.id);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+              >
+                Edit Product
+              </button>
+              <div className="h-px bg-gray-100 w-full" />
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  // Add your delete logic here later
+                  console.log('Delete product:', product.id);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
+              >
+                Delete
+              </button>
+            </div>
+          </>
+        )}
+      </div>
 
       <div className="flex gap-0">
         {/* Image area */}
