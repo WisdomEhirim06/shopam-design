@@ -34,12 +34,14 @@ const CATEGORY_LABEL: Record<string, string> = {
   other: 'Other',
 };
 
+// 1. ADDED ROUTES AND THE CERTIFICATE OPTION HERE
 const settingsItems = [
-  { label: 'Edit Profile' },
-  { label: 'Notification Preferences' },
-  { label: 'Payment & Bank Details' },
-  { label: 'Privacy & Security' },
-  { label: 'Help & Support' },
+  { label: 'Edit Profile', route: '/settings' },
+  { label: 'CAC & Certificate Upload', route: '/settings' },
+  { label: 'Notification Preferences', route: '/settings' },
+  { label: 'Payment & Bank Details', route: '/settings' },
+  { label: 'Privacy & Security', route: '/settings' },
+  { label: 'Help & Support', route: '/support' },
 ];
 
 export default function ProfilePage() {
@@ -109,13 +111,10 @@ export default function ProfilePage() {
     try {
       await authService.logout();
     } finally {
-      // authService.logout() already clears localStorage even if the API fails.
-      // Always redirect to sign-in regardless.
       router.replace('/auth/signin');
     }
   };
 
-  // Derive unique categories from real products for the filter bar
   const productCategories = ['All', ...Array.from(new Set(products.map(p => p.taxonomy_path).filter((c): c is string => !!c)))];
 
   const filteredProducts = products.filter(product => {
@@ -148,7 +147,6 @@ export default function ProfilePage() {
         {/* Avatar Area - Left Aligned */}
         <div className="flex flex-col items-start -mt-10 sm:-mt-12 mb-6">
           <div className="relative group">
-            {/* White ring wrapper */}
             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-[4px] border-white bg-white shadow-md relative z-10">
               <div className="w-full h-full rounded-full border-[2px] border-[#FA3728] overflow-hidden bg-gray-100 flex items-center justify-center relative">
                  <span className="text-4xl font-bold text-gray-400">
@@ -160,7 +158,6 @@ export default function ProfilePage() {
                  </div>
               </div>
             </div>
-            {/* Verified Badge */}
             <div className="absolute bottom-2 right-2 bg-[#FA3728] rounded-full p-1 z-20 border-[2.5px] border-white shadow-sm flex items-center justify-center">
                <Check className="text-white" strokeWidth={3} size={14} />
             </div>
@@ -363,7 +360,11 @@ export default function ProfilePage() {
                       </div>
                     )}
                     <div className="pt-2">
-                      <button className="w-full py-3 bg-gray-900 text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors">
+                      {/* 2. ADDED ONCLICK ROUTER PUSH TO SETTINGS PAGE */}
+                      <button 
+                        onClick={() => router.push('/settings')}
+                        className="w-full py-3 bg-gray-900 text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors"
+                      >
                         <Edit3 size={16} /> Edit Details
                       </button>
                     </div>
@@ -384,8 +385,10 @@ export default function ProfilePage() {
                   <h2 className="text-lg font-bold text-gray-900 mb-3 px-1">Settings</h2>
                   <div className="space-y-1.5">
                     {settingsItems.map((item) => (
+                      /* 3. ADDED ONCLICK TO THE MAP FUNCTION TO ROUTE TO SPECIFIC PAGES */
                       <button
                         key={item.label}
+                        onClick={() => router.push(item.route)}
                         className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors border-none"
                       >
                         <span className="text-sm font-semibold text-gray-800">{item.label}</span>
