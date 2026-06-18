@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Search, Bell, Home, Package, MessageSquare, User, X } from 'lucide-react';
+import { Search, Bell, X, User } from 'lucide-react';
 import MobileBottomNav from '../components/MobileBottomNav';
 import { useState, useEffect, useRef } from 'react';
 import apiClient, { API_ENDPOINTS } from '@/lib/api/config';
@@ -15,25 +15,14 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
-  // Strict Mode (reactStrictMode: true) mounts → unmounts → remounts every
-  // component in development. Without this ref gate, the auth guard useEffect
-  // runs twice. If the 401 interceptor clears access_token between the two
-  // runs (e.g. a concurrent API call just failed), the second run finds no
-  // token and fires a spurious redirect even though the user is logged in.
-  // The ref persists across the Strict Mode remount cycle within the same
-  // component instance, so the guard runs exactly once per true mount.
+  const [userInitial, setUserInitial] = useState('V');
+  
   const authCheckRan = useRef(false);
 
   useEffect(() => {
-    // Guard: dashboard is vendor-only. Runs ONCE on mount — intentionally NOT
-    // re-running on every pathname change. Re-running on pathname was causing
-    // a redirect loop: if the 401 interceptor cleared access_token in the
-    // background (e.g. a momentary API glitch), the next navigation would
-    // instantly kick the user to sign-in even though they were actively using
-    // the dashboard. The interceptor handles genuine session expiry redirects;
-    // the layout only needs to gate the initial render.
-    if (authCheckRan.current) return; // already ran — Strict Mode remount, skip
+    if (authCheckRan.current) return; 
     authCheckRan.current = true;
 
     if (!localStorage.getItem('user')) {
@@ -47,33 +36,101 @@ export default function DashboardLayout({
         window.location.replace('/explore');
         return;
       }
-    } catch { /* corrupt user blob — let API-level auth decide */ }
+      // Grab the user's initial for the profile circle
+      if (storedUser?.first_name) setUserInitial(storedUser.first_name[0].toUpperCase());
+      else if (storedUser?.username) setUserInitial(storedUser.username[0].toUpperCase());
+    } catch { /* corrupt user blob */ }
     setAuthChecked(true);
-  }, []); 
+  }, [pathname]); 
+
   useEffect(() => {
     const ping = () => {
       if (document.hidden) return; 
       
       apiClient
         .get(API_ENDPOINTS.AUTH.PROFILE, { headers: { 'X-Keepalive': 'true' } })
-        .catch(() => {
-        
-        });
+        .catch(() => {});
     };
     const id = setInterval(ping, 4 * 60 * 1000); // every 4 minutes
     return () => clearInterval(id);
   }, []);
 
-  // Don't render the dashboard shell until we've confirmed the token exists.
-  // This prevents a flash of dashboard content before the redirect fires.
   if (!authChecked) return null;
 
+  // Removed 'Profile' from the main nav items
   const navItems = [
     { href: '/dashboard', label: 'Home' },
     { href: '/dashboard/products', label: 'Products' },
     { href: '/dashboard/orders', label: 'Orders' },
-    { href: '/dashboard/profile', label: 'Profile' },
   ];
+
+  // The Dropdown Menu Component to reuse in both Mobile and Desktop headers
+  // The Dropdown Menu Component to reuse in both Mobile and Desktop headers
+  const ProfileDropdown = () => (
+    <div className="relative">
+      <button 
+        onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+        className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm shadow-sm hover:bg-[#FA3728] transition-colors border-2 border-transparent hover:border-red-100"
+      >
+        {userInitial}
+      </button>
+
+      {isProfileMenuOpen && (
+        <>
+          {/* Invisible overlay to close menu when clicking outside */}
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setIsProfileMenuOpen(false)} 
+          />
+          <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 py-1 z-50 overflow-hidden">
+            <div className="px-4 py-2 border-b border-gray-50 mb-1">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Account</p>
+            </div>
+            
+            {/* View My Products */}
+            <Link 
+              href="/dashboard/products" 
+              onClick={() => setIsProfileMenuOpen(false)} 
+              className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#FA3728] transition-colors"
+            >
+              View My Products
+            </Link>
+            
+            {/* Business Information */}
+            <Link 
+              href="/dashboard/business-info" 
+              onClick={() => setIsProfileMenuOpen(false)} 
+              className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#FA3728] transition-colors"
+            >
+              Business Information
+            </Link>
+            
+            {/* Settings */}
+            <Link 
+              href="/dashboard/settings" 
+              onClick={() => setIsProfileMenuOpen(false)} 
+              className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#FA3728] transition-colors"
+            >
+              Settings
+            </Link>
+            
+            <div className="h-px bg-gray-100 my-1" />
+            
+            {/* Sign Out */}
+            <button 
+              onClick={() => {
+                setIsProfileMenuOpen(false);
+                window.location.replace('/auth/signin');
+              }} 
+              className="w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
@@ -112,7 +169,7 @@ export default function DashboardLayout({
             </nav>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             {isSearchOpen ? (
               <div className="flex items-center gap-2 bg-gray-50 rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-[#FA3728] border border-gray-100 transition-all">
                 <Search size={16} className="text-gray-400" />
@@ -127,19 +184,24 @@ export default function DashboardLayout({
                 </button>
               </div>
             ) : (
-              <button onClick={() => setIsSearchOpen(true)} className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+              <button onClick={() => setIsSearchOpen(true)} className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
                 <Search size={20} />
               </button>
             )}
-            <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors relative">
+            <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors relative">
               <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-[#FA3728] rounded-full border-2 border-white"></span>
+              <span className="absolute top-1 right-1 w-2 h-2 bg-[#FA3728] rounded-full border-2 border-white"></span>
             </button>
+            
+            {/* The new Profile Dropdown */}
+            <div className="pl-2 border-l border-gray-200">
+               <ProfileDropdown />
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Mobile Top Header (Matches Prototype Image) */}
+      {/* Mobile Top Header */}
       <header className="md:hidden bg-white px-4 py-3 sticky top-0 z-40 border-b border-gray-100">
         {isSearchOpen ? (
           <div className="flex items-center gap-2 bg-gray-50 rounded-full px-3 py-2 focus-within:ring-1 focus-within:ring-[#FA3728] border border-gray-100 transition-all w-full">
@@ -169,20 +231,25 @@ export default function DashboardLayout({
                 Vendor
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setIsSearchOpen(true)} className="p-2 text-gray-600 hover:text-gray-900">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setIsSearchOpen(true)} className="p-1 text-gray-600 hover:text-gray-900">
                 <Search size={20} />
               </button>
-              <button className="p-2 text-gray-600 hover:text-gray-900 relative">
+              <button className="p-1 text-gray-600 hover:text-gray-900 relative">
                 <Bell size={20} />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-[#FA3728] rounded-full border-2 border-white"></span>
+                <span className="absolute top-1 right-1 w-2 h-2 bg-[#FA3728] rounded-full border-2 border-white"></span>
               </button>
+              
+              {/* The new Profile Dropdown on Mobile */}
+              <div className="pl-1">
+                 <ProfileDropdown />
+              </div>
             </div>
           </div>
         )}
       </header>
 
-      {/* Main Content Area - logically constrained for desktop, edge-to-edge for mobile */}
+      {/* Main Content Area */}
       <main className="max-w-xl md:max-w-5xl mx-auto w-full pb-20 md:pb-8 pt-4 md:pt-8 min-h-screen">
         <div className="bg-transparent md:bg-white md:rounded-2xl md:shadow-sm md:border md:border-gray-100 min-h-[85vh] overflow-hidden relative">
           {children}
