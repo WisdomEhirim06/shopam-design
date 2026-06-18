@@ -242,6 +242,7 @@ export default function ProductsPage() {
       const axiosErr = err as any;
       const status = axiosErr?.response?.status;
       const data = axiosErr?.response?.data;
+      console.error('Failed to create product:', axiosErr);
 
       if (status === 403) {
         const backendMsg = data?.detail || data?.message || data?.error;
