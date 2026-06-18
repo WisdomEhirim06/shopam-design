@@ -165,18 +165,18 @@ export default function ProductDetailPage() {
             {/* Vendor Info */}
             <div className="flex items-start justify-between">
               <Link
-                href={`/vendors/${product.owner}`}
+                href={`/vendors/${product.owner_name ? product.owner_name[0].toUpperCase() : 'Vendor'}`}
                 className="flex items-center gap-3 group"
               >
                 <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center">
                   <span className="text-white font-bold text-lg">
-                    {product.owner_name[0]}
-                  </span>
+  {product.owner_name ? product.owner_name[0].toUpperCase() : 'V'}
+</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900 group-hover:text-[#FA3728] transition-colors">
-                    {product.owner_name}
-                  </h3>
+                  <span className="text-white font-bold text-lg">
+  {product.owner_name ? product.owner_name.toUpperCase() : 'V'}
+</span>
                 </div>
               </Link>
             </div>
@@ -287,10 +287,10 @@ export default function ProductDetailPage() {
           <div className="mt-12">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
-                More from {product.owner_name}
+                More from {product.owner_name ? product.owner_name.toUpperCase() : 'Vendor'}
               </h2>
               <Link
-                href={`/vendors/${product.owner}`}
+                href={`/vendors/${product.owner_name ? product.owner_name[0].toUpperCase() : 'Vendor'}`}
                 className="flex items-center gap-2 text-[#FA3728] hover:text-[#E31B23] font-medium"
               >
                 See all
