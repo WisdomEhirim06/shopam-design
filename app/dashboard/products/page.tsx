@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, MoreVertical, X, ImageIcon, Package, Loader2, Camera, Grid2x2 } from 'lucide-react';
 import { productsService, categoriesService } from '../../../lib/api/products';
@@ -94,6 +95,7 @@ export default function ProductsPage() {
   const [categoryOptions, setCategoryOptions] = useState<TaxonomyOption[]>([]);
   const [categoriesLoaded, setCategoriesLoaded] = useState(false);
   const [ven_profile, setVen_profile] = useState<any>(null);
+  const router = useRouter();
 
   const mainImageRef = useRef<HTMLInputElement>(null);
   const subImagesRef = useRef<HTMLInputElement>(null);
@@ -106,6 +108,9 @@ export default function ProductsPage() {
           // Using optional chaining (?.) is a safe way to check if user exists
           if (user?.vendor_profile) {
             setVen_profile(user.vendor_profile);
+          }
+          else {  
+            router.push('/explore');
           }
         } catch (error) {
           console.error("Failed to fetch user:", error);
@@ -122,9 +127,8 @@ export default function ProductsPage() {
   const loadCategories = async () => {
     try {
       const data = await categoriesService.getCategories();
-      const relevantBranch = ven_profile?.business_category
-      ? getRelevantTaxonomy(data, ven_profile.business_category) 
-      : data;
+      const relevantBranch = getRelevantTaxonomy(data, ven_profile.business_category) 
+     
       setCategoryOptions(flattenTaxonomy(relevantBranch));
     } catch {
       // leave options empty
