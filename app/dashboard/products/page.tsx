@@ -108,6 +108,7 @@ export default function ProductsPage() {
           // Using optional chaining (?.) is a safe way to check if user exists
           if (user?.vendor_profile) {
             setVen_profile(user.vendor_profile);
+            console.log('Vendor profile found:', ven_profile);
           }
           else {  
             router.push('/explore');
@@ -115,6 +116,7 @@ export default function ProductsPage() {
         } catch (error) {
           console.error("Failed to fetch user:", error);
         }
+
       };
   
       // 2. Call the function immediately
