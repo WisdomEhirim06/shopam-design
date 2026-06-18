@@ -25,9 +25,9 @@ const CATEGORY_MAP: Record<string, string> = {
 const getRelevantTaxonomy = (data: any[], categoryId: string) => {
   // 1. Get the exact taxonomy name (e.g., "Home & Living")
   const targetName = CATEGORY_MAP[categoryId];
-  console.log('Mapping category ID to name:', categoryId, '→', targetName);
+  console.log('Mapping category ID to name:', categoryId, '→', targetName? targetName : 'Unknown');
   
-  if (!targetName) return data; // Fallback to all data if ID is unknown
+  
 
   // 2. Find the top-level node in the API response that matches
   const relevantBranch = data.find(category => category.name === targetName);
@@ -102,7 +102,6 @@ export default function ProductsPage() {
       const fetchUser = async () => {
         try {
           const user = await authService.getFullProfile();
-          console.log('[PROFILE PAGE] Fetched user:', user);
           
           // Using optional chaining (?.) is a safe way to check if user exists
           if (user?.vendor_profile) {
