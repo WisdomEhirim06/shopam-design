@@ -11,17 +11,22 @@ import {
   ArrowLeft,
   ShoppingBag,
   Loader2,
+  Tag
 } from 'lucide-react';
 import { cartService } from '@/lib/api/cart';
 import { Cart, SubCart, CartItem } from '@/lib/api/types';
-
-
+import apiClient from '@/lib/api/config'; // Make sure this path is correct for your setup
+import { ordersService } from '../../lib/api/services';
 
 export default function CartPage() {
   const [cart, setCart] = useState<Cart | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // New states for ordering
+  const [placingOrder, setPlacingOrder] = useState<string | null>(null);
+  const [promoCodes, setPromoCodes] = useState<Record<string, string>>({});
 
   const fetchCart = async () => {
     try {
@@ -37,8 +42,6 @@ export default function CartPage() {
   };
 
   useEffect(() => {
-    // Guard: if there's no token at all, redirect immediately rather than
-    // letting the API call hit a 401 and trigger the logout flow.
     if (!localStorage.getItem('user')) {
       window.location.replace('/auth/signin?redirect=/cart');
       return;
@@ -51,7 +54,6 @@ export default function CartPage() {
     if (newQty === currentQty) return;
 
     try {
-      // Optimistic update
       if (cart) {
         const updatedSubcarts = cart.subcarts.map(sub => ({
           ...sub,
@@ -63,17 +65,15 @@ export default function CartPage() {
       }
 
       await cartService.updateQuantity(itemId, newQty);
-      // Re-fetch to sync with server (price calculations, etc.)
       fetchCart();
     } catch (err) {
       console.error('Failed to update quantity:', err);
-      fetchCart(); // Rollback on error
+      fetchCart();
     }
   };
 
   const handleRemoveItem = async (itemId: string) => {
     try {
-      // Optimistic update
       if (cart) {
         const updatedSubcarts = cart.subcarts.map(sub => ({
           ...sub,
@@ -109,6 +109,41 @@ export default function CartPage() {
       setError('Failed to clear cart.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // --- NEW: Place Order Logic ---
+  const handlePlaceOrder = async (subcartId: string) => {
+    setPlacingOrder(subcartId);
+    try {
+      const promoCode = promoCodes[subcartId] || '';
+      
+      // Sending the exact payload your PlaceOrderView expects
+      await ordersService.createOrder({
+        target_type: 'subcart',
+        target_id: subcartId,
+        ...(promoCode && { promo_code: promoCode })
+      });
+
+      alert('Order placed successfully! The vendor has been notified.');
+      
+      // Clear the used promo code
+      setPromoCodes(prev => ({ ...prev, [subcartId]: '' }));
+      
+      // Refresh the cart to reflect removed items
+      await fetchCart();
+    } catch (err: any) {
+      console.error('Failed to place order:', err);
+      // Extract the error message from Django ValidationError formatting
+      const errMsg = 
+        err.response?.data?.error || 
+        err.response?.data?.promo_code?.[0] || 
+        err.response?.data?.detail || 
+        'Failed to place order. Please try again.';
+      
+      alert(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
+    } finally {
+      setPlacingOrder(null);
     }
   };
 
@@ -169,7 +204,6 @@ export default function CartPage() {
             /* Grouped Cart Items */
             cart.subcarts.map((subcart, index) => {
               const subtotal = subcart.items.reduce((sum, item) => sum + parseFloat(item.total_price), 0);
-              const vendorSlug = subcart.vendor_name.toLowerCase().replace(/\s+/g, '-');
               const isVendorSelected = selectedVendors.includes(subcart.vendor_id);
 
               return (
@@ -250,19 +284,39 @@ export default function CartPage() {
                   </div>
                   
                   {/* Vendor Subtotal & Order */}
-                  <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+                  <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                       <span className="block text-gray-500 text-xs mb-0.5">Subtotal</span>
                       <span className="font-semibold text-gray-900 text-base">₦{subtotal.toLocaleString()}</span>
                     </div>
-                    <Link
-                      href={`/chats/${vendorSlug}`}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FA3728]/10 hover:bg-[#FA3728]/20 text-[#FA3728] font-medium text-sm rounded-full transition-colors"
-                    >
-                      <MessageCircle size={16} />
-                      Order via Chat
-                    </Link>
+                    
+                    <div className="flex flex-row items-center gap-2">
+                      <div className="relative w-full md:w-32 lg:w-40">
+                        <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Promo code"
+                          value={promoCodes[subcart.id] || ''}
+                          onChange={(e) => setPromoCodes({ ...promoCodes, [subcart.id]: e.target.value })}
+                          className="w-full pl-8 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-full focus:outline-none focus:border-[#FA3728] focus:ring-1 focus:ring-[#FA3728] transition-all uppercase"
+                        />
+                      </div>
+                      
+                      <button
+                        onClick={() => handlePlaceOrder(subcart.id)}
+                        disabled={placingOrder === subcart.id}
+                        className="inline-flex flex-shrink-0 items-center justify-center gap-1.5 px-5 py-2 bg-[#FA3728] hover:bg-[#E31B23] disabled:opacity-60 text-white font-medium text-sm rounded-full transition-colors"
+                      >
+                        {placingOrder === subcart.id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <MessageCircle size={16} />
+                        )}
+                        Place Order
+                      </button>
+                    </div>
                   </div>
+
                 </motion.div>
               );
             })

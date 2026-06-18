@@ -264,6 +264,7 @@ export interface OrderItem {
 export interface CreateOrderRequest {
   target_type: 'cart' | 'subcart' | 'item';
   target_id: string;
+  promo_code?: string | null;
 }
 
 export interface OrderFilters {
