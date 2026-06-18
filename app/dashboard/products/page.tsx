@@ -27,7 +27,7 @@ const getRelevantTaxonomy = (data: any[], categoryId: string) => {
   const targetName = CATEGORY_MAP[categoryId];
   console.log('Mapping category ID to name:', categoryId, '→', targetName? targetName : 'Unknown');
   
-  
+  if (!targetName) return data; // Fallback to all data if ID is unknown
 
   // 2. Find the top-level node in the API response that matches
   const relevantBranch = data.find(category => category.name === targetName);
@@ -125,7 +125,6 @@ export default function ProductsPage() {
       const relevantBranch = ven_profile?.business_category
       ? getRelevantTaxonomy(data, ven_profile.business_category) 
       : data;
-    console.log(relevantBranch);
       setCategoryOptions(flattenTaxonomy(relevantBranch));
     } catch {
       // leave options empty
