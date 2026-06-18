@@ -45,7 +45,7 @@ export const productsService = {
       if (data.description) form.append('description', data.description);
       if (data.tax_inclusive !== undefined) form.append('tax_inclusive', String(data.tax_inclusive));
       if (data.taxonomy_id) form.append('taxonomy_id', data.taxonomy_id);
-      data.images!.forEach((img) => form.append('images', img));
+      data.images!.forEach((img) => form.append('uploaded_images', img));
       const response = await apiClient.post<ProductService>(API_ENDPOINTS.PRODUCTS.CREATE, form);
       return response.data;
     }
