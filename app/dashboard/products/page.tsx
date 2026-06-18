@@ -103,11 +103,11 @@ export default function ProductsPage() {
       // 1. Define an async function inside the effect
       const fetchUser = async () => {
         try {
-          const user = await authService.getFullProfile();
+          const user = await authService.getVendorProfile();
           
           // Using optional chaining (?.) is a safe way to check if user exists
-          if (user?.vendor_profile) {
-            setVen_profile(user.vendor_profile);
+          if (user) {
+            setVen_profile(user);
             console.log('Vendor profile found:', ven_profile);
           }
           else {  

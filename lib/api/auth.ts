@@ -195,9 +195,18 @@ export const authService = {
     const raw = response.data ?? {};
     const user: UserProfile = raw.user ?? raw;
     const vendor_profile: VendorProfile | undefined = raw.vendor_profile ?? raw.profile ?? undefined;
-    console.log('[authService] Fetched full profile:', { user, vendor_profile });
     localStorage.setItem('user', JSON.stringify(user));
     return { user, vendor_profile };
+  },
+  
+  /**
+   * Fetch just the vendor business profile. Useful for pages that only need vendor info and can skip the user data parsing step.
+   */
+  async getVendorProfile(): Promise<VendorProfile | undefined> {
+    const response = await apiClient.get<any>(API_ENDPOINTS.AUTH.PROFILE);
+    const raw = response.data ?? {};
+    const vendor_profile: VendorProfile | undefined = raw.vendor_profile ?? raw.profile ?? undefined;
+    return vendor_profile;
   },
 
   /**
