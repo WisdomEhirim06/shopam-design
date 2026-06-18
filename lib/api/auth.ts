@@ -124,7 +124,7 @@ export const authService = {
 
   // Check if user is authenticated
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('access_token');
+    return !!localStorage.getItem('user');
   },
 
   // Get stored user data
