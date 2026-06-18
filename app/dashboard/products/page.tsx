@@ -100,30 +100,35 @@ export default function ProductsPage() {
   const mainImageRef = useRef<HTMLInputElement>(null);
   const subImagesRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-      // 1. Define an async function inside the effect
-      const fetchUser = async () => {
-        try {
-          const user = await authService.getVendorProfile();
-          
-          // Using optional chaining (?.) is a safe way to check if user exists
-          if (user) {
-            setVen_profile(user);
-            console.log('Vendor profile found:', ven_profile);
-          }
-          else {  
-            router.push('/explore');
-          }
-        } catch (error) {
-          console.error("Failed to fetch user:", error);
+    const fetchUser = async () => {
+      try {
+        const user = await authService.getVendorProfile();
+        if (user) {
+          setVen_profile(user); // This will trigger the next useEffect
+          console.log('Vendor profile loaded:', user);
+        } else {  
+          router.push('/explore');
         }
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
 
-      };
-  
-      // 2. Call the function immediately
-      fetchUser();
-    }, []);
+    fetchUser();
+  }, [router]);
 
-  useEffect(() => { loadProducts(); loadCategories(); }, []);
+  // 2. Fetch Products (Runs once on mount, doesn't need to wait for ven_profile)
+  useEffect(() => { 
+    loadProducts(); 
+  }, []);
+
+  // 3. Fetch Categories (Runs ONLY when ven_profile successfully updates)
+  useEffect(() => {
+    // Only run if ven_profile exists
+    if (ven_profile) {
+      loadCategories();
+    }
+  }, [ven_profile]); // <-- This array tells React to watch this variable
 
 
   const loadCategories = async () => {
