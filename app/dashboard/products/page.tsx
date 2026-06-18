@@ -127,6 +127,7 @@ export default function ProductsPage() {
   const loadCategories = async () => {
     try {
       const data = await categoriesService.getCategories();
+      console.log("Bsuiness category from vendor profile:", ven_profile?.business_category);
       const relevantBranch = getRelevantTaxonomy(data, ven_profile.business_category) 
      
       setCategoryOptions(flattenTaxonomy(relevantBranch));
