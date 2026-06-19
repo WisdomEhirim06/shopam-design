@@ -144,22 +144,29 @@ export default function EditProductPage() {
 
   // ── Image Handlers ───────────────────────────────────────────────────────
   
+  // ── Image Handlers ───────────────────────────────────────────────────────
+  
   const totalActiveImages = existingImages.length + newImages.length;
 
   const handleAddImages = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
 
-    setNewImages((prevFiles) => {
-      const remainingSlots = MAX_IMAGES - totalActiveImages;
-      const filesToAdd = files.slice(0, remainingSlots);
-      
-      // Generate previews
-      const previewsToAdd = filesToAdd.map((file) => URL.createObjectURL(file));
-      setNewImagePreviews((prevPreviews) => [...prevPreviews, ...previewsToAdd]);
+    // 1. Calculate slots outside the state setters
+    const remainingSlots = MAX_IMAGES - totalActiveImages;
+    if (remainingSlots <= 0) {
+      e.target.value = '';
+      return; // Already at max limit
+    }
 
-      return [...prevFiles, ...filesToAdd];
-    });
+    const filesToAdd = files.slice(0, remainingSlots);
+    
+    // 2. Generate previews
+    const previewsToAdd = filesToAdd.map((file) => URL.createObjectURL(file));
+
+    // 3. Update states as siblings (do NOT nest setStates inside each other)
+    setNewImages((prev) => [...prev, ...filesToAdd]);
+    setNewImagePreviews((prev) => [...prev, ...previewsToAdd]);
 
     // Reset input
     e.target.value = '';
@@ -171,10 +178,19 @@ export default function EditProductPage() {
   };
 
   const handleRemoveNewImage = (index: number) => {
+    // Best practice: Clean up the browser memory when removing a preview
+    URL.revokeObjectURL(newImagePreviews[index]);
+
     setNewImages((prev) => prev.filter((_, i) => i !== index));
     setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Cleanup effect to prevent memory leaks when component unmounts
+  useEffect(() => {
+    return () => {
+      newImagePreviews.forEach(preview => URL.revokeObjectURL(preview));
+    };
+  }, [newImagePreviews]);
   // ── Form Submission ──────────────────────────────────────────────────────
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -193,7 +209,7 @@ export default function EditProductPage() {
         item_type: formData.item_type,
         tax_inclusive: formData.tax_inclusive,
         uploaded_images: newImages.length > 0 ? newImages : undefined,
-        deleted_image_ids: deletedImageIds.length > 0 ? deletedImageIds.map(id => Number(id)) : undefined,
+        deleted_image_ids: deletedImageIds.length > 0 ? deletedImageIds : undefined,
       };
 
       await productsService.updateProduct(productId, payload);

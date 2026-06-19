@@ -81,7 +81,7 @@ export const productsService = {
   /** Update product (vendor only) */
   async updateProduct(
   id: string, 
-  data: Partial<ProductServiceCreate> & { deleted_image_ids?: number[], uploaded_images?: File[] }
+  data: Partial<ProductServiceCreate> & { deleted_image_ids?: string[], uploaded_images?: File[] }
 ): Promise<ProductService> {
   
   // The helper automatically strips out any fields that are undefined,
