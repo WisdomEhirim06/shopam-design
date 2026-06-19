@@ -82,8 +82,7 @@ export default function EditProductPage() {
     description: '',
     price: '',
     item_type: 'product' as ItemType,
-    tax_inclusive: false,
-    taxonomy_id: '',
+    tax_inclusive: false
   });
 
   // Image Management
@@ -122,8 +121,7 @@ export default function EditProductPage() {
           description: product.description || '',
           price: product.price ? product.price.toString() : '',
           item_type: product.item_type || 'product',
-          tax_inclusive: product.tax_inclusive || false,
-          taxonomy_id: product.taxonomy_path || '',
+          tax_inclusive: product.tax_inclusive || false
         });
 
         // Set existing images
@@ -194,7 +192,6 @@ export default function EditProductPage() {
         price: formData.price,
         item_type: formData.item_type,
         tax_inclusive: formData.tax_inclusive,
-        taxonomy_id: formData.taxonomy_id || undefined,
         uploaded_images: newImages.length > 0 ? newImages : undefined,
         deleted_image_ids: deletedImageIds.length > 0 ? deletedImageIds.map(id => Number(id)) : undefined,
       };
@@ -396,37 +393,6 @@ export default function EditProductPage() {
               </select>
             </div>
           </div>
-
-          {/* Category */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Category
-            </label>
-            <select
-              value={formData.taxonomy_id}
-              onChange={(e) => setFormData({ ...formData, taxonomy_id: e.target.value })}
-              disabled={!categoriesLoaded}
-              className="w-full bg-gray-50 border border-gray-200 focus:border-[#FA3728] focus:bg-white focus:ring-0 rounded-xl px-4 py-3 text-sm text-gray-900 transition-all disabled:opacity-50"
-            >
-              <option value="">
-                {!categoriesLoaded ? 'Loading categories...' : 'Select a category'}
-              </option>
-              {categoryOptions.map((option) => {
-                const isParent = option.depth === 0;
-                return (
-                  <option
-                    key={option.id}
-                    value={option.id}
-                    disabled={isParent}
-                    className={isParent ? 'font-bold text-gray-400 bg-gray-100' : 'pl-4'}
-                  >
-                    {'—'.repeat(option.depth)} {option.name}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-
           {/* Tax inclusive toggle */}
           <div
             onClick={() => setFormData({ ...formData, tax_inclusive: !formData.tax_inclusive })}
