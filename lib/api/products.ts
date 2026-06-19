@@ -70,9 +70,6 @@ export const productsService = {
   const response = await apiClient.post<ProductService>(
     API_ENDPOINTS.PRODUCTS.CREATE, 
     form,
-    {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }
   );
   
   return response.data;
@@ -90,9 +87,7 @@ export const productsService = {
     uploaded_images: data.images, // If this is empty, the helper skips it
   });
 
-    const response = await apiClient.patch<ProductService>(API_ENDPOINTS.PRODUCTS.UPDATE(id), form, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    const response = await apiClient.patch<ProductService>(API_ENDPOINTS.PRODUCTS.UPDATE(id), form,);
     return response.data;
   },
 
