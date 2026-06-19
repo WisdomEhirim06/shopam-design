@@ -10,14 +10,14 @@ export function objectToFormData(data: Record<string, any>): FormData {
   const form = new FormData();
   
   Object.entries(data).forEach(([key, value]) => {
-    // Skip null/undefined
+    // Skip null/undefined values so we don't accidentally overwrite data with blanks
     if (value === null || value === undefined) return;
 
-    // Handle Image Arrays
-    if (key === 'uploaded_images' && Array.isArray(value)) {
-      value.forEach((img) => form.append('uploaded_images', img));
+    // Handle ANY Array (e.g., uploaded_images [files] OR deleted_image_ids [numbers])
+    if (Array.isArray(value)) {
+      value.forEach((item) => form.append(key, item));
     } 
-    // Handle simple values
+    // Handle simple values (strings, booleans, numbers)
     else {
       form.append(key, value);
     }
@@ -70,27 +70,40 @@ export const productsService = {
   const response = await apiClient.post<ProductService>(
     API_ENDPOINTS.PRODUCTS.CREATE, 
     form,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }
   );
   
   return response.data;
   },
 
   /** Update product (vendor only) */
-  async updateProduct(id: string, data: Partial<ProductServiceCreate>): Promise<ProductService> {
-    const form = objectToFormData({
+  async updateProduct(
+  id: string, 
+  data: Partial<ProductServiceCreate> & { deleted_image_ids?: number[], uploaded_images?: File[] }
+): Promise<ProductService> {
+  
+  // The helper automatically strips out any fields that are undefined,
+  // so it will only send the exact fields you are trying to update!
+  const form = objectToFormData({
     title: data.title,
     price: data.price,
     item_type: data.item_type,
     description: data.description,
     tax_inclusive: data.tax_inclusive,
     taxonomy_id: data.taxonomy_id,
-    uploaded_images: data.images, // If this is empty, the helper skips it
+    uploaded_images: data.uploaded_images || data.images, // Supports both naming conventions
+    deleted_image_ids: data.deleted_image_ids,
   });
 
-    const response = await apiClient.patch<ProductService>(API_ENDPOINTS.PRODUCTS.UPDATE(id), form,);
-    return response.data;
-  },
-
+  const response = await apiClient.patch<ProductService>(
+    API_ENDPOINTS.PRODUCTS.UPDATE(id), 
+    form
+  );
+  
+  return response.data;
+},
   /** Delete product (vendor only) */
   async deleteProduct(id: string): Promise<void> {
     await apiClient.delete(API_ENDPOINTS.PRODUCTS.DELETE(id));
