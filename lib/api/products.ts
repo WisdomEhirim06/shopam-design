@@ -6,7 +6,25 @@ import type {
   PaginatedResponse,
   Category,
 } from './types';
+export function objectToFormData(data: Record<string, any>): FormData {
+  const form = new FormData();
+  
+  Object.entries(data).forEach(([key, value]) => {
+    // Skip null/undefined
+    if (value === null || value === undefined) return;
 
+    // Handle Image Arrays
+    if (key === 'uploaded_images' && Array.isArray(value)) {
+      value.forEach((img) => form.append('uploaded_images', img));
+    } 
+    // Handle simple values
+    else {
+      form.append(key, value);
+    }
+  });
+  
+  return form;
+}
 export const productsService = {
   /** Get all products on the platform (public) */
   async getProducts(filters?: ProductFilters): Promise<PaginatedResponse<ProductService>> {
@@ -35,62 +53,46 @@ export const productsService = {
 
   /** Create a new product (vendor only) */
   async createProduct(data: ProductServiceCreate): Promise<ProductService> {
-    const hasImages = !!data.images?.length;
 
-    if (hasImages) {
-      const form = new FormData();
-      form.append('title', data.title);
-      form.append('price', data.price);
-      form.append('item_type', data.item_type);
-      if (data.description) form.append('description', data.description);
-      if (data.tax_inclusive !== undefined) form.append('tax_inclusive', String(data.tax_inclusive));
-      if (data.taxonomy_id) form.append('taxonomy_id', data.taxonomy_id);
-      data.images!.forEach((img) => form.append('uploaded_images', img));
-      const response = await apiClient.post<ProductService>(API_ENDPOINTS.PRODUCTS.CREATE, form);
-      return response.data;
+  // If you have images, use FormData. 
+  // If not, you can still use FormData! DRF handles it perfectly 
+  // as long as you aren't sending files that aren't there.
+  const form = objectToFormData({
+    title: data.title,
+    price: data.price,
+    item_type: data.item_type,
+    description: data.description,
+    tax_inclusive: data.tax_inclusive,
+    taxonomy_id: data.taxonomy_id,
+    uploaded_images: data.images, // If this is empty, the helper skips it
+  });
+
+  const response = await apiClient.post<ProductService>(
+    API_ENDPOINTS.PRODUCTS.CREATE, 
+    form,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' }
     }
-
-    // No files — send plain JSON so DRF parses types correctly
-    const payload: Record<string, unknown> = {
-      title: data.title,
-      price: data.price,
-      item_type: data.item_type,
-    };
-    if (data.description) payload.description = data.description;
-    if (data.tax_inclusive !== undefined) payload.tax_inclusive = data.tax_inclusive;
-    if (data.taxonomy_id) payload.taxonomy_id = data.taxonomy_id;
-
-    const response = await apiClient.post<ProductService>(API_ENDPOINTS.PRODUCTS.CREATE, payload);
-    console.log('RESPONSE', response.data);
-    return response.data;
+  );
+  
+  return response.data;
   },
 
   /** Update product (vendor only) */
   async updateProduct(id: string, data: Partial<ProductServiceCreate>): Promise<ProductService> {
-    const hasImages = !!data.images?.length;
+    const form = objectToFormData({
+    title: data.title,
+    price: data.price,
+    item_type: data.item_type,
+    description: data.description,
+    tax_inclusive: data.tax_inclusive,
+    taxonomy_id: data.taxonomy_id,
+    uploaded_images: data.images, // If this is empty, the helper skips it
+  });
 
-    if (hasImages) {
-      const form = new FormData();
-      if (data.title) form.append('title', data.title);
-      if (data.price) form.append('price', data.price);
-      if (data.item_type) form.append('item_type', data.item_type);
-      if (data.description) form.append('description', data.description);
-      if (data.tax_inclusive !== undefined) form.append('tax_inclusive', String(data.tax_inclusive));
-      if (data.taxonomy_id) form.append('taxonomy_id', data.taxonomy_id);
-      data.images!.forEach((img) => form.append('uploaded_images', img));
-      const response = await apiClient.patch<ProductService>(API_ENDPOINTS.PRODUCTS.UPDATE(id), form);
-      return response.data;
-    }
-
-    const payload: Record<string, unknown> = {};
-    if (data.title) payload.title = data.title;
-    if (data.price) payload.price = data.price;
-    if (data.item_type) payload.item_type = data.item_type;
-    if (data.description) payload.description = data.description;
-    if (data.tax_inclusive !== undefined) payload.tax_inclusive = data.tax_inclusive;
-    if (data.taxonomy_id) payload.taxonomy_id = data.taxonomy_id;
-
-    const response = await apiClient.patch<ProductService>(API_ENDPOINTS.PRODUCTS.UPDATE(id), payload);
+    const response = await apiClient.patch<ProductService>(API_ENDPOINTS.PRODUCTS.UPDATE(id), form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
     return response.data;
   },
 
