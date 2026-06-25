@@ -62,7 +62,7 @@ export default function DashboardLayout({
     { href: '/dashboard', label: 'Home' },
     { href: '/dashboard/products', label: 'Products' },
     { href: '/dashboard/orders', label: 'Orders' },
-    {href:  'dashboard/chats', label:'Chats'}
+    {href:  '/dashboard/chats', label:'Chats'}
   ];
 
   // The Dropdown Menu Component to reuse in both Mobile and Desktop headers
