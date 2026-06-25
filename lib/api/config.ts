@@ -157,9 +157,9 @@ export const API_ENDPOINTS = {
 
   // Messages / DM
   MESSAGES: {
-    LIST: '/api/posts/messages/',
-    THREAD: '/api/posts/messages/thread/',
-    DETAIL: (id: string) => `/api/posts/messages/${id}/`,
+    LIST: '/api/posts/messages',
+    THREAD: '/api/posts/messages/thread',
+    DETAIL: (id: string) => `/api/posts/messages/${id}`,
   },
 
   REVIEWS: {
