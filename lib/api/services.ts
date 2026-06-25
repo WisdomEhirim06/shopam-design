@@ -342,6 +342,7 @@ export const messagesService = {
       API_ENDPOINTS.MESSAGES.THREAD,
       { params: { user_id: userId } }
     );
+    console.log(response)
     return response.data;
   },
 
