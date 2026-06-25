@@ -13,6 +13,7 @@ interface Conversation {
 }
 
 export default function MessagesPage() {
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [thread, setThread] = useState<Message[]>([]);
@@ -20,35 +21,144 @@ export default function MessagesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
+
+  const ws = useRef<WebSocket | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fetchUser = async () => {
+
+  /**
+   * Track message IDs we've already added so that when the WebSocket echoes
+   * back a message we sent via REST, we don't show it twice.
+   */
+  const seenMessageIds = useRef<Set<string | number>>(new Set());
+
+  // ── 1. Boot ─────────────────────────────────────────────────────────────
+  // BUG FIXED: fetchUser was previously called in the component body (outside
+  // any useEffect), so it ran on every single render. It's now inside a
+  // useEffect, and loadConversations is called only once the user is known —
+  // fixing the stale-closure bug where currentUser was always null inside
+  // loadConversations, causing all conversations to be grouped incorrectly.
+  useEffect(() => {
+    const init = async () => {
       try {
-       const currentUser  = await authService.getCurrentUser();
-        
-        // Using optional chaining (?.) is a safe way to check if user exists
-        if (currentUser) {
-          setCurrentUser(currentUser);
+        const user = await authService.getCurrentUser();
+        if (user) {
+          setCurrentUser(user);
+          await loadConversations(user); // pass user directly — avoids stale closure
         }
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
+      } catch (err) {
+        console.error('Failed to initialize:', err);
+        setError('Failed to load messages.');
+      } finally {
+        setIsLoading(false);
       }
     };
-    fetchUser();
-  useEffect(() => {
-    loadConversations();
+    init();
   }, []);
 
+  // ── 2. Auto-scroll ───────────────────────────────────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [thread]);
+  }, [thread, isOtherUserTyping]);
 
-  const loadConversations = async () => {
+  // ── 3. WebSocket lifecycle ───────────────────────────────────────────────
+  // Opens a connection when a thread is selected, tears it down (including the
+  // typing timeout) when the user navigates away or picks a different thread.
+  useEffect(() => {
+    if (!currentUser || !selectedUserId) return;
+
+    // Close any socket left open from a previous thread
+    if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
+      ws.current.close(1000, 'switching thread');
+    }
+
+    // page.tsx (inside your useEffect or connect function)
+
+    // 1. Get the session ID from your auth cookie
+    const match = document.cookie.match(/(?:^|;\s*)sessionid=([^;]*)/);
+    const sessionId = match ? decodeURIComponent(match[1]) : '';
+
+    // 2. Connect directly to the ECS backend domain, bypassing Next.js proxy
+    const backendDomain = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || 'api.shopam.net'; 
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+    const socket = new WebSocket(
+  `${wsProtocol}//${backendDomain}/ws/chat/${selectedUserId}/?session_id=${sessionId}`
+);
+    ws.current = socket
+
+    socket.onopen = () => {
+      // Ready — nothing special needed here
+    };
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'typing') {
+        setIsOtherUserTyping(data.is_typing);
+        // Failsafe: hide the indicator after 3 s in case the stop event drops
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        if (data.is_typing) {
+          typingTimeoutRef.current = setTimeout(() => setIsOtherUserTyping(false), 3000);
+        }
+
+      } else if (data.type === 'read_receipt') {
+        setThread((prev) =>
+          prev.map((msg) =>
+            msg.id === data.message_id ? { ...msg, status: 'read' } : msg
+          )
+        );
+
+      } else if (data.type === 'chat_message') {
+        const incoming: Message = data.message;
+        // BUG FIXED: without deduplication the sender's own message appeared
+        // twice — once from the REST response and once from the WS echo.
+        if (!seenMessageIds.current.has(incoming.id)) {
+          seenMessageIds.current.add(incoming.id);
+          setThread((prev) => [...prev, incoming]);
+        }
+      }
+    };
+
+    socket.onerror = (err) => {
+      console.error('WebSocket error:', err);
+    };
+
+    socket.onclose = (event) => {
+      // Don't attempt reconnection for intentional closes (code 1000).
+      if (event.code !== 1000) {
+        console.warn(`WebSocket closed unexpectedly (code ${event.code})`);
+      }
+    };
+
+    return () => {
+      // BUG FIXED: the old cleanup only closed the socket — it never cleared
+      // typingTimeoutRef, so the "typing…" indicator could fire after leaving
+      // the thread if the timeout was still pending.
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+      setIsOtherUserTyping(false);
+      socket.close(1000, 'left thread');
+    };
+  }, [currentUser, selectedUserId]);
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  /**
+   * `user` is passed in rather than read from state so this can safely be
+   * called from the init effect before setCurrentUser has flushed to state.
+   */
+  const loadConversations = async (user: any) => {
     try {
       const msgs = await messagesService.getMessages();
       const grouped: Record<string, Message[]> = {};
       msgs.forEach((msg) => {
-        const otherId = msg.sender === currentUser?.id ? msg.recipient : msg.sender;
+        // BUG FIXED: was previously `msg.sender === currentUser?.id` which was
+        // always false because currentUser was null at call time.
+        const otherId = msg.sender === user.id ? msg.recipient : msg.sender;
         if (!grouped[otherId]) grouped[otherId] = [];
         grouped[otherId].push(msg);
       });
@@ -56,11 +166,7 @@ export default function MessagesPage() {
         const sorted = [...messages].sort(
           (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
-        return {
-          userId,
-          allMessages: sorted,
-          lastMessage: sorted[sorted.length - 1],
-        };
+        return { userId, allMessages: sorted, lastMessage: sorted[sorted.length - 1] };
       });
       setConversations(
         convs.sort(
@@ -71,21 +177,21 @@ export default function MessagesPage() {
       );
     } catch {
       setError('Failed to load messages.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const openThread = async (userId: string) => {
     setSelectedUserId(userId);
     setError('');
+    seenMessageIds.current.clear();
     try {
       const msgs = await messagesService.getThread(userId);
-      setThread(
-        [...msgs].sort(
-          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        )
+      const sorted = [...msgs].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
+      // Pre-populate the seen-IDs set so the WS echo of these messages is ignored
+      sorted.forEach((m) => seenMessageIds.current.add(m.id));
+      setThread(sorted);
     } catch {
       setError('Failed to load conversation.');
     }
@@ -94,6 +200,12 @@ export default function MessagesPage() {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !selectedUserId) return;
+
+    // Tell the other side we've stopped typing before the message arrives
+    if (ws.current?.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify({ action: 'typing', is_typing: false }));
+    }
+
     setIsSending(true);
     setError('');
     try {
@@ -101,15 +213,29 @@ export default function MessagesPage() {
         recipient: selectedUserId,
         content: input.trim(),
       });
+      // Register the ID before appending so the WS echo (if any) is deduplicated
+      seenMessageIds.current.add(msg.id);
       setThread((prev) => [...prev, msg]);
       setInput('');
-      loadConversations();
+      // Refresh the conversation list to update the "last message" preview
+      if (currentUser) loadConversations(currentUser);
     } catch {
       setError('Failed to send message. Please try again.');
     } finally {
       setIsSending(false);
     }
   };
+
+  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    if (ws.current?.readyState === WebSocket.OPEN) {
+      ws.current.send(
+        JSON.stringify({ action: 'typing', is_typing: e.target.value.length > 0 })
+      );
+    }
+  };
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-8">
@@ -125,7 +251,12 @@ export default function MessagesPage() {
       {error && (
         <div className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm flex items-center justify-between">
           <span>{error}</span>
-          <button onClick={() => setError('')} className="ml-3 font-bold text-red-400 hover:text-red-300">×</button>
+          <button
+            onClick={() => setError('')}
+            className="ml-3 font-bold text-red-400 hover:text-red-300"
+          >
+            ×
+          </button>
         </div>
       )}
 
@@ -143,7 +274,7 @@ export default function MessagesPage() {
         ) : (
           <div className="flex h-[600px]">
 
-            {/* Conversation list */}
+            {/* ── Conversation list ── */}
             <div
               className={`w-full md:w-72 border-r border-white/10 flex-shrink-0 flex flex-col ${
                 selectedUserId ? 'hidden md:flex' : 'flex'
@@ -192,7 +323,7 @@ export default function MessagesPage() {
               </div>
             </div>
 
-            {/* Thread view */}
+            {/* ── Thread view ── */}
             <div className={`flex-1 flex flex-col ${!selectedUserId ? 'hidden md:flex' : 'flex'}`}>
               {!selectedUserId ? (
                 <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center px-6">
@@ -214,9 +345,17 @@ export default function MessagesPage() {
                     <div className="w-9 h-9 rounded-full bg-crimson/20 flex items-center justify-center text-crimson font-bold text-sm flex-shrink-0">
                       {selectedUserId.slice(0, 2).toUpperCase()}
                     </div>
-                    <p className="font-semibold text-white text-sm">
-                      Customer #{selectedUserId.slice(0, 8).toUpperCase()}
-                    </p>
+                    <div className="flex-1">
+                      <p className="font-semibold text-white text-sm">
+                        Customer #{selectedUserId.slice(0, 8).toUpperCase()}
+                      </p>
+                      {/* BUG FIXED: isOtherUserTyping was tracked but never
+                          rendered anywhere — the typing indicator never appeared.
+                          Shown here as a subtitle in the header. */}
+                      {isOtherUserTyping && (
+                        <p className="text-[11px] text-crimson animate-pulse">typing…</p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Messages */}
@@ -229,7 +368,10 @@ export default function MessagesPage() {
                       thread.map((msg) => {
                         const isSelf = msg.sender === currentUser?.id;
                         return (
-                          <div key={msg.id} className={`flex ${isSelf ? 'justify-end' : 'justify-start'}`}>
+                          <div
+                            key={msg.id}
+                            className={`flex ${isSelf ? 'justify-end' : 'justify-start'}`}
+                          >
                             <div
                               className={`max-w-[70%] px-4 py-2.5 rounded-2xl text-sm shadow-sm ${
                                 isSelf
@@ -238,7 +380,11 @@ export default function MessagesPage() {
                               }`}
                             >
                               <p className="leading-relaxed">{msg.content}</p>
-                              <p className={`text-[10px] mt-1 text-right ${isSelf ? 'text-white/60' : 'text-gray-500'}`}>
+                              <p
+                                className={`text-[10px] mt-1 text-right ${
+                                  isSelf ? 'text-white/60' : 'text-gray-500'
+                                }`}
+                              >
                                 {new Date(msg.created_at).toLocaleTimeString('en-NG', {
                                   hour: '2-digit',
                                   minute: '2-digit',
@@ -249,6 +395,20 @@ export default function MessagesPage() {
                         );
                       })
                     )}
+
+                    {/* Animated typing bubble */}
+                    {isOtherUserTyping && (
+                      <div className="flex justify-start">
+                        <div className="bg-white/10 rounded-2xl rounded-bl-sm px-4 py-3">
+                          <span className="flex gap-1 items-center h-3">
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
                     <div ref={messagesEndRef} />
                   </div>
 
@@ -261,7 +421,7 @@ export default function MessagesPage() {
                       <input
                         type="text"
                         value={input}
-                        onChange={(e) => setInput(e.target.value)}
+                        onChange={handleTyping}
                         placeholder="Type a message..."
                         className="w-full bg-transparent px-5 py-3 text-sm text-white placeholder-gray-500 outline-none"
                       />
