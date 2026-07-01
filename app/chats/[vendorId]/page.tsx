@@ -98,34 +98,37 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
   // ── 1. Initial boot ──────────────────────────────────────────────────────
+  // ── 1. Initial boot: Fetch User First ─────────────────────────────────────
   useEffect(() => {
-  const initialize = async () => {
     if (!authService.isAuthenticated()) {
       router.push(`/auth/signin?redirect=/chats/${orderId}`);
       return;
     }
+    const fetchUser = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        setCurrentUser(user);
+        if (user) {
+          setIsVendor(user?.is_vendor || false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      }
+    };
+    
+    fetchUser();
+    // REMOVED refreshOrder() FROM HERE
+  }, [router, orderId]);
 
-    try {
-      setIsLoading(true);
 
-      const user = await authService.getCurrentUser();
-
-      setCurrentUser(user);
-      setIsVendor(user?.is_vendor || false);
-
-      // Now that we have the user, load the order/chat
-      await refreshOrder(currentUser);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
+  // ── 1b. Fetch Order only AFTER user is loaded ───────────────────────────
+  useEffect(() => {
+    // Only run refreshOrder once currentUser state actually exists
+    if (currentUser && currentUser.id) {
+      refreshOrder();
     }
-  };
-
-  initialize();
-}, [orderId]);
-
-  console.log("Current user", currentUser);
+  }, [currentUser?.id, orderId]); 
+  // We depend on currentUser?.id so this fires exactly once when the user loads
 
   // ── 2. WebSocket lifecycle ───────────────────────────────────────────────
   useEffect(() => {
@@ -229,58 +232,54 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
 
   // ── Data fetching ────────────────────────────────────────────────────────
 
-  const refreshOrder = async (user = currentUser) => {
-  if (!user) return;
-  console.log("Refreshing order for user", user);
+  const refreshOrder = async () => {
+    try {
+      setIsLoading(true);
+      const fetchedOrder = await ordersService.getOrder(orderId);
+      setOrder(fetchedOrder);
 
-  try {
-    const fetchedOrder = await ordersService.getOrder(orderId);
-    setOrder(fetchedOrder);
+      const otherUserId = currentUser?.is_vendor ? fetchedOrder.customer : fetchedOrder.vendor;
+      let textThreads: any[] = [];
+      try {
+        if (otherUserId) {
+          textThreads = await messagesService.getThread(otherUserId);
+        }
+      } catch (err) {
+        // Ignored — text thread is non-critical
+      }
 
-    const otherUserId = user.is_vendor
-      ? fetchedOrder.customer
-      : fetchedOrder.vendor;
-
-    let thread: any[] = [];
-
-    if (otherUserId) {
-      thread = await messagesService.getThread(otherUserId);
+      buildMessagesUI(fetchedOrder, textThreads);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-    console.log("Fetched order and thread", fetchedOrder, thread);
+  };
 
-    buildMessagesUI(fetchedOrder, thread, user);
-  } catch (err) {
-    console.error(err);
-  }
-};
+  const buildMessagesUI = (order: Order, thread: any[]) => {
+    const currentUserId = currentUser?.id;
 
-  const buildMessagesUI = (
-  order: Order,
-  textThreads: any[],
-  user: any = currentUser
-) => {
+if (!currentUserId) return;
+    console.log("Thread", thread);
 
-  const messages: Message[] = [];
-  console.log("Building messages UI for order", order, "with threads", textThreads);
+    const mappedMessages: Message[] = thread.map(msg => ({
+  id: msg.id,
+  type: 'text',
+  sender: msg.sender === currentUser.id ? 'user' : 'vendor',
+  vendor: '',
+  status: '',
+  items: [],
+  total: 0,
+  text: msg.content,
+  time: new Date(msg.created_at).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  }),
+}));
 
-  textThreads.forEach(msg => {
-    messages.push({
-      id: msg.id,
-      type: 'text',
-      sender: msg.sender === user.id ? 'user' : 'vendor',
-      vendor: '',
-      status: '',
-      items: [],
-      total: 0,
-      text: msg.content,
-      time: new Date(msg.created_at).toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    });
-  });
+console.log("Mapped", mappedMessages);
 
-  setMessages(messages);
+setMessages(mappedMessages);
 };
 
   // ── 4. Typing indicator emitter ──────────────────────────────────────────
