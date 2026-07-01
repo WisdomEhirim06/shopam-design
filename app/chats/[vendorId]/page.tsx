@@ -247,7 +247,9 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
   };
 
   const buildMessagesUI = (order: Order, thread: any[]) => {
-    const currentUserId = currentUser.id;
+    const currentUserId = currentUser?.id;
+
+    if (!currentUserId) return;
     console.log("Thread", thread);
 
     const mappedMessages: Message[] = thread.map(msg => ({
