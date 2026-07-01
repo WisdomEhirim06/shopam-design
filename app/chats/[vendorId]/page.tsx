@@ -99,24 +99,31 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
 
   // ── 1. Initial boot ──────────────────────────────────────────────────────
   useEffect(() => {
+  const initialize = async () => {
     if (!authService.isAuthenticated()) {
       router.push(`/auth/signin?redirect=/chats/${orderId}`);
       return;
     }
-    const fetchUser = async () => {
-      try {
-        const user = await authService.getCurrentUser();
-        setCurrentUser(user);
-        if (user) {
-          setIsVendor(user?.is_vendor || false);
-        }
-      } catch (error) {
-        console.error('Failed to fetch user:', error);
-      }
-    };
-    fetchUser();
-    refreshOrder();
-  }, [router, orderId]);
+
+    try {
+      setIsLoading(true);
+
+      const user = await authService.getCurrentUser();
+
+      setCurrentUser(user);
+      setIsVendor(user?.is_vendor || false);
+
+      // Now that we have the user, load the order/chat
+      await refreshOrder(currentUser);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  initialize();
+}, [orderId]);
 
   console.log("Current user", currentUser);
 
@@ -222,54 +229,55 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
 
   // ── Data fetching ────────────────────────────────────────────────────────
 
-  const refreshOrder = async () => {
-    try {
-      setIsLoading(true);
-      const fetchedOrder = await ordersService.getOrder(orderId);
-      setOrder(fetchedOrder);
+  const refreshOrder = async (user = currentUser) => {
+  if (!user) return;
 
-      const otherUserId = currentUser?.is_vendor ? fetchedOrder.customer : fetchedOrder.vendor;
-      let textThreads: any[] = [];
-      try {
-        if (otherUserId) {
-          textThreads = await messagesService.getThread(otherUserId);
-        }
-      } catch (err) {
-        // Ignored — text thread is non-critical
-      }
+  try {
+    const fetchedOrder = await ordersService.getOrder(orderId);
+    setOrder(fetchedOrder);
 
-      buildMessagesUI(fetchedOrder, textThreads);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
+    const otherUserId = user.is_vendor
+      ? fetchedOrder.customer
+      : fetchedOrder.vendor;
+
+    let thread: any[] = [];
+
+    if (otherUserId) {
+      thread = await messagesService.getThread(otherUserId);
     }
-  };
 
-  const buildMessagesUI = (order: Order, thread: any[]) => {
-    const currentUserId = currentUser?.id;
+    buildMessagesUI(fetchedOrder, thread, user);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
-    if (!currentUserId) return;
-    console.log("Thread", thread);
+  const buildMessagesUI = (
+  order: Order,
+  textThreads: any[],
+  user: any = currentUser
+) => {
 
-    const mappedMessages: Message[] = thread.map(msg => ({
-  id: msg.id,
-  type: 'text',
-  sender: msg.sender === currentUser.id ? 'user' : 'vendor',
-  vendor: '',
-  status: '',
-  items: [],
-  total: 0,
-  text: msg.content,
-  time: new Date(msg.created_at).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-  }),
-}));
+  const messages: Message[] = [];
 
-console.log("Mapped", mappedMessages);
+  textThreads.forEach(msg => {
+    messages.push({
+      id: msg.id,
+      type: 'text',
+      sender: msg.sender === user.id ? 'user' : 'vendor',
+      vendor: '',
+      status: '',
+      items: [],
+      total: 0,
+      text: msg.content,
+      time: new Date(msg.created_at).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    });
+  });
 
-setMessages(mappedMessages);
+  setMessages(messages);
 };
 
   // ── 4. Typing indicator emitter ──────────────────────────────────────────
