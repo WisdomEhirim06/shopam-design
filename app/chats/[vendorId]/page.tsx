@@ -118,6 +118,8 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
     refreshOrder();
   }, [router, orderId]);
 
+  console.log("Current user", currentUser);
+
   // ── 2. WebSocket lifecycle ───────────────────────────────────────────────
   useEffect(() => {
     if (!currentUser || !order) return;
