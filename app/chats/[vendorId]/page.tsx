@@ -244,9 +244,26 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
     }
   };
 
-  const buildMessagesUI = (o: Order, textThreads: any[]) => {
-    // ... (Your existing buildMessagesUI logic remains here unchanged) ...
-  };
+  const buildMessagesUI = (order: Order, thread: any[]) => {
+    const currentUserId = currentUser.id;
+
+    const mappedMessages: Message[] = thread.map(msg => ({
+  id: msg.id,
+  type: 'text',
+  sender: msg.sender === currentUser.id ? 'user' : 'vendor',
+  vendor: '',
+  status: '',
+  items: [],
+  total: 0,
+  text: msg.content,
+  time: new Date(msg.created_at).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  }),
+}));
+
+setMessages(mappedMessages);
+};
 
   // ── 4. Typing indicator emitter ──────────────────────────────────────────
 

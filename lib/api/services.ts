@@ -338,12 +338,23 @@ export const messagesService = {
 
   /** Get the full chat thread between current user and another user */
   async getThread(userId: string): Promise<Message[]> {
-    const response = await apiClient.get<Message[]>(
+    const response = await apiClient.get<any[]>(
       API_ENDPOINTS.MESSAGES.THREAD,
       { params: { user_id: userId } }
     );
-    console.log(response)
-    return response.data;
+    
+    // Map the backend data to match the Message type
+    const mappedMessages = response.data.map(apiMsg => ({
+      id: apiMsg.id,
+      sender: apiMsg.sender,
+      recipient: apiMsg.recipient,
+      content: apiMsg.content,
+      is_edited: apiMsg.is_edited,
+      created_at: apiMsg.created_at,
+      can_be_edited: apiMsg.can_be_edited
+    }));
+
+    return mappedMessages;
   },
 
   /** Send a direct message */
