@@ -246,6 +246,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
 
   const buildMessagesUI = (order: Order, thread: any[]) => {
     const currentUserId = currentUser.id;
+    console.log("Thread", thread);
 
     const mappedMessages: Message[] = thread.map(msg => ({
   id: msg.id,
@@ -261,6 +262,8 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
     minute: '2-digit',
   }),
 }));
+
+console.log("Mapped", mappedMessages);
 
 setMessages(mappedMessages);
 };
