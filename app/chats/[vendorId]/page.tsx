@@ -231,6 +231,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
 
   const refreshOrder = async (user = currentUser) => {
   if (!user) return;
+  console.log("Refreshing order for user", user);
 
   try {
     const fetchedOrder = await ordersService.getOrder(orderId);
@@ -245,6 +246,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
     if (otherUserId) {
       thread = await messagesService.getThread(otherUserId);
     }
+    console.log("Fetched order and thread", fetchedOrder, thread);
 
     buildMessagesUI(fetchedOrder, thread, user);
   } catch (err) {
@@ -259,6 +261,7 @@ export default function VendorChatPage({ params }: { params: Promise<{ vendorId:
 ) => {
 
   const messages: Message[] = [];
+  console.log("Building messages UI for order", order, "with threads", textThreads);
 
   textThreads.forEach(msg => {
     messages.push({
