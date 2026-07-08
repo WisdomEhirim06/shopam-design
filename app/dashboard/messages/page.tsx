@@ -84,7 +84,7 @@ export default function MessagesPage() {
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
     const socket = new WebSocket(
-  `${wsProtocol}//${backendDomain}/ws/chat/${selectedUserId}/?session_id=${sessionId}`
+  `${wsProtocol}//${backendDomain}/ws/chat/${selectedUserId}`
 );
     ws.current = socket
 
