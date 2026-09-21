@@ -25,7 +25,6 @@ export default function SearchBar() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search products, brands, or verified vendors..."
-
         aria-label="Search products and vendors"
         className="h-11 min-w-0 flex-1 bg-transparent text-sm text-ink placeholder:text-slate-400 focus:outline-none sm:text-base"
       />

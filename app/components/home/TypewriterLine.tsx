@@ -39,9 +39,9 @@ export default function TypewriterLine() {
   const after = shown.length > SHOPAM_START ? shown.slice(SHOPAM_START) : '';
 
   return (
-    <section className="bg-canvas py-16 sm:py-24">
-      <div ref={ref} className="mx-auto max-w-4xl px-6 text-center">
-        <p className="font-bricolage font-black tracking-tight text-ink text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight">
+    <section className="bg-canvas py-10 sm:py-24">
+      <div ref={ref} className="mx-auto max-w-4xl px-4 sm:px-6 text-center">
+        <p className="font-bricolage font-black tracking-tight text-ink text-2xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight">
           <span>{before}</span>
           {after && <span className="text-[#FA3728]">{after}</span>}
           <span className="type-cursor ml-1 inline-block h-[0.8em] w-[3px] translate-y-[0.06em] rounded-full bg-[#FA3728] align-middle" />
