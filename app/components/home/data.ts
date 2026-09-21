@@ -71,10 +71,50 @@ export const homeCategories: HomeCategory[] = [
   { label: 'Food & Drinks', slug: 'food_drinks', image: '/images/products/fruits.jpg' },
 ];
 
+export interface FloatingProduct {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+  vendor: string;
+  rating: number;
+  reviews: number;
+  tag?: string;
+}
+
+export const floatingProductSets: FloatingProduct[][] = [
+  // Set 1
+  [
+    { id: 1, name: 'Air Retro High', price: 28000, image: '/images/products/sneakers-orange.jpg', vendor: 'Urban Kicks', rating: 4.9, reviews: 48, tag: 'Sneakers' },
+    { id: 2, name: 'TechBuds Pro', price: 15000, image: '/images/products/wireless-earbuds.jpg', vendor: 'TechHub NG', rating: 4.8, reviews: 234, tag: 'Audio' },
+    { id: 3, name: 'Pulse Series 7', price: 45000, image: '/images/products/smartwatch.jpg', vendor: 'Gadgets Plus', rating: 4.7, reviews: 456, tag: 'Wearable' },
+    { id: 4, name: 'Leather Tote', price: 32000, image: '/images/products/handbad.jpg', vendor: 'Luxury Bags', rating: 4.6, reviews: 321, tag: 'Fashion' },
+    { id: 5, name: 'BoomBass Mini', price: 18000, image: '/images/products/speaker.jpg', vendor: 'Audio World', rating: 4.7, reviews: 445, tag: 'Speaker' },
+  ],
+  // Set 2
+  [
+    { id: 6, name: 'Nordic Lamp', price: 8500, image: '/images/products/lamp.jpg', vendor: 'Home Living', rating: 4.7, reviews: 234, tag: 'Home' },
+    { id: 7, name: 'Ankara Gown', price: 28000, image: '/images/products/fashion.jpg', vendor: "Sarah's Fashion", rating: 4.9, reviews: 189, tag: 'Fashion' },
+    { id: 8, name: 'Pro Gamepad', price: 22000, image: '/images/products/controller.jpg', vendor: 'GameZone', rating: 4.8, reviews: 312, tag: 'Gaming' },
+    { id: 9, name: 'SpeedRunner X', price: 25000, image: '/images/products/shoes-black.jpg', vendor: 'SportFit NG', rating: 4.8, reviews: 278, tag: 'Footwear' },
+    { id: 10, name: 'Hydro Thermo', price: 4000, image: '/images/products/bottle.jpg', vendor: 'Fitness Gear', rating: 4.8, reviews: 567, tag: 'Fitness' },
+  ],
+  // Set 3
+  [
+    { id: 11, name: 'Retro Cam 4K', price: 65000, image: '/images/products/camera.jpg', vendor: 'Vision Tech', rating: 4.9, reviews: 92, tag: 'Camera' },
+    { id: 12, name: 'Armor Shield', price: 3500, image: '/images/products/phone.png', vendor: 'Accessories Hub', rating: 4.6, reviews: 892, tag: 'Gadgets' },
+    { id: 13, name: 'Urban Commute', price: 12000, image: '/images/products/backpack.jpg', vendor: 'Bags & More', rating: 4.5, reviews: 167, tag: 'Bags' },
+    { id: 14, name: 'Timber Boot', price: 38000, image: '/images/products/boots.jpg', vendor: 'Footwear NG', rating: 4.7, reviews: 140, tag: 'Boots' },
+    { id: 15, name: 'Organic Basket', price: 9500, image: '/images/products/fruits.jpg', vendor: 'Fresh Market', rating: 4.9, reviews: 380, tag: 'Groceries' },
+  ],
+];
+
 export const vendorCards: VendorCard[] = [
-  { image: '/images/products/fashion.jpg', name: "Sarah's Fashion", tag: 'Fashion' },
-  { image: '/images/products/wireless-earbuds.jpg', name: 'TechHub NG', tag: 'Electronics' },
-  { image: '/images/products/chicken.jpg', name: "Nkechi's Kitchen", tag: 'Food & Drinks' },
+  { image: '/images/products/fashion.jpg', name: "Sarah's Fashion", tag: 'Fashion & Wears' },
+  { image: '/images/products/wireless-earbuds.jpg', name: 'TechHub NG', tag: 'Electronics & Audio' },
+  { image: '/images/products/food.jpg', name: "Nkechi's Kitchen", tag: 'Food & Drinks' },
+  { image: '/images/products/hair.jpg', name: 'Glow Care', tag: 'Beauty & Hair' },
+  { image: '/images/products/sneakers-orange.jpg', name: 'Urban Footwear', tag: 'Shoes & Sneakers' },
 ];
 
 export const customerCollage = [

@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-const FULL_TEXT = 'Shopping Experience..... Best with..... Shopam';
-const SHOPAM_START = FULL_TEXT.indexOf('Shopam');
+const FULL_TEXT = "Shopping without stress. That's ShopAm.";
+const SHOPAM_START = FULL_TEXT.indexOf("ShopAm");
 
 export default function TypewriterLine() {
   const [count, setCount] = useState(0);
@@ -23,11 +23,11 @@ export default function TypewriterLine() {
             i += 1;
             setCount(i);
             if (i >= FULL_TEXT.length) clearInterval(id);
-          }, 95);
+          }, 65);
           observer.disconnect();
         }
       },
-      { threshold: 0.4 }
+      { threshold: 0.3 }
     );
 
     observer.observe(el);
@@ -39,12 +39,12 @@ export default function TypewriterLine() {
   const after = shown.length > SHOPAM_START ? shown.slice(SHOPAM_START) : '';
 
   return (
-    <section className="bg-canvas py-20 sm:py-28">
+    <section className="bg-canvas py-16 sm:py-24">
       <div ref={ref} className="mx-auto max-w-4xl px-6 text-center">
-        <p className="font-script text-4xl leading-snug text-ink sm:text-5xl lg:text-6xl xl:text-7xl">
-          {before}
+        <p className="font-bricolage font-black tracking-tight text-ink text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight">
+          <span>{before}</span>
           {after && <span className="text-[#FA3728]">{after}</span>}
-          <span className="type-cursor ml-1 inline-block h-[0.85em] w-[3px] translate-y-[0.08em] rounded-full bg-[#FA3728] align-middle" />
+          <span className="type-cursor ml-1 inline-block h-[0.8em] w-[3px] translate-y-[0.06em] rounded-full bg-[#FA3728] align-middle" />
         </p>
       </div>
 

@@ -27,11 +27,11 @@ export default function CustomersSpotlight() {
           <span className="inline-block rounded-full bg-[#2563EB]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#2563EB]">
             For Vendors
           </span>
-          <h2 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl lg:text-5xl">
-            Get all your customers in one place
+          <h2 className="mt-4 text-3xl font-black tracking-tight text-ink sm:text-4xl lg:text-5xl">
+            Get all your customers in <span className="text-[#2563EB]">one place</span>
           </h2>
           <p className="mt-4 max-w-md text-base leading-relaxed text-slate-500">
-            List your products, manage orders and chat with buyers — all from one simple dashboard built for Nigerian vendors.
+            List your products, manage orders, and chat with buyers — all from <strong className="font-bold text-slate-800">one simple dashboard</strong> built for <strong className="font-bold text-slate-800">Nigerian vendors</strong>.
           </p>
           <Link
             href="/auth/signup"

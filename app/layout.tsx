@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, DM_Sans, Dancing_Script } from "next/font/google";
+import { Plus_Jakarta_Sans, DM_Sans, Dancing_Script, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import JsonLd from "@/components/JsonLd";
@@ -13,6 +13,12 @@ const jakartaSans = Plus_Jakarta_Sans({
 const dmSans = DM_Sans({ 
   subsets: ["latin"],
   variable: '--font-dm-sans',
+  display: 'swap',
+});
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: '--font-bricolage',
   display: 'swap',
 });
 
@@ -112,7 +118,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${jakartaSans.variable} ${dmSans.variable} ${dancingScript.variable}`}>
+    <html lang="en" className={`${jakartaSans.variable} ${dmSans.variable} ${bricolage.variable} ${dancingScript.variable}`}>
       <head>
         <JsonLd />
       </head>

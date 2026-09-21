@@ -12,6 +12,7 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
         button: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
+        bricolage: ['var(--font-bricolage)', 'sans-serif'],
         script: ['var(--font-script)', 'cursive'],
       },
       colors: {

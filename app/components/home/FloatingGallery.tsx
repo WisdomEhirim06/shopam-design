@@ -1,85 +1,115 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { galleryImages } from './data';
-
-const SIZES = [112, 144, 96, 160, 124, 136, 104, 152];
-const ROTATIONS = [-4, 3, -2, 5, -3, 2, -5, 4];
-const OFFSETS = [0, 30, 8, 46, 16, 38, 4, 26];
-
-function GalleryCard({ src, index }: { src: string; index: number }) {
-  const size = SIZES[index % SIZES.length];
-  const rotate = ROTATIONS[index % ROTATIONS.length];
-  const offset = OFFSETS[index % OFFSETS.length];
-
-  return (
-    <div
-      className="gallery-card shrink-0"
-      style={{ animationDelay: `${(index % 5) * 0.6}s`, marginTop: `${offset}px` }}
-    >
-      <div
-        className="gallery-card-inner relative overflow-hidden rounded-2xl bg-white shadow-[0_18px_50px_-14px_rgba(15,23,42,0.22)] ring-1 ring-slate-900/5"
-        style={{ width: size, height: size, transform: `rotate(${rotate}deg)` }}
-      >
-        <Image src={src} alt="" fill sizes="180px" className="object-cover" />
-      </div>
-    </div>
-  );
-}
-
-function MarqueeRow({ images, duration, startIndex }: { images: string[]; duration: number; startIndex: number }) {
-  return (
-    <div className="gallery-row flex w-max gap-5 sm:gap-7" style={{ animationDuration: `${duration}s` }}>
-      {[...images, ...images].map((src, i) => (
-        <GalleryCard key={i} src={src} index={i + startIndex} />
-      ))}
-    </div>
-  );
-}
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Star } from 'lucide-react';
+import { floatingProductSets } from './data';
 
 export default function FloatingGallery() {
-  const rowA = galleryImages.slice(0, 7);
-  const rowB = galleryImages.slice(7, 14);
+  const [activeSet, setActiveSet] = useState(0);
+
+  useEffect(() => {
+    // 0.55s rapid swipe in, 2.2s gentle float, 0.4s fast swipe out
+    const interval = setInterval(() => {
+      setActiveSet((prev) => (prev + 1) % floatingProductSets.length);
+    }, 3200);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentProducts = floatingProductSets[activeSet];
+
+  // Subtle rotation offsets for each of the 5 cards to match the playful shop.app floating aesthetic
+  const rotations = [-3, 2, -1, 3, -2];
+  const yOffsets = [4, -4, 2, -2, 5];
 
   return (
-    <section className="relative overflow-hidden bg-canvas pb-6 pt-14 sm:pb-10 sm:pt-20">
-      {/* Soft colour glows for depth */}
-      <div className="pointer-events-none absolute -top-24 left-1/4 h-72 w-72 rounded-full bg-[#FA3728]/10 blur-[110px]" />
-      <div className="pointer-events-none absolute right-1/4 top-8 h-64 w-64 rounded-full bg-[#2563EB]/10 blur-[110px]" />
-      <div className="pointer-events-none absolute bottom-0 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-[#D4AF37]/10 blur-[110px]" />
+    <section className="relative overflow-hidden bg-canvas pt-20 sm:pt-24 pb-4">
+      {/* Soft atmospheric color glows */}
+      <div className="pointer-events-none absolute -top-10 left-1/4 h-56 w-56 rounded-full bg-[#FA3728]/8 blur-[90px]" />
+      <div className="pointer-events-none absolute top-4 right-1/4 h-56 w-56 rounded-full bg-[#2563EB]/8 blur-[90px]" />
 
-      <div className="gallery-band relative space-y-4 sm:space-y-6">
-        <MarqueeRow images={rowA} duration={72} startIndex={0} />
-        <MarqueeRow images={rowB} duration={54} startIndex={3} />
+      <div className="relative mx-auto max-w-6xl px-2 sm:px-4">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeSet}
+            initial={{ x: '90vw', opacity: 0 }}
+            animate={{
+              x: 0,
+              opacity: 1,
+              transition: {
+                duration: 0.55,
+                ease: [0.16, 1, 0.3, 1], // Rapid deceleration / easeOutExpo
+              },
+            }}
+            exit={{
+              x: '-90vw',
+              opacity: 0,
+              transition: {
+                duration: 0.38,
+                ease: [0.7, 0, 0.84, 0], // Fast acceleration / easeInExpo
+              },
+            }}
+            className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-5"
+          >
+            {currentProducts.map((product, index) => {
+              const rot = rotations[index % rotations.length];
+              const yOffset = yOffsets[index % yOffsets.length];
+
+              return (
+                <motion.div
+                  key={product.id}
+                  animate={{
+                    y: [yOffset, yOffset - 7, yOffset],
+                  }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 2.2,
+                    ease: 'easeInOut',
+                    delay: index * 0.18,
+                  }}
+                  className="shrink-0"
+                >
+                  <Link
+                    href="/explore"
+                    className="group block w-[70px] sm:w-[96px] md:w-[116px] lg:w-[128px] overflow-hidden rounded-xl sm:rounded-2xl bg-white p-1 sm:p-1.5 shadow-[0_10px_30px_-8px_rgba(15,23,42,0.14)] ring-1 ring-slate-900/5 transition-transform duration-300 hover:scale-105 active:scale-95"
+                    style={{
+                      transform: `rotate(${rot}deg)`,
+                    }}
+                  >
+                    {/* Small product image */}
+                    <div className="relative aspect-square w-full overflow-hidden rounded-lg sm:rounded-xl bg-slate-50">
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        fill
+                        sizes="(max-width: 640px) 70px, 130px"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+
+                    {/* Miniature caption details like shop.app */}
+                    <div className="mt-1 px-0.5 pb-0.5">
+                      <p className="truncate text-[9px] sm:text-[11px] font-semibold text-slate-800 leading-tight">
+                        {product.name}
+                      </p>
+                      <div className="mt-0.5 flex items-center justify-between text-[8px] sm:text-[10px] text-slate-400">
+                        <span className="truncate">{product.tag || product.vendor}</span>
+                        <span className="flex items-center gap-0.5 font-medium text-amber-500">
+                          <Star size={9} className="fill-amber-400 text-amber-400" />
+                          {product.rating}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </AnimatePresence>
       </div>
-
-      <style jsx>{`
-        .gallery-band {
-          -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
-          mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
-        }
-        .gallery-row {
-          animation-name: drift-right;
-          animation-timing-function: linear;
-          animation-iteration-count: infinite;
-          will-change: transform;
-        }
-        @keyframes drift-right {
-          from { transform: translateX(-50%); }
-          to { transform: translateX(0); }
-        }
-        .gallery-card {
-          animation: bob 7s ease-in-out infinite;
-          will-change: transform;
-        }
-        @keyframes bob {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-12px); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .gallery-row, .gallery-card { animation: none; }
-        }
-      `}</style>
     </section>
   );
 }

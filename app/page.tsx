@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Navbar from './components/home/Navbar';
 import FloatingGallery from './components/home/FloatingGallery';
 import HeroBrand from './components/home/HeroBrand';
 import CategoryPills from './components/home/CategoryPills';
@@ -22,14 +23,17 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div data-theme="light" className="min-h-screen bg-canvas font-sans text-ink">
-      <FloatingGallery />
-      <HeroBrand />
-      <CategoryPills />
-      <ProductsShowcase />
-      <VendorsSpotlight />
-      <CustomersSpotlight />
-      <TypewriterLine />
+    <div data-theme="light" className="min-h-screen bg-canvas font-sans text-ink antialiased">
+      <Navbar />
+      <main>
+        <FloatingGallery />
+        <HeroBrand />
+        <CategoryPills />
+        <ProductsShowcase />
+        <VendorsSpotlight />
+        <CustomersSpotlight />
+        <TypewriterLine />
+      </main>
       <HomeFooter />
     </div>
   );

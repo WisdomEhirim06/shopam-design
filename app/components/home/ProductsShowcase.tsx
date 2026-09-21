@@ -13,14 +13,11 @@ export default function ProductsShowcase() {
         {/* Section header — title left, explore CTA right */}
         <div className="mb-8 flex items-end justify-between gap-4 sm:mb-10">
           <div>
-            <span className="inline-block rounded-full bg-[#FA3728]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#FA3728]">
-              Trending Now
-            </span>
-            <h2 className="mt-3 text-2xl font-bold tracking-tight text-ink sm:text-3xl lg:text-4xl">
+            <h2 className="text-3xl font-black tracking-tight text-ink sm:text-4xl lg:text-5xl">
               Popular Products
             </h2>
-            <p className="mt-1.5 text-sm text-slate-500 sm:text-base">
-              Discover what&apos;s trending on ShopAm
+            <p className="mt-2 text-sm text-slate-500 sm:text-base">
+              Discover what&apos;s <strong className="font-semibold text-slate-800">trending</strong> on ShopAm
             </p>
           </div>
 
@@ -44,49 +41,48 @@ export default function ProductsShowcase() {
               transition={{ delay: index * 0.05 }}
               className="group overflow-hidden rounded-xl bg-white shadow-sm transition-all hover:shadow-lg"
             >
-              <div className="relative aspect-square w-full bg-gray-100 sm:aspect-[4/3]">
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  quality={70}
-                  sizes="(max-width: 640px) 50vw, 240px"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  onError={(e) => {
-                    e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="150" height="150"%3E%3Crect fill="%23f3f4f6" width="150" height="150"/%3E%3C/svg%3E';
-                  }}
-                />
-                {product.discount && (
-                  <span className="absolute left-2 top-2 rounded bg-[#FA3728] px-1.5 py-0.5 text-[10px] font-bold text-white">
-                    -{product.discount}%
-                  </span>
-                )}
-                <button className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 opacity-0 transition-opacity group-hover:opacity-100">
-                  <Heart size={13} className="text-gray-700" />
-                </button>
-                <div className="absolute bottom-2 right-2 flex items-center gap-0.5 rounded-full bg-white/95 px-1.5 py-0.5 text-[10px] font-semibold backdrop-blur-sm">
-                  <Star size={10} className="fill-[#D4AF37] text-[#D4AF37]" />
-                  {product.rating}
-                </div>
-              </div>
-
-              <div className="p-3">
-                <p className="mb-0.5 truncate text-[10px] text-gray-500">{product.vendor}</p>
-                <h3 className="mb-1 line-clamp-2 text-xs font-semibold leading-snug text-ink lg:text-sm">
-                  {product.name}
-                </h3>
-                <div className="mb-0.5 flex items-center gap-1.5">
-                  <p className="text-sm font-bold text-[#FA3728] lg:text-base">
-                    ₦{product.price.toLocaleString()}
-                  </p>
-                  {product.originalPrice && (
-                    <p className="text-[10px] text-gray-400 line-through">
-                      ₦{product.originalPrice.toLocaleString()}
-                    </p>
+              <Link href={`/explore?q=${encodeURIComponent(product.name)}`} className="block h-full">
+                <div className="relative aspect-square w-full bg-gray-100 sm:aspect-[4/3]">
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    fill
+                    quality={70}
+                    sizes="(max-width: 640px) 50vw, 240px"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="150" height="150"%3E%3Crect fill="%23f3f4f6" width="150" height="150"/%3E%3C/svg%3E';
+                    }}
+                  />
+                  {product.discount && (
+                    <span className="absolute left-2 top-2 rounded bg-[#FA3728] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      -{product.discount}%
+                    </span>
                   )}
+                  <div className="absolute bottom-2 right-2 flex items-center gap-0.5 rounded-full bg-white/95 px-1.5 py-0.5 text-[10px] font-semibold backdrop-blur-sm shadow-xs">
+                    <Star size={10} className="fill-[#D4AF37] text-[#D4AF37]" />
+                    {product.rating}
+                  </div>
                 </div>
-                <p className="text-[10px] text-gray-500">({product.reviews} reviews)</p>
-              </div>
+
+                <div className="p-3">
+                  <p className="mb-0.5 truncate text-[10px] text-gray-500">{product.vendor}</p>
+                  <h3 className="mb-1 line-clamp-2 text-xs font-semibold leading-snug text-ink lg:text-sm">
+                    {product.name}
+                  </h3>
+                  <div className="mb-0.5 flex items-center gap-1.5">
+                    <p className="text-sm font-bold text-[#FA3728] lg:text-base">
+                      ₦{product.price.toLocaleString()}
+                    </p>
+                    {product.originalPrice && (
+                      <p className="text-[10px] text-gray-400 line-through">
+                        ₦{product.originalPrice.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-gray-500">({product.reviews} reviews)</p>
+                </div>
+              </Link>
             </motion.div>
           ))}
         </div>

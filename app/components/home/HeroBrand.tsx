@@ -1,24 +1,21 @@
 'use client';
 
-import Image from 'next/image';
 import SearchBar from './SearchBar';
 
 export default function HeroBrand() {
   return (
-    <section className="relative bg-canvas px-4 pb-10 pt-6 sm:pb-14 sm:pt-8">
+    <section className="relative bg-canvas px-4 pb-8 pt-2 sm:pb-12 sm:pt-4">
       <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-        <Image
-          src="/images/black-logo.png"
-          alt="ShopAm"
-          width={180}
-          height={56}
-          priority
-          className="h-10 w-auto sm:h-12"
-        />
-        <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-500 sm:text-base">
-          Nigeria&apos;s trusted marketplace for products and services from verified vendors.
+        {/* Bold ShopAm text mark in Bricolage Grotesque font */}
+        <h1 className="font-bricolage font-black tracking-tight text-ink text-6xl sm:text-7xl md:text-8xl lg:text-9xl select-none">
+          Shop<span className="text-[#FA3728]">Am</span>
+        </h1>
+
+        <p className="mt-3 sm:mt-4 max-w-md text-sm leading-relaxed text-slate-500 sm:text-base">
+          Nigeria&apos;s <strong className="font-semibold text-slate-800">trusted marketplace</strong> for products and services from <strong className="font-semibold text-slate-800">verified vendors</strong>.
         </p>
-        <div className="mt-7 w-full sm:mt-9">
+
+        <div className="mt-6 w-full sm:mt-8">
           <SearchBar />
         </div>
       </div>
