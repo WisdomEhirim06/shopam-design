@@ -79,13 +79,16 @@ export default function FloatingGallery() {
                       transform: `rotate(${rot}deg)`,
                     }}
                   >
-                    {/* Small product image */}
+                    {/* Small product image with instant priority loading */}
                     <div className="relative aspect-square w-full overflow-hidden rounded-lg sm:rounded-xl bg-slate-50">
                       <Image
                         src={product.image}
                         alt={product.name}
                         fill
-                        sizes="(max-width: 640px) 70px, 130px"
+                        priority={activeSet === 0}
+                        loading={activeSet === 0 ? 'eager' : 'lazy'}
+                        quality={65}
+                        sizes="128px"
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
@@ -109,6 +112,21 @@ export default function FloatingGallery() {
             })}
           </motion.div>
         </AnimatePresence>
+      </div>
+
+      {/* Hidden preloader for subsequent sets to eliminate swipe-in delay */}
+      <div className="hidden" aria-hidden="true">
+        {floatingProductSets.flat().map((p) => (
+          <Image
+            key={`preload-${p.id}`}
+            src={p.image}
+            alt=""
+            width={128}
+            height={128}
+            quality={65}
+            priority
+          />
+        ))}
       </div>
     </section>
   );

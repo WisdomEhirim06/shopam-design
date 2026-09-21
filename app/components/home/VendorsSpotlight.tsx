@@ -130,6 +130,7 @@ export default function VendorsSpotlight() {
                       src={vendor.image}
                       alt={vendor.name}
                       fill
+                      quality={70}
                       sizes="(max-width: 640px) 150px, 220px"
                       className="object-cover"
                     />

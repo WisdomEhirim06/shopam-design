@@ -18,7 +18,9 @@ export default function CategoryPills() {
                 src={category.image}
                 alt={category.label}
                 fill
-                sizes="28px"
+                priority
+                quality={60}
+                sizes="32px"
                 className="object-cover"
               />
             </span>
