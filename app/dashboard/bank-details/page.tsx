@@ -15,6 +15,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import apiClient, { API_ENDPOINTS } from '@/lib/api/config';
+import { BANK_OPTIONS, formatCurrency } from './bank-data';
 
 export default function BankDetailsPage() {
   // Payment Setup State — empty until loaded or filled by vendor
@@ -68,10 +69,7 @@ export default function BankDetailsPage() {
       setTimeout(() => { setSaveStatus('idle'); setSaveMsg(''); }, 3000);
     }
   };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount);
-  };
+  // (formatCurrency is imported from ./bank-data)
 
   return (
     <div className="space-y-6">
@@ -162,15 +160,9 @@ export default function BankDetailsPage() {
                 onChange={(e) => setPaymentSetup({ ...paymentSetup, bankName: e.target.value })}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-crimson/50 focus:ring-2 focus:ring-crimson/20 transition-all"
               >
-                <option value="First Bank of Nigeria" className="theme-modal">First Bank of Nigeria</option>
-                <option value="GTBank" className="theme-modal">Guaranty Trust Bank</option>
-                <option value="Access Bank" className="theme-modal">Access Bank</option>
-                <option value="Zenith Bank" className="theme-modal">Zenith Bank</option>
-                <option value="UBA" className="theme-modal">United Bank for Africa</option>
-                <option value="Ecobank" className="theme-modal">Ecobank Nigeria</option>
-                <option value="Fidelity Bank" className="theme-modal">Fidelity Bank</option>
-                <option value="Union Bank" className="theme-modal">Union Bank</option>
-                <option value="Stanbic IBTC" className="theme-modal">Stanbic IBTC Bank</option>
+                {BANK_OPTIONS.map((bank) => (
+                  <option key={bank.value} value={bank.value} className="theme-modal">{bank.label}</option>
+                ))}
               </select>
             </div>
 

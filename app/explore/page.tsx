@@ -6,34 +6,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   SlidersHorizontal,
-  Heart,
   ShoppingCart,
-  Star,
-  X,
-  ChevronDown,
   Loader2,
   MessageCircle,
-  Check,
 } from 'lucide-react';
 import { productsService, categoriesService, cartService, authService } from '@/lib/api';
 import type { Product, Category } from '@/lib/api';
-
-/* ── Dummy products shown while real vendor listings are pending ── */
-const DUMMY_PRODUCTS: Product[] = [
-  { id: 'd1', owner: 'vendor1', owner_name: 'Adaeze Couture', title: 'African Print Wrap Dress', description: 'Vibrant Ankara wrap dress, available in M/L/XL', price: '28000', tax_inclusive: false, item_type: 'product', addons: [], images: [], taxonomy_path: '', created_at: '', updated_at: '', average_rating: '4.8', review_count: '124' },
-  { id: 'd2', owner: 'vendor2', owner_name: "Mama Nkechi's Kitchen", title: 'Jollof Rice Family Platter', description: 'Party-size smoky Jollof for 5–6 people', price: '8500', tax_inclusive: false, item_type: 'service', addons: [], images: [], taxonomy_path: '', created_at: '', updated_at: '', average_rating: '5.0', review_count: '87' },
-  { id: 'd3', owner: 'vendor3', owner_name: 'Lagos Craft House', title: 'Handwoven Rattan Basket Set', description: 'Set of 3 handcrafted storage baskets', price: '12500', tax_inclusive: false, item_type: 'product', addons: [], images: [], taxonomy_path: '', created_at: '', updated_at: '', average_rating: '4.6', review_count: '52' },
-  { id: 'd4', owner: 'vendor4', owner_name: 'Tunde Skincare', title: 'Shea Butter Body Cream 250ml', description: 'Cold-pressed natural shea butter, unscented', price: '5500', tax_inclusive: false, item_type: 'product', addons: [], images: [], taxonomy_path: '', created_at: '', updated_at: '', average_rating: '4.9', review_count: '210' },
-  { id: 'd5', owner: 'vendor5', owner_name: 'Chioma Tech Hub', title: 'Phone Screen Repair (Any Model)', description: 'Same-day screen replacement service, warranty included', price: '15000', tax_inclusive: true, item_type: 'service', addons: [], images: [], taxonomy_path: '', created_at: '', updated_at: '', average_rating: '4.7', review_count: '63' },
-  { id: 'd6', owner: 'vendor6', owner_name: 'Eko Fabrics', title: 'Aso-Oke Head Tie Set', description: 'Premium woven aso-oke, 3-piece gele set', price: '35000', tax_inclusive: false, item_type: 'product', addons: [], images: [], taxonomy_path: '', created_at: '', updated_at: '', average_rating: '4.5', review_count: '39' },
-  { id: 'd7', owner: 'vendor1', owner_name: 'Adaeze Couture', title: 'Beaded Ankara Clutch Bag', description: 'Hand-beaded evening clutch, various colours', price: '9500', tax_inclusive: false, item_type: 'product', addons: [], images: [], taxonomy_path: '', created_at: '', updated_at: '', average_rating: '4.4', review_count: '28' },
-  { id: 'd8', owner: 'vendor7', owner_name: 'Naija Fresh Farm', title: 'Organic Ofada Rice 5kg', description: 'Stone-free, sun-dried local Ofada variety', price: '7200', tax_inclusive: false, item_type: 'product', addons: [], images: [], taxonomy_path: '', created_at: '', updated_at: '', average_rating: '4.8', review_count: '156' },
-  { id: 'd9', owner: 'vendor8', owner_name: 'Kemi Beauty Bar', title: 'Lace Front Wig 20" Natural', description: 'Brazilian hair lace front, natural black', price: '85000', tax_inclusive: false, item_type: 'product', addons: [], images: [], taxonomy_path: '', created_at: '', updated_at: '', average_rating: '4.9', review_count: '72' },
-  { id: 'd10', owner: 'vendor9', owner_name: 'IbadanWood Works', title: 'Custom Wooden Photo Frame', description: 'Personalized engraved hardwood frame, 8×10"', price: '6800', tax_inclusive: false, item_type: 'product', addons: [], images: [], taxonomy_path: '', created_at: '', updated_at: '', average_rating: '4.7', review_count: '44' },
-  { id: 'd11', owner: 'vendor2', owner_name: "Mama Nkechi's Kitchen", title: 'Egusi Soup + Fufu Combo', description: 'Rich egusi soup with goat meat, served with fufu', price: '4500', tax_inclusive: false, item_type: 'service', addons: [], images: [], taxonomy_path: '', created_at: '', updated_at: '', average_rating: '5.0', review_count: '198' },
-  { id: 'd12', owner: 'vendor5', owner_name: 'Chioma Tech Hub', title: 'Laptop Battery Replacement', description: 'Genuine replacement batteries, all laptop brands', price: '25000', tax_inclusive: true, item_type: 'service', addons: [], images: [], taxonomy_path: '', created_at: '', updated_at: '', average_rating: '4.6', review_count: '31' },
-];
 import ProfileButton from '../components/ProfileButton';
+import { DUMMY_PRODUCTS } from './data';
+import ProductCard from './components/ProductCard';
+import FilterDropdown from './components/FilterDropdown';
 
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,8 +61,6 @@ export default function ExplorePage() {
     setError('');
 
     try {
-      // The products list endpoint (/api/commerce/products/) does NOT support ?search.
-      // Keyword queries must go to /api/commerce/search/?q= instead.
       let response;
 
       if (searchQuery) {
@@ -98,7 +78,6 @@ export default function ExplorePage() {
           filters.category = selectedCategories.join(',');
         }
 
-        // Map sortBy to API ordering
         switch (sortBy) {
           case 'price-low':
             filters.ordering = 'price';
@@ -114,7 +93,6 @@ export default function ExplorePage() {
         response = await productsService.getProducts(filters);
       }
 
-      // Use API results when available, fall back to dummy data on first page
       const results = response.results.length > 0 ? response.results : (page === 1 ? DUMMY_PRODUCTS : []);
 
       if (page === 1) {
@@ -126,7 +104,6 @@ export default function ExplorePage() {
       setTotalProducts(response.count || DUMMY_PRODUCTS.length);
       setHasMore(!!response.next);
     } catch {
-      // On any network error, show dummy products
       if (page === 1) setProducts(DUMMY_PRODUCTS);
       setHasMore(false);
     } finally {
@@ -147,7 +124,7 @@ export default function ExplorePage() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setPage(1); // Reset to first page
+    setPage(1);
   };
 
   const toggleCategory = (categoryName: string) => {
@@ -161,7 +138,7 @@ export default function ExplorePage() {
 
   const handleSortChange = (sort: string) => {
     setSortBy(sort);
-    setPage(1); // Reset to first page
+    setPage(1);
   };
 
   const loadMore = () => {
@@ -309,79 +286,19 @@ export default function ExplorePage() {
                 <span className="font-bold text-sm">Filters</span>
               </button>
 
-              {/* FLOATING DROPDOWN FILTERS */}
-              <AnimatePresence>
-                {showFilters && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute top-full left-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 z-50 overflow-hidden"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-bold text-gray-900">Categories</h3>
-                      <button
-                        onClick={() => setSelectedCategories([])}
-                        className="text-[10px] font-bold text-[#FA3728] hover:underline"
-                      >
-                        Clear All
-                      </button>
-                    </div>
-
-                    <div className="space-y-1.5 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
-                      {[
-                        { label: "Food and Drinks",               slug: 'food_drinks' },
-                        { label: "Home and Living",               slug: 'home_living' },
-                        { label: "Beauty, Hair and Personal Care", slug: 'beauty_hair_personal_care' },
-                        { label: "Accessories",                   slug: 'accessories' },
-                        { label: "Women's Fashion",               slug: 'womens_fashion' },
-                        { label: "Men's Fashion",                 slug: 'mens_fashion' },
-                        { label: "Baby and Kids",                 slug: 'baby_kids' },
-                      ].map(({ label, slug }) => (
-                        <label
-                                                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${selectedCategories.includes(slug)
-                              ? 'bg-[#FA3728]/5 text-[#FA3728]'
-                              : 'hover:bg-gray-50 text-gray-600'
-                            }`}
-                         >
-                          <span className="text-xs font-semibold">{label}</span>
-                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedCategories.includes(slug)
-                              ? 'bg-[#FA3728] border-[#FA3728]'
-                              : 'border-gray-300'
-                            }`}>
-                            {selectedCategories.includes(slug) && <Check size={10} className="text-white" />}
-                          </div>
-                          <input
-                            type="checkbox"
-                            className="hidden"
-                            checked={selectedCategories.includes(slug)}
-                            onChange={() => toggleCategory(slug)}
-                          />
-                        </label>
-                      ))}
-                    </div>
-
-                    <div className="mt-5 pt-4 border-t border-gray-50">
-                      <button
-                        onClick={() => setShowFilters(false)}
-                        className="w-full py-2.5 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-colors"
-                      >
-                        Show Results
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <FilterDropdown
+                showFilters={showFilters}
+                selectedCategories={selectedCategories}
+                onToggleCategory={toggleCategory}
+                onClearAll={() => setSelectedCategories([])}
+                onClose={() => setShowFilters(false)}
+              />
             </div>
 
             <p className="text-gray-600 text-sm hidden sm:block">
               {loading ? 'Loading...' : `${totalProducts} products`}
             </p>
           </div>
-
-
-
-
 
           {/* Products Grid */}
           {loading && products.length === 0 ? (
@@ -405,62 +322,7 @@ export default function ExplorePage() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
               {products.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="group cursor-pointer p-2.5 sm:p-3 rounded-2xl border border-gray-100/80 hover:border-[#FA3728]/20 transition-all hover:bg-white hover:shadow-xl shadow-sm bg-white"
-                >
-                  <Link href={`/products/${product.id}`}>
-                    {/* Product Image Area (STRICT SQUARE) */}
-                    <div className="relative aspect-square rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 shadow-sm border border-gray-100 overflow-hidden mb-3">
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#FA3728]/5 to-transparent flex items-center justify-center text-gray-300">
-                        <ShoppingCart size={32} className="opacity-40" />
-                      </div>
-
-                      {/* Rating Badge */}
-                      {parseFloat(product.average_rating) > 0 && (
-                        <div className="absolute bottom-2 left-2">
-                          <div className="px-2 py-0.5 bg-white/95 backdrop-blur-sm rounded-full text-[10px] font-bold flex items-center gap-1 shadow-sm border border-gray-50">
-                            <Star size={10} className="text-amber-500 fill-amber-500" />
-                            {parseFloat(product.average_rating).toFixed(1)}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Product Info Section */}
-                    <div className="px-1">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <h3 className="font-bold text-gray-900 text-xs sm:text-sm truncate group-hover:text-[#FA3728] transition-colors">
-                          {product.title}
-                        </h3>
-                      </div>
-                      <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-2 truncate">
-                        {product.owner_name || 'ShopAm Vendor'}
-                      </p>
-
-                      <div className="flex items-center justify-between gap-1">
-                        <p className="text-sm sm:text-base font-black text-[#FA3728]">
-                          ₦{parseFloat(product.price).toLocaleString()}
-                        </p>
-
-                        {/* Small Add to Cart Icon Button */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            addToCart(product.id);
-                          }}
-                          className="p-1.5 bg-[#FA3728]/10 hover:bg-[#FA3728] text-[#FA3728] hover:text-white rounded-lg transition-colors flex items-center justify-center"
-                        >
-                          <ShoppingCart size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
+                <ProductCard key={product.id} product={product} index={index} onAddToCart={addToCart} />
               ))}
             </div>
           )}
