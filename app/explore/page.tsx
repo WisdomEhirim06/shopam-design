@@ -42,6 +42,15 @@ export default function ExplorePage() {
     loadCartCount();
   }, []);
 
+  // Pick up deep-link params from the homepage: ?q= (search) and ?category= (category slug)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    const category = params.get('category');
+    if (q) setSearchQuery(q);
+    if (category) setSelectedCategories([category]);
+  }, []);
+
   // Fetch products when filters change
   useEffect(() => {
     loadProducts();

@@ -1,29 +1,36 @@
 'use client';
 
-import Navbar from './components/landing/Navbar';
-import Hero from './components/landing/Hero';
-import Stats from './components/landing/Stats';
-import StressCarousel from './components/landing/StressCarousel';
-import TrendingProducts from './components/landing/TrendingProducts';
-import InfiniteScroll from './components/landing/InfiniteScroll';
-import Categories from './components/landing/Categories';
-import WhyChoose from './components/landing/WhyChoose';
-import Cta from './components/landing/Cta';
-import Footer from './components/landing/Footer';
+import { useEffect } from 'react';
+import FloatingGallery from './components/home/FloatingGallery';
+import HeroBrand from './components/home/HeroBrand';
+import CategoryPills from './components/home/CategoryPills';
+import ProductsShowcase from './components/home/ProductsShowcase';
+import VendorsSpotlight from './components/home/VendorsSpotlight';
+import CustomersSpotlight from './components/home/CustomersSpotlight';
+import TypewriterLine from './components/home/TypewriterLine';
+import HomeFooter from './components/home/HomeFooter';
 
 export default function LandingPage() {
+  // The homepage is always light, regardless of the saved global theme.
+  useEffect(() => {
+    const previous = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = '#F8F9FA';
+    document.documentElement.setAttribute('data-theme', 'light');
+    return () => {
+      document.body.style.backgroundColor = previous;
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-      <Hero />
-      <Stats />
-      <StressCarousel />
-      <TrendingProducts />
-      <InfiniteScroll />
-      <Categories />
-      <WhyChoose />
-      <Cta />
-      <Footer />
+    <div data-theme="light" className="min-h-screen bg-canvas font-sans text-ink">
+      <FloatingGallery />
+      <HeroBrand />
+      <CategoryPills />
+      <ProductsShowcase />
+      <VendorsSpotlight />
+      <CustomersSpotlight />
+      <TypewriterLine />
+      <HomeFooter />
     </div>
   );
 }

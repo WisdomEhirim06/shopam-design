@@ -12,12 +12,17 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
         button: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
+        script: ['var(--font-script)', 'cursive'],
       },
       colors: {
         charcoal: "#0A0A0A",
         pitch: "#000000",
         crimson: "#E31B23",
         shopam: "#FA3728",
+        ink: "#0F172A",
+        canvas: "#F8F9FA",
+        trust: "#2563EB",
+        gold: "#D4AF37",
         'theme-bg': 'var(--bg-primary)',
         'theme-bg-secondary': 'var(--bg-secondary)',
         'theme-bg-tertiary': 'var(--bg-tertiary)',
