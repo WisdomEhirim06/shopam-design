@@ -1,22 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Mail, Lock, Eye, EyeOff, User, ShoppingBag, Shield, Zap } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Check, Loader2 } from 'lucide-react';
 import { authService } from '@/lib/api';
-import { Suspense } from 'react';
+import { isValidEmail } from '@/lib/validation';
+import AuthShell from '../../components/auth/AuthShell';
+import FloatingInput from '../../components/auth/FloatingInput';
+import { normalizeNigerianPhone } from '../signup/phone';
 
 function UserSignUpForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const returnUrl = searchParams.get('redirect') || '/explore';
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -27,45 +23,28 @@ function UserSignUpForm() {
     confirmPassword: '',
     agreeToTerms: false,
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (status !== 'idle') return;
     setError('');
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
+    const errs: Record<string, string> = {};
+    if (!formData.username.trim()) errs.username = 'Username is required';
+    if (!formData.email.trim()) errs.email = 'Email is required';
+    else if (!isValidEmail(formData.email)) errs.email = 'Enter a valid email address';
+    if (!formData.phone.trim()) errs.phone = 'Phone number is required';
+    if (formData.password.length < 8) errs.password = 'Password must be at least 8 characters';
+    if (formData.confirmPassword !== formData.password) errs.confirmPassword = 'Passwords do not match';
+    if (!formData.agreeToTerms) errs.terms = 'Please agree to the terms to continue';
+    setFieldErrors(errs);
+    if (Object.keys(errs).length) return;
 
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters');
-      return;
-    }
-
-    if (!formData.agreeToTerms) {
-      setError('Please agree to terms and conditions');
-      return;
-    }
-
-    if (!formData.phone) {
-      setError('Phone number is required');
-      return;
-    }
-
-    if (!formData.username) {
-      setError('Username is required');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    // Strip country code so backend concatenates phone_country_code + phone correctly
-    let phone = formData.phone.trim().replace(/\s+/g, '');
-    if (phone.startsWith('+234')) phone = phone.slice(4);
-    else if (phone.startsWith('234')) phone = phone.slice(3);
-    else if (phone.startsWith('0')) phone = phone.slice(1);
+    setStatus('loading');
+    const phone = normalizeNigerianPhone(formData.phone);
 
     try {
       await authService.registerUser({
@@ -76,12 +55,12 @@ function UserSignUpForm() {
         first_name: formData.first_name || undefined,
         last_name: formData.last_name || undefined,
       });
-
-      // Email verification required before login — redirect to verify page
-      router.push(`/auth/user-verify?email=${encodeURIComponent(formData.email)}`);
+      setStatus('success');
+      window.setTimeout(() => {
+        router.push(`/auth/user-verify?email=${encodeURIComponent(formData.email)}`);
+      }, 800);
     } catch (err: any) {
-      console.error('Registration error:', err.response?.status, err.response?.data);
-
+      setStatus('idle');
       const data = err.response?.data;
       if (!data) {
         setError(err.message || 'Registration failed. Please try again.');
@@ -102,273 +81,150 @@ function UserSignUpForm() {
       } else {
         setError('Registration failed. Please try again.');
       }
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
+  const disabled = status !== 'idle';
+
   return (
-    <div className="h-screen flex overflow-hidden bg-white">
-      {/* Left Side - Red Brand Section */}
-      <div className="hidden lg:flex flex-col lg:w-1/2 bg-[#8B0000] relative overflow-hidden">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 z-0">
-          <Image 
-            src="/images/hero-1.png" 
-            alt="Shopper background" 
-            fill 
-            className="object-cover opacity-25"
-          />
-          <div className="absolute inset-0 bg-gradient-to-br from-[#8B0000]/90 via-[#A50F15]/85 to-[#8B0000]/95 mix-blend-multiply"></div>
-        </div>
-
-        {/* Content - Aligned to top to match form */}
-        <div className="relative z-10 flex flex-col justify-start h-full p-8 lg:p-16 pt-24 lg:pt-32 text-white">
-          {/* Logo */}
-          <Link href="/" className="mb-8">
-            <Image src="/images/logo.png" alt="ShopAm Logo" width={110} height={36} className="object-contain brightness-0 invert" />
-          </Link>
-
-          {/* Main Heading */}
-          <motion.div
-            initial={{ opacity: 0, x: -15 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h1 className="text-2xl lg:text-3xl font-bold mb-3 leading-tight">
-              Welcome to ShopAm
-            </h1>
-            <p className="text-base opacity-85 max-w-sm font-light leading-relaxed">
-              Discover amazing local vendors and products in your community with ease and security.
-            </p>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Right Side - Sign Up Form Container */}
-      <div className="flex-1 w-full lg:w-1/2 overflow-y-auto bg-white">
-        <div className="min-h-full w-full flex flex-col items-center justify-start lg:justify-center py-12 lg:py-20 px-6 sm:px-10 lg:px-12">
-          <div className="w-full max-w-md mx-auto">
-          {/* Mobile Header */}
-          <div className="lg:hidden mb-6 flex justify-center w-full relative">
-            <Link href="/">
-              <Image src="/images/black-logo.png" alt="ShopAm Logo" width={140} height={42} className="object-contain" />
+    <AuthShell
+      title="Create your account"
+      subtitle="Join ShopAm and start shopping from verified vendors."
+      footer={
+        <div className="space-y-2">
+          <p>
+            Already have an account?{' '}
+            <Link href="/auth/signin" className="font-semibold text-[#FA3728] hover:underline">
+              Sign In
             </Link>
-          </div>
-
-          {/* Form Header */}
-          <div className="mb-6 mt-4 lg:mt-0">
-            <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-1">
-              Create Account
-            </h2>
-          </div>
-
-          {/* Sign Up Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Error Message */}
-            {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-                {error}
-              </div>
-            )}
-
-            {/* Username Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Username
-              </label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  required
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  placeholder="Choose a username"
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] outline-none transition-all text-gray-900"
-                />
-              </div>
-            </div>
-
-            {/* First Name Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                First Name (Optional)
-              </label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  value={formData.first_name}
-                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                  placeholder="Enter your first name"
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] outline-none transition-all text-gray-900"
-                />
-              </div>
-            </div>
-
-            {/* Last Name Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Last Name (Optional)
-              </label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  value={formData.last_name}
-                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                  placeholder="Enter your last name"
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] outline-none transition-all text-gray-900"
-                />
-              </div>
-            </div>
-
-            {/* Email Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="Enter your email"
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] outline-none transition-all text-gray-900"
-                />
-              </div>
-            </div>
-
-            {/* Phone Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number
-              </label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="tel"
-                  required
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+234 800 000 0000"
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] outline-none transition-all text-gray-900"
-                />
-              </div>
-            </div>
-
-            {/* Password Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Create a password"
-                  className="w-full pl-12 pr-12 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] outline-none transition-all text-gray-900"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Confirm Password Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  required
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  placeholder="Confirm your password"
-                  className="w-full pl-12 pr-12 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FA3728] outline-none transition-all text-gray-900"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Terms and Conditions */}
-            <div className="flex items-start gap-3">
-              <input
-                type="checkbox"
-                id="terms"
-                checked={formData.agreeToTerms}
-                onChange={(e) => setFormData({ ...formData, agreeToTerms: e.target.checked })}
-                className="mt-1 w-4 h-4 text-[#FA3728] border-2 border-gray-300 rounded focus:ring-[#FA3728]"
-              />
-              <label htmlFor="terms" className="text-sm text-gray-600">
-                I agree to the{' '}
-                <Link href="/terms" className="text-[#FA3728] hover:underline font-medium">
-                  Terms and Conditions
-                </Link>{' '}
-                and{' '}
-                <Link href="/privacy" className="text-[#FA3728] hover:underline font-medium">
-                  Privacy Policy
-                </Link>
-              </label>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3.5 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-            >
-              {isSubmitting ? 'Creating Account...' : 'Create Account'}
-            </button>
-
-
-
-            {/* Sign In Link */}
-            <p className="text-center text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link href="/auth/signin" className="text-[#FA3728] hover:underline font-semibold">
-                Sign In
-              </Link>
-            </p>
-
-            {/* Vendor Link */}
-            <p className="text-center text-sm text-gray-500 pt-4 border-t border-gray-100">
-              Want to sell on ShopAm?{' '}
-              <Link href="/auth/signup" className="text-[#FA3728] hover:underline font-medium">
-                Become a vendor
-              </Link>
-            </p>
-          </form>
-          </div>
+          </p>
+          <p className="text-slate-400">
+            Want to sell on ShopAm?{' '}
+            <Link href="/auth/signup" className="font-medium text-[#FA3728] hover:underline">
+              Become a vendor
+            </Link>
+          </p>
         </div>
-      </div>
-    </div>
+      }
+    >
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+            {error}
+          </div>
+        )}
+
+        <FloatingInput
+          id="username"
+          label="Username"
+          value={formData.username}
+          onChange={(v) => { setFormData({ ...formData, username: v }); if (fieldErrors.username) setFieldErrors({ ...fieldErrors, username: '' }); }}
+          error={fieldErrors.username}
+          autoComplete="username"
+          disabled={disabled}
+        />
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <FloatingInput
+            id="first_name"
+            label="First name (optional)"
+            value={formData.first_name}
+            onChange={(v) => setFormData({ ...formData, first_name: v })}
+            autoComplete="given-name"
+            disabled={disabled}
+          />
+          <FloatingInput
+            id="last_name"
+            label="Last name (optional)"
+            value={formData.last_name}
+            onChange={(v) => setFormData({ ...formData, last_name: v })}
+            autoComplete="family-name"
+            disabled={disabled}
+          />
+        </div>
+
+        <FloatingInput
+          id="email"
+          label="Email"
+          type="email"
+          inputMode="email"
+          value={formData.email}
+          onChange={(v) => { setFormData({ ...formData, email: v }); if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: '' }); }}
+          error={fieldErrors.email}
+          autoComplete="email"
+          disabled={disabled}
+        />
+
+        <FloatingInput
+          id="phone"
+          label="Phone number"
+          type="tel"
+          inputMode="tel"
+          value={formData.phone}
+          onChange={(v) => { setFormData({ ...formData, phone: v }); if (fieldErrors.phone) setFieldErrors({ ...fieldErrors, phone: '' }); }}
+          error={fieldErrors.phone}
+          autoComplete="tel"
+          disabled={disabled}
+        />
+
+        <FloatingInput
+          id="password"
+          label="Password"
+          type="password"
+          value={formData.password}
+          onChange={(v) => { setFormData({ ...formData, password: v }); if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: '' }); }}
+          error={fieldErrors.password}
+          autoComplete="new-password"
+          disabled={disabled}
+        />
+
+        <FloatingInput
+          id="confirmPassword"
+          label="Confirm password"
+          type="password"
+          value={formData.confirmPassword}
+          onChange={(v) => { setFormData({ ...formData, confirmPassword: v }); if (fieldErrors.confirmPassword) setFieldErrors({ ...fieldErrors, confirmPassword: '' }); }}
+          error={fieldErrors.confirmPassword}
+          autoComplete="new-password"
+          disabled={disabled}
+        />
+
+        <div>
+          <label className="flex items-start gap-3 text-sm text-slate-500">
+            <input
+              type="checkbox"
+              checked={formData.agreeToTerms}
+              onChange={(e) => { setFormData({ ...formData, agreeToTerms: e.target.checked }); if (fieldErrors.terms) setFieldErrors({ ...fieldErrors, terms: '' }); }}
+              disabled={disabled}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#FA3728] focus:ring-[#FA3728]"
+            />
+            <span>
+              I agree to the{' '}
+              <Link href="/terms" className="font-medium text-[#FA3728] hover:underline">Terms</Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="font-medium text-[#FA3728] hover:underline">Privacy Policy</Link>.
+            </span>
+          </label>
+          {fieldErrors.terms && <p className="mt-1.5 text-xs font-medium text-red-500">{fieldErrors.terms}</p>}
+        </div>
+
+        <button
+          type="submit"
+          disabled={disabled}
+          className={`flex h-14 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white shadow-lg transition-all disabled:cursor-not-allowed ${
+            status === 'success' ? 'bg-emerald-600' : 'bg-[#FA3728] hover:bg-[#E31B23] disabled:opacity-80'
+          }`}
+        >
+          {status === 'loading' && <Loader2 size={18} className="animate-spin" />}
+          {status === 'success' && <Check size={18} strokeWidth={3} />}
+          <span>{status === 'loading' ? 'Creating account…' : status === 'success' ? 'Account created' : 'Create Account'}</span>
+        </button>
+      </form>
+    </AuthShell>
   );
 }
 
 export default function UserSignUpPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <UserSignUpForm />
-    </Suspense>
-  );
+  return <UserSignUpForm />;
 }

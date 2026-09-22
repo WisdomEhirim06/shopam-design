@@ -1,16 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CheckCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle2 } from 'lucide-react';
 import { authService } from '@/lib/api';
-import Image from 'next/image';
+import AuthShell from '../../components/auth/AuthShell';
 import PersonalInfoStep from './PersonalInfoStep';
 import BusinessStep from './BusinessStep';
 import { normalizeNigerianPhone } from './phone';
-import type { PersonalData, BusinessData, BusinessCategory } from './data';
+import type { PersonalData, BusinessData } from './data';
 
 type Step = 'personal' | 'business' | 'success';
 
@@ -18,11 +18,8 @@ export default function VendorSignUpPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>('personal');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
 
-  // Form State
   const [personalData, setPersonalData] = useState<PersonalData>({
     username: '',
     email: '',
@@ -44,28 +41,23 @@ export default function VendorSignUpPage() {
     logoPreview: '',
   });
 
-  // Handle form submission
   const handleSubmit = async () => {
     setError('');
 
-    // Validation
     if (personalData.password !== personalData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-
     if (personalData.password.length < 8) {
       setError('Password must be at least 8 characters');
       return;
     }
-
     if (!personalData.phone) {
       setError('Phone number is required');
       return;
     }
 
     setIsSubmitting(true);
-
     const phone = normalizeNigerianPhone(personalData.phone);
 
     try {
@@ -89,8 +81,6 @@ export default function VendorSignUpPage() {
       router.push(`/auth/user-verify?email=${encodeURIComponent(personalData.email)}`);
     } catch (err: any) {
       setIsSubmitting(false);
-      console.error('Vendor registration error:', err.response?.status, err.response?.data);
-
       const data = err.response?.data;
       if (!data) {
         setError(err.message || 'Registration failed. Please try again.');
@@ -110,137 +100,95 @@ export default function VendorSignUpPage() {
     }
   };
 
-  const goToDashboard = () => {
-    router.push('/dashboard');
-  };
+  const title =
+    currentStep === 'business'
+      ? 'Business details'
+      : currentStep === 'success'
+      ? 'Check your email'
+      : 'Create your vendor account';
+
+  const subtitle =
+    currentStep === 'business'
+      ? 'Tell us about your business'
+      : currentStep === 'success'
+      ? undefined
+      : 'Step 1 of 2 · Your personal information';
 
   return (
-    <div className="h-screen flex overflow-hidden">
-      {/* Left Side - Brand Section */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#8B0000]">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/hero-shopping.jpg"
-            alt="Vendors background"
-            fill
-            className="object-cover opacity-20"
+    <AuthShell
+      title={title}
+      subtitle={subtitle}
+      footer={
+        currentStep === 'personal' ? (
+          <>
+            Already have an account?{' '}
+            <Link href="/auth/signin" className="font-semibold text-[#FA3728] hover:underline">
+              Sign In
+            </Link>
+          </>
+        ) : undefined
+      }
+    >
+      <AnimatePresence mode="wait">
+        {currentStep === 'personal' && (
+          <PersonalInfoStep
+            personalData={personalData}
+            onChange={setPersonalData}
+            error={error}
+            onContinue={() => {
+              if (
+                !personalData.first_name ||
+                !personalData.last_name ||
+                !personalData.email ||
+                !personalData.phone ||
+                !personalData.password ||
+                !personalData.confirmPassword
+              ) {
+                setError('Please fill in all required fields');
+                return;
+              }
+              setError('');
+              setCurrentStep('business');
+            }}
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-[#800000] via-[#A50F15] to-[#800000] opacity-90 mix-blend-multiply"></div>
-        </div>
+        )}
 
-        {/* Content - Aligned with Form */}
-        <div className="relative z-10 flex flex-col justify-center items-start p-10 text-white w-full">
+        {currentStep === 'business' && (
+          <BusinessStep
+            businessData={businessData}
+            onChange={setBusinessData}
+            error={error}
+            isSubmitting={isSubmitting}
+            onSubmit={handleSubmit}
+            onBack={() => {
+              setError('');
+              setCurrentStep('personal');
+            }}
+          />
+        )}
+
+        {currentStep === 'success' && (
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="max-w-md"
+            key="success"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center"
           >
-            {/* Logo and Registration Text */}
-            <div className="mb-8">
-              <Image
-                src="/images/logo.png"
-                alt="ShopAm Logo"
-                width={110}
-                height={36}
-                className="object-contain brightness-0 invert"
-              />
-              <p className="mt-3 text-xs font-semibold tracking-widest uppercase opacity-70">
-                Vendor Registration
-              </p>
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-50 text-green-500">
+              <CheckCircle2 size={40} />
             </div>
-
-            <h2 className="text-4xl xl:text-5xl font-bold mb-6 leading-tight">
-              Sell Smarter.<br />Serve Better.
-            </h2>
-            <p className="text-lg opacity-90 font-light leading-relaxed">
-              Join thousands of successful vendors on<br />
-              <span className="font-semibold">ShopAm</span> and grow your business today.
+            <p className="text-sm text-slate-500">
+              Your vendor account is created. Click the verification link in your email to activate it, then sign in.
             </p>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="mt-6 flex h-12 w-full items-center justify-center rounded-xl bg-[#FA3728] text-sm font-semibold text-white transition-all hover:bg-[#E31B23]"
+            >
+              Go to Dashboard
+            </button>
           </motion.div>
-
-          {/* Footer - Aligned Bottom */}
-          <div className="absolute bottom-12 left-16 opacity-60">
-            <p className="text-sm">© 2026 ShopAm. All rights reserved.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Side - Form Container */}
-      <div className="flex-1 w-full lg:w-1/2 overflow-y-auto bg-white">
-        <div className="min-h-full w-full flex flex-col items-center justify-start lg:justify-center py-12 lg:py-20 px-6 sm:px-10 lg:px-12">
-          <div className="w-full max-w-md mx-auto">
-            {/* Mobile Header */}
-            {currentStep === 'personal' && (
-              <div className="lg:hidden mb-6 flex justify-center w-full relative">
-                <Link href="/">
-                  <Image src="/images/black-logo.png" alt="ShopAm Logo" width={110} height={36} className="object-contain" />
-                </Link>
-              </div>
-            )}
-
-            <AnimatePresence mode="wait">
-              {/* Step 1: Personal Info */}
-              {currentStep === 'personal' && (
-                <PersonalInfoStep
-                  personalData={personalData}
-                  onChange={setPersonalData}
-                  error={error}
-                  showPassword={showPassword}
-                  onTogglePassword={() => setShowPassword(!showPassword)}
-                  showConfirmPassword={showConfirmPassword}
-                  onToggleConfirmPassword={() => setShowConfirmPassword(!showConfirmPassword)}
-                  onContinue={() => {
-                    if (!personalData.first_name || !personalData.last_name || !personalData.email || !personalData.phone || !personalData.password || !personalData.confirmPassword) {
-                      setError('Please fill in all required fields');
-                      return;
-                    }
-                    setError('');
-                    setCurrentStep('business');
-                  }}
-                />
-              )}
-
-              {/* Step 2: Business Details */}
-              {currentStep === 'business' && (
-                <BusinessStep
-                  businessData={businessData}
-                  onChange={setBusinessData}
-                  error={error}
-                  isSubmitting={isSubmitting}
-                  onSubmit={handleSubmit}
-                />
-              )}
-
-              {/* Success Screen */}
-              {currentStep === 'success' && (
-                <motion.div
-                  key="success"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center"
-                >
-                  <div className="mb-8">
-                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <CheckCircle size={40} className="text-green-600" />
-                    </div>
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Check Your Email</h2>
-                    <p className="text-gray-600">Your vendor account is created. Click the verification link in your email to activate it, then sign in.</p>
-                  </div>
-
-                  <button
-                    onClick={goToDashboard}
-                    className="w-full py-3 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-lg font-semibold"
-                  >
-                    Go to Dashboard
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
-    </div>
+        )}
+      </AnimatePresence>
+    </AuthShell>
   );
 }

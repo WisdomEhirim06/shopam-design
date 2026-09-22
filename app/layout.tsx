@@ -16,17 +16,17 @@ const dmSans = DM_Sans({
   display: 'swap',
 });
 
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
-  variable: '--font-bricolage',
-  display: 'swap',
-});
-
 const dancingScript = Dancing_Script({
   subsets: ["latin"],
   variable: '--font-script',
   display: 'swap',
   weight: ['400', '700'],
+});
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: '--font-bricolage',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
