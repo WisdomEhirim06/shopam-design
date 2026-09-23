@@ -58,12 +58,9 @@ export const authService = {
     const refresh: string = raw.tokens?.refresh ?? raw.refresh ?? '';
     const user: UserProfile = raw.user ?? raw;
 
-    if (access) {
-      localStorage.setItem('access_token', access);
-      if (refresh) localStorage.setItem('refresh_token', refresh);
-      localStorage.setItem('user', JSON.stringify(user));
-      setRoleCookie(!!user?.is_vendor);
-    }
+    const user: UserProfile = raw.user ?? raw;
+    localStorage.setItem('user', JSON.stringify(user));
+    setRoleCookie(!!user.is_vendor);
 
     return { access, refresh, user };
   },
@@ -102,7 +99,7 @@ export const authService = {
 
   // Check if user is authenticated
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('access_token');
+    return !!localStorage.getItem('user');
   },
 
   // Get stored user data
