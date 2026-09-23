@@ -28,13 +28,7 @@ async function proxy(request: NextRequest, segments: string[]): Promise<NextResp
     return NextResponse.json({ detail: 'Invalid path' }, { status: 400 });
   }
 
-  const stripped = rawPath.replace(/\/+$/, '');
-  const needsTrailingSlash =
-    /^(accounts|notifications|posts|support)(\/|$)/.test(stripped) ||
-    ['commerce/disputes', 'commerce/vendor/orders', 'commerce/vendors/reviews'].some(
-      (p) => stripped === p || stripped.startsWith(p + '/')
-    );
-  const path = '/api/' + stripped + (needsTrailingSlash ? '/' : '');
+  const path = '/api/' + rawPath;
   const search = request.nextUrl.search;
   const target = `${BACKEND}${path}${search}`;
 

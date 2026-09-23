@@ -45,7 +45,7 @@ export const authService = {
     }
   },
 
- 
+
   async login(data: LoginRequest | { username: string; password: string }): Promise<LoginResponse> {
     const payload = 'username' in data && !('email' in data)
       ? { email: (data as any).username, password: data.password }
@@ -58,17 +58,13 @@ export const authService = {
     const refresh: string = raw.tokens?.refresh ?? raw.refresh ?? '';
     const user: UserProfile = raw.user ?? raw;
 
-    if (access) {
-      localStorage.setItem('access_token', access);
-      if (refresh) localStorage.setItem('refresh_token', refresh);
-      localStorage.setItem('user', JSON.stringify(user));
-      setRoleCookie(!!user?.is_vendor);
-    }
+    localStorage.setItem('user', JSON.stringify(user));
+    setRoleCookie(!!user.is_vendor);
 
     return { access, refresh, user };
   },
 
-  
+
   async logout(): Promise<void> {
     try {
       const refresh = localStorage.getItem('refresh_token');
@@ -86,7 +82,7 @@ export const authService = {
     }
   },
 
-  
+
   async changePassword(data: PasswordChangeRequest): Promise<void> {
     await apiClient.post(API_ENDPOINTS.AUTH.PASSWORD_CHANGE, data);
   },
@@ -102,14 +98,14 @@ export const authService = {
 
   // Check if user is authenticated
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('access_token');
+    return !!localStorage.getItem('user');
   },
 
   // Get stored user data
   getCurrentUser(): UserProfile | null {
     const userStr = localStorage.getItem('user');
     if (!userStr) return null;
-    
+
     try {
       return JSON.parse(userStr);
     } catch {
@@ -138,25 +134,25 @@ export const authService = {
     await apiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, data);
   },
 
-  
+
   async verifyEmail(token: string): Promise<{ authenticated: boolean }> {
-  try {
-    const response = await apiClient.get<any>(API_ENDPOINTS.AUTH.VERIFY_EMAIL, { params: { token } });
-    const raw = response.data ?? {};
+    try {
+      const response = await apiClient.get<any>(API_ENDPOINTS.AUTH.VERIFY_EMAIL, { params: { token } });
+      const raw = response.data ?? {};
 
-    // Backend returns { message: "Email verified successfully." } on 200
-    if (raw.message) {
-      return { authenticated: false };
+      // Backend returns { message: "Email verified successfully." } on 200
+      if (raw.message) {
+        return { authenticated: false };
+      }
+
+      // Shouldn't reach here on a 200, but just in case
+      throw new Error('Verification failed.');
+    } catch (err: any) {
+      // Axios throws on 4xx — pull the error message from the response body
+      const message = err?.response?.data?.error ?? 'Verification link is invalid or has expired.';
+      throw new Error(message);
     }
-
-    // Shouldn't reach here on a 200, but just in case
-    throw new Error('Verification failed.');
-  } catch (err: any) {
-    // Axios throws on 4xx — pull the error message from the response body
-    const message = err?.response?.data?.error ?? 'Verification link is invalid or has expired.';
-    throw new Error(message);
-  }
-},
+  },
   /**
    * Fetch the full profile from the server and update localStorage
    */

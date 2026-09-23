@@ -36,10 +36,11 @@ export default function DashboardLayout({
     if (authCheckRan.current) return; // already ran — Strict Mode remount, skip
     authCheckRan.current = true;
 
-    if (!localStorage.getItem('access_token')) {
+    if (!localStorage.getItem('user')) {
       window.location.replace('/auth/signin?redirect=' + encodeURIComponent(pathname));
       return;
     }
+    
     
     try {
       const storedUser = JSON.parse(localStorage.getItem('user') ?? 'null');
