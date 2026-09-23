@@ -168,6 +168,7 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string) => `/api/commerce/products/${id}/`,
     CREATE: '/api/commerce/products/',
     UPDATE: (id: string) => `/api/commerce/products/${id}/`,
+    UPDATE_STOCK: (id: string) => `/api/commerce/products/${id}/update-stock`,
     DELETE: (id: string) => `/api/commerce/products/${id}/`,
     ADDONS: (productId: string) => `/api/commerce/products/${productId}/addons/`,
     ADDON_DETAIL: (productId: string, id: string) => `/api/commerce/products/${productId}/addons/${id}/`,
