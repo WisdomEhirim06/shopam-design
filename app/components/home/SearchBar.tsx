@@ -4,13 +4,32 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, ArrowRight } from 'lucide-react';
 
-export default function SearchBar() {
+/**
+ * Shared centered search pill used by the homepage hero and the Explore page.
+ * - No `onSubmit` → navigates to `/explore?q=...` (homepage behaviour).
+ * - With `onSubmit` → filters in place (Explore behaviour).
+ */
+export default function SearchBar({
+  initialValue = '',
+  placeholder = 'Search products, brands, or verified vendors...',
+  onSubmit,
+  ariaLabel = 'Search products and vendors',
+}: {
+  initialValue?: string;
+  placeholder?: string;
+  onSubmit?: (query: string) => void;
+  ariaLabel?: string;
+}) {
   const router = useRouter();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialValue);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const q = query.trim();
+    if (onSubmit) {
+      onSubmit(q);
+      return;
+    }
     router.push(q ? `/explore?q=${encodeURIComponent(q)}` : '/explore');
   };
 
@@ -24,8 +43,8 @@ export default function SearchBar() {
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search products, brands, or verified vendors..."
-        aria-label="Search products and vendors"
+        placeholder={placeholder}
+        aria-label={ariaLabel}
         className="h-11 min-w-0 flex-1 bg-transparent text-sm text-ink placeholder:text-slate-400 focus:outline-none sm:text-base"
       />
       <button

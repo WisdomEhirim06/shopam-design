@@ -14,62 +14,98 @@ export default function ProductCard({
   index: number;
   onAddToCart: (productId: string) => void;
 }) {
+  const rating = parseFloat(product.average_rating) || 0;
+  const reviewCount = parseInt(product.review_count || '0', 10) || 0;
+  const price = parseFloat(product.price) || 0;
+  const image = product.images?.[0]?.image_url;
+  const shopName = product.owner_name || 'ShopAm Vendor';
+
   return (
-    <motion.div
-      key={product.id}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: index * 0.05 }}
-      className="group cursor-pointer p-2.5 sm:p-3 rounded-2xl border border-gray-100/80 hover:border-[#FA3728]/20 transition-all hover:bg-white hover:shadow-xl shadow-sm bg-white"
+    <motion.article
+      initial={{ opacity: 0, y: 14 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ delay: Math.min(index * 0.03, 0.24), duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className="group h-full"
     >
-      <Link href={`/products/${product.id}`}>
-        {/* Product Image Area (STRICT SQUARE) */}
-        <div className="relative aspect-square rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 shadow-sm border border-gray-100 overflow-hidden mb-3">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#FA3728]/5 to-transparent flex items-center justify-center text-gray-300">
-            <ShoppingCart size={32} className="opacity-40" />
-          </div>
-
-          {/* Rating Badge */}
-          {parseFloat(product.average_rating) > 0 && (
-            <div className="absolute bottom-2 left-2">
-              <div className="px-2 py-0.5 bg-white/95 backdrop-blur-sm rounded-full text-[10px] font-bold flex items-center gap-1 shadow-sm border border-gray-50">
-                <Star size={10} className="text-amber-500 fill-amber-500" />
-                {parseFloat(product.average_rating).toFixed(1)}
+      <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-[0_14px_30px_-16px_rgba(15,23,42,0.25)]">
+        <Link href={`/products/${product.id}`} className="flex h-full flex-col">
+          {/* Image box — 5 × 6cm rounded portrait */}
+          <div className="relative aspect-[5/6] w-full overflow-hidden bg-slate-50">
+            {image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={image}
+                alt={product.title}
+                loading="lazy"
+                className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+                <ShoppingCart size={22} className="text-slate-300" />
               </div>
-            </div>
-          )}
-        </div>
+            )}
 
-        {/* Product Info Section */}
-        <div className="px-1">
-          <div className="flex items-center justify-between mb-0.5">
-            <h3 className="font-bold text-gray-900 text-xs sm:text-sm truncate group-hover:text-[#FA3728] transition-colors">
-              {product.title}
-            </h3>
-          </div>
-          <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-2 truncate">
-            {product.owner_name || 'ShopAm Vendor'}
-          </p>
+            {rating > 0 && (
+              <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-0.5 rounded-full bg-white/90 px-1.5 py-0.5 text-[9px] font-bold text-slate-700 shadow-sm backdrop-blur-sm">
+                <Star size={9} className="fill-gold text-gold" />
+                {rating.toFixed(1)}
+              </span>
+            )}
 
-          <div className="flex items-center justify-between gap-1">
-            <p className="text-sm sm:text-base font-black text-[#FA3728]">
-              ₦{parseFloat(product.price).toLocaleString()}
-            </p>
-
-            {/* Small Add to Cart Icon Button */}
+            {/* Quick add to cart */}
             <button
+              type="button"
+              aria-label={`Add ${product.title} to cart`}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 onAddToCart(product.id);
               }}
-              className="p-1.5 bg-[#FA3728]/10 hover:bg-[#FA3728] text-[#FA3728] hover:text-white rounded-lg transition-colors flex items-center justify-center"
+              className="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 text-ink shadow-md ring-1 ring-slate-900/5 backdrop-blur transition-all hover:bg-[#FA3728] hover:text-white active:scale-90 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
             >
-              <ShoppingCart size={14} />
+              <ShoppingCart size={13} />
             </button>
           </div>
-        </div>
-      </Link>
-    </motion.div>
+
+          {/* Details */}
+          <div className="flex flex-1 flex-col p-2 sm:p-2.5">
+            <h3 className="line-clamp-2 text-[11px] font-bold leading-snug text-ink sm:text-xs">
+              {product.title}
+            </h3>
+
+            <p className="mt-0.5 truncate text-[9px] font-semibold uppercase tracking-wide text-slate-400 sm:text-[10px]">
+              {shopName}
+            </p>
+
+            {product.description && (
+              <p className="mt-1 line-clamp-1 text-[10px] leading-relaxed text-slate-500 sm:text-[11px]">
+                {product.description}
+              </p>
+            )}
+
+            <div className="mt-auto flex items-end justify-between gap-1.5 pt-2">
+              <div className="flex min-w-0 items-center gap-0.5 text-[9px] font-medium text-slate-400 sm:text-[10px]">
+                {rating > 0 ? (
+                  <>
+                    <Star size={10} className="shrink-0 fill-gold text-gold" />
+                    <span className="truncate">
+                      {rating.toFixed(1)}
+                      {reviewCount > 0 && ` (${reviewCount})`}
+                    </span>
+                  </>
+                ) : (
+                  <span className="truncate">No reviews</span>
+                )}
+              </div>
+
+              <p className="shrink-0 text-xs font-extrabold tracking-tight text-ink sm:text-sm">
+                ₦{price.toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </Link>
+      </div>
+    </motion.article>
   );
 }
