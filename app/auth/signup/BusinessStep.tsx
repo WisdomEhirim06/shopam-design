@@ -122,12 +122,12 @@ export default function BusinessStep({
         </div>
       </div>
 
-      <div className="mt-6 space-y-3">
+      <div className="mt-5 sm:mt-6 space-y-2.5 sm:space-y-3">
         <button
           type="button"
           onClick={onSubmit}
           disabled={isSubmitting}
-          className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#FA3728] text-sm font-semibold text-white shadow-lg transition-all hover:bg-[#E31B23] active:scale-[0.99] disabled:opacity-80"
+          className="flex h-11 sm:h-12 w-full items-center justify-center gap-2 rounded-full bg-[#FA3728] text-sm sm:text-base font-semibold text-white shadow-sm transition-all hover:bg-[#E31B23] hover:shadow-md active:scale-[0.99] disabled:opacity-80"
         >
           {isSubmitting ? (
             <><Loader2 size={18} className="animate-spin" /> Creating store…</>
@@ -138,7 +138,7 @@ export default function BusinessStep({
         <button
           type="button"
           onClick={onBack}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-medium text-slate-500 transition-colors hover:text-ink"
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-full text-sm font-medium text-slate-500 transition-colors hover:text-ink"
         >
           <ArrowLeft size={16} /> Back
         </button>

@@ -108,7 +108,7 @@ function UserSignUpForm() {
       }
     >
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5" noValidate>
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
             {error}
@@ -125,7 +125,7 @@ function UserSignUpForm() {
           disabled={disabled}
         />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           <FloatingInput
             id="first_name"
             label="First name (optional)"
@@ -212,7 +212,7 @@ function UserSignUpForm() {
         <button
           type="submit"
           disabled={disabled}
-          className={`flex h-14 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white shadow-lg transition-all disabled:cursor-not-allowed ${
+          className={`flex h-11 sm:h-12 w-full items-center justify-center gap-2 rounded-full text-sm sm:text-base font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed ${
             status === 'success' ? 'bg-emerald-600' : 'bg-[#FA3728] hover:bg-[#E31B23] disabled:opacity-80'
           }`}
         >

@@ -92,7 +92,7 @@ function SignInForm() {
           </>
         }
       >
-        <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5" noValidate>
           {justVerified && (
             <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
               Your email is verified. Sign in to continue.

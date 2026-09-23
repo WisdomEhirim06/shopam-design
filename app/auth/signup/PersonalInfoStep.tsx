@@ -28,8 +28,8 @@ export default function PersonalInfoStep({
         </div>
       )}
 
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="space-y-3 sm:space-y-3.5">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           <FloatingInput
             id="first_name"
             label="First name"
@@ -96,7 +96,7 @@ export default function PersonalInfoStep({
       <button
         type="button"
         onClick={onContinue}
-        className="mt-6 flex h-14 w-full items-center justify-center rounded-xl bg-[#FA3728] text-sm font-semibold text-white shadow-lg transition-all hover:bg-[#E31B23] active:scale-[0.99]"
+        className="mt-5 sm:mt-6 flex h-11 sm:h-12 w-full items-center justify-center rounded-full bg-[#FA3728] text-sm sm:text-base font-semibold text-white shadow-sm transition-all hover:bg-[#E31B23] hover:shadow-md active:scale-[0.99]"
       >
         Continue
       </button>

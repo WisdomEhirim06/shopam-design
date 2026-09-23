@@ -46,6 +46,7 @@ export default function ForgotPasswordPage() {
   if (status === 'sent') {
     return (
       <AuthShell
+        align="center"
         title="Check your email"
         subtitle={<>We sent a password reset link to <span className="font-semibold text-ink">{email}</span>.</>}
       >
@@ -76,7 +77,7 @@ export default function ForgotPasswordPage() {
       title="Reset password"
       subtitle="Enter the email linked to your account and we'll send a reset link."
     >
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5" noValidate>
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
             {error}
@@ -98,7 +99,7 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={status !== 'idle'}
-          className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#FA3728] text-sm font-semibold text-white shadow-lg transition-all hover:bg-[#E31B23] disabled:opacity-80"
+          className="flex h-11 sm:h-12 w-full items-center justify-center gap-2 rounded-full bg-[#FA3728] text-sm sm:text-base font-semibold text-white shadow-sm transition-all hover:bg-[#E31B23] hover:shadow-md active:scale-[0.99] disabled:opacity-80"
         >
           {status === 'loading' ? (
             <><Loader2 size={18} className="animate-spin" /> Sending…</>

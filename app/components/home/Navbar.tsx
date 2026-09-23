@@ -19,8 +19,8 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* Center: Centered in the available space on mobile, perfectly centered on desktop via balanced flanks */}
-        <div className="flex-1 flex items-center justify-center gap-3 sm:gap-8">
+        {/* Center links: perfectly centered on all screen sizes */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center gap-3.5 sm:gap-8">
           <Link
             href="/explore"
             className="text-[11px] sm:text-sm font-bold text-slate-700 hover:text-[#FA3728] transition-colors whitespace-nowrap"
@@ -41,8 +41,8 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Right: Counter-balance spacer on desktop so the center links stay exactly at 50% on desktop */}
-        <div className="hidden sm:flex w-[104px] shrink-0 justify-end items-center text-xs font-bold text-slate-400">
+        {/* Right: Country indicator on desktop */}
+        <div className="hidden sm:flex items-center text-xs font-bold text-slate-400">
           <span>Nigeria</span>
         </div>
       </nav>

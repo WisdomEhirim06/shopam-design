@@ -48,11 +48,11 @@ function ResetPasswordForm() {
 
   if (!token || !email) {
     return (
-      <AuthShell title="Invalid reset link" subtitle="This password reset link is missing or has expired.">
+      <AuthShell align="center" title="Invalid reset link" subtitle="This password reset link is missing or has expired.">
         <div className="text-center">
           <Link
             href="/auth/forgot-password"
-            className="inline-flex h-12 items-center justify-center rounded-xl bg-[#FA3728] px-6 text-sm font-semibold text-white transition-all hover:bg-[#E31B23]"
+            className="inline-flex h-11 sm:h-12 items-center justify-center rounded-full bg-[#FA3728] px-6 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#E31B23] hover:shadow-md"
           >
             Request a new link
           </Link>
@@ -63,7 +63,7 @@ function ResetPasswordForm() {
 
   if (status === 'done') {
     return (
-      <AuthShell title="Password updated" subtitle="Redirecting you to sign in…">
+      <AuthShell align="center" title="Password updated" subtitle="Redirecting you to sign in…">
         <div className="flex justify-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-green-500">
             <CheckCircle2 size={32} />
@@ -75,7 +75,7 @@ function ResetPasswordForm() {
 
   return (
     <AuthShell title="Set a new password" subtitle="Choose a strong password you haven't used before.">
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5" noValidate>
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
             {error}
@@ -107,7 +107,7 @@ function ResetPasswordForm() {
         <button
           type="submit"
           disabled={status !== 'idle'}
-          className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#FA3728] text-sm font-semibold text-white shadow-lg transition-all hover:bg-[#E31B23] disabled:opacity-80"
+          className="flex h-11 sm:h-12 w-full items-center justify-center gap-2 rounded-full bg-[#FA3728] text-sm sm:text-base font-semibold text-white shadow-sm transition-all hover:bg-[#E31B23] hover:shadow-md active:scale-[0.99] disabled:opacity-80"
         >
           {status === 'loading' ? (
             <><Loader2 size={18} className="animate-spin" /> Updating…</>
