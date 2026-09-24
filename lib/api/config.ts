@@ -24,12 +24,11 @@ apiClient.interceptors.request.use(
     const url = config.url || '';
     const isPublic = PUBLIC_ENDPOINTS.some((p) => url.startsWith(p));
 
-    if (!isPublic) {
-      const token = localStorage.getItem('access_token');
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
+    // 2. REMOVED the localStorage 'access_token' logic. 
+    // We don't need it because withCredentials handles the session cookie automatically.
+    
+    // You can keep CSRF token logic here if Django requires it for POST requests
+    // Example: config.headers['X-CSRFToken'] = getCsrfTokenCookie();
 
     return config;
   },
@@ -89,57 +88,22 @@ function clearSessionAndRedirect() {
 }
 
 apiClient.interceptors.response.use(
-  (response) => {
-    isRedirecting = false;
-    return response;
-  },
-  async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retried?: boolean };
+  (response) => response,
+  (error: AxiosError) => {
+    console.log(`[AXIOS] Error triggered on request to: ${error.config?.url}`);
+    console.log(`[AXIOS] Status Code: ${error.response?.status}`);
 
-    const url = originalRequest?.url || '';
-
-    // Auth endpoints manage their own error messages — never intercept them.
-    const isAuthEndpoint =
-      url.startsWith('/api/accounts/login') ||
-      url.startsWith('/api/accounts/logout') ||
-      url.startsWith('/api/accounts/register') ||
-      url.startsWith('/api/accounts/token/refresh') ||
-      url.startsWith('/api/accounts/verify-email') ||
-      url.startsWith('/api/accounts/user-verify') ||
-      url.startsWith('/api/accounts/password');
-
-    const isKeepalivePing = !!originalRequest?.headers?.['X-Keepalive'];
-
-    if (error.response?.status !== 401 || isAuthEndpoint || isKeepalivePing || originalRequest?._retried) {
-      return Promise.reject(error);
-    }
-
-    const hadSession = !!localStorage.getItem('access_token');
-    if (!hadSession) return Promise.reject(error);
-
-    originalRequest._retried = true;
-
-    try {
-      if (!_refreshPromise) {
-        _refreshPromise = refreshAccessToken().finally(() => {
-          _refreshPromise = null;
-        });
+    if (error.response?.status === 401 ) {
+      localStorage.removeItem('user');
       }
-      const newToken = await _refreshPromise;
-
-      // Retry the original request with the fresh token.
-      if (originalRequest.headers) {
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+      
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/signin')) {
+        window.location.href = '/auth/signin';
       }
-      return apiClient(originalRequest);
-    } catch {
-      // Refresh failed — session is genuinely over.
-      clearSessionAndRedirect();
-      return Promise.reject(error);
-    }
+    
+    return Promise.reject(error);
   }
 );
-
 export default apiClient;
 
 // API Endpoints
