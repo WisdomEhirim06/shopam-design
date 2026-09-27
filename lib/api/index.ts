@@ -1,6 +1,8 @@
 // Export all API services
 export { authService } from './auth';
 export { productsService, categoriesService } from './products';
+export { vendorsService } from './vendors';
+export type { Vendor } from './vendors';
 export { cartService } from './cart';
 export {
   ordersService,

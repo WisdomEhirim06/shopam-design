@@ -1,310 +1,468 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { useParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search,
-  Filter,
-  Plus,
-  ShoppingCart,
-  Phone,
-  Mail,
+  Star,
   MapPin,
   Check,
   MessageCircle,
-  User
+  Search,
+  Shield,
+  ArrowLeft,
 } from 'lucide-react';
+import {
+  vendorsService,
+  productsService,
+  postsService,
+  cartService,
+  authService,
+  followsService,
+} from '@/lib/api';
+import type { ProductService, Vendor } from '@/lib/api';
+import { compactNumber } from '@/lib/format';
+import Navbar from '../../components/home/Navbar';
+import ProductCard from '../../explore/components/ProductCard';
+import PostCard from '../../components/feed/PostCard';
+import { toFeedPost, FEED_POSTS, type FeedPost } from '../../components/feed/data';
+import { fallbackVendor, FALLBACK_VENDOR_PRODUCTS } from './data';
 
-const toTitleCase = (str: string) => {
-  return str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
-};
+type Tab = 'products' | 'posts' | 'info';
 
-// Mock vendor database
-const MOCK_VENDOR = {
-  id: 'v1',
-  name: 'Abuja Electronics',
-  category: 'Electronics',
-  location: 'Abuja, FCT',
-  phone: '+234 800 123 4567',
-  email: 'hello@abujaelectronics.ng',
-  bio: 'Premium tech distributor in the heart of Abuja. Providing high quality panels and accessories for homes and businesses.',
-  avatar: '/images/stress-1.jpg',
-  coverBg: 'bg-gradient-to-r from-gray-900 via-gray-800 to-[#FA3728]/20'
-};
+function Stars({ value, size = 15 }: { value: number; size?: number }) {
+  return (
+    <span className="inline-flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          size={size}
+          className={i <= Math.round(value) ? 'fill-gold text-gold' : 'text-slate-300'}
+        />
+      ))}
+    </span>
+  );
+}
 
-const MOCK_PRODUCTS = [
-  { id: 1, name: 'Wire less and Bluetooth Mouse', description: 'Ergonomic dual-mode wireless mouse with long battery life.', price: 10000, image: '/images/products/mouse.jpg', category: 'Accessories' },
-  { id: 2, name: 'REdmie LAtest BH100X', description: 'Latest smartphone model with 120Hz display and 108MP camera.', price: 350000, image: '/images/products/phone.png', category: 'Smartphones' },
-  { id: 3, name: 'Android fast charger', description: '65W super fast charging brick with strong braided cable.', price: 5950, image: '/images/products/charger.jpg', category: 'Accessories' },
-  { id: 4, name: 'Twin Cooperate Iphone and Redmie', description: 'Premium business phone bundle for corporate executives.', price: 511000, image: '/images/products/phones.jpg', category: 'Smartphones' },
-  { id: 5, name: 'Airpod One', description: 'High fidelity audio with active noise cancellation.', price: 18000, image: '/images/products/airpod.jpg', category: 'Headsets' },
-  { id: 6, name: 'Black Bluetooth Headsets', description: 'Over-ear headphones with deep bass and 40-hour battery life.', price: 25050, image: '/images/products/headset.jpg', category: 'Headsets' },
-];
+export default function VendorShopPage() {
+  const params = useParams();
+  const vendorId = decodeURIComponent((params?.vendorId as string) ?? '');
 
-const SECONDARY_CATEGORIES = ['All', 'Smartphones', 'Accessories', 'Headsets', 'Wearables'];
+  const [vendor, setVendor] = useState<Vendor | null>(null);
+  const [products, setProducts] = useState<ProductService[]>([]);
+  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default function VendorShopPage({ params }: { params: Promise<{ vendorId: string }> }) {
-  const { vendorId } = use(params);
-  const [activeTab, setActiveTab] = useState<'info' | 'products' | 'posts'>('products');
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeTab, setActiveTab] = useState<Tab>('products');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [following, setFollowing] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  const rawShopName = vendorId === 'v1' ? MOCK_VENDOR.name : vendorId.replace('-', ' ');
-  const shopName = toTitleCase(rawShopName);
+  useEffect(() => {
+    if (!vendorId) return;
+    let active = true;
+    setLoading(true);
 
-  const filteredProducts = MOCK_PRODUCTS.filter(product => {
-    const matchCategory = activeCategory === 'All' || product.category === activeCategory;
-    const matchSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCategory && matchSearch;
-  });
+    vendorsService
+      .getVendor(vendorId)
+      .then((data) => {
+        if (!active) return;
+        setVendor(data);
+        setFollowing(data.isFollowing);
+      })
+      .catch(() => {
+        if (active) {
+          const fb = fallbackVendor(vendorId);
+          setVendor(fb);
+          setFollowing(fb.isFollowing);
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    productsService
+      .getProducts({ vendor: vendorId, page_size: 24 })
+      .then((res) => {
+        if (active) setProducts(res.results.length > 0 ? res.results : FALLBACK_VENDOR_PRODUCTS);
+      })
+      .catch(() => {
+        if (active) setProducts(FALLBACK_VENDOR_PRODUCTS);
+      });
+
+    postsService
+      .getPosts({ vendor: vendorId, page_size: 12 })
+      .then((res) => {
+        if (!active) return;
+        const mapped = (res.results ?? []).map(toFeedPost).filter((p) => p.image);
+        setPosts(mapped.length > 0 ? mapped : FEED_POSTS.slice(0, 3));
+      })
+      .catch(() => {
+        if (active) setPosts(FEED_POSTS.slice(0, 3));
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [vendorId]);
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const addToCart = async (productId: string) => {
+    if (!authService.isAuthenticated()) {
+      window.location.href = `/auth/signin?redirect=${encodeURIComponent(`/vendors/${vendorId}`)}`;
+      return;
+    }
+    try {
+      await cartService.addToCart({ product_id: productId, quantity: 1 });
+      window.dispatchEvent(new Event('shopam:cart-updated'));
+      showToast('Added to cart!', 'success');
+    } catch {
+      showToast('Failed to add to cart.', 'error');
+    }
+  };
+
+  const toggleFollow = async () => {
+    if (!authService.isAuthenticated()) {
+      window.location.href = `/auth/signin?redirect=${encodeURIComponent(`/vendors/${vendorId}`)}`;
+      return;
+    }
+    setFollowBusy(true);
+    try {
+      if (!following) {
+        await followsService.followVendor({ followed_vendor: vendorId });
+        setFollowing(true);
+      } else {
+        setFollowing(false);
+      }
+    } catch {
+      /* follow is non-critical */
+    } finally {
+      setFollowBusy(false);
+    }
+  };
+
+  const filteredProducts = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const list = products.filter(
+      (p) => !q || `${p.title} ${p.description ?? ''}`.toLowerCase().includes(q)
+    );
+    switch (sortBy) {
+      case 'price-low':
+        return [...list].sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+      case 'price-high':
+        return [...list].sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+      default:
+        return list;
+    }
+  }, [products, searchQuery, sortBy]);
+
+  if (loading || !vendor) {
+    return (
+      <div className="min-h-screen bg-canvas">
+        <Navbar actions />
+        <main className="mx-auto max-w-7xl animate-pulse px-4 pb-28 pt-28 sm:px-6 lg:px-8">
+          <div className="h-44 rounded-3xl bg-slate-100 sm:h-60" />
+          <div className="mx-auto mt-6 flex max-w-xl flex-col items-center gap-3">
+            <div className="h-24 w-24 rounded-full bg-slate-100" />
+            <div className="h-8 w-56 rounded bg-slate-100" />
+            <div className="h-4 w-40 rounded bg-slate-100" />
+          </div>
+          <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="aspect-square rounded-2xl bg-slate-100" />
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const tabs: { id: Tab; label: string; count?: number }[] = [
+    { id: 'products', label: 'Products', count: products.length },
+    { id: 'posts', label: 'Posts', count: posts.length },
+    { id: 'info', label: 'Info' },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Navigation Header */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100 h-14 sm:h-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
-          <div className="flex items-center justify-between h-full">
-            <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-              <div className="relative flex items-center justify-center">
-                <img src="/images/black-logo.png" alt="ShopAm Logo" width={100} height={100} />
+    <div className="min-h-screen bg-canvas font-sans text-ink antialiased">
+      <Navbar actions />
+
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`fixed left-1/2 top-20 z-[200] -translate-x-1/2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-lg ${
+              toast.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
+            }`}
+          >
+            {toast.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <main className="mx-auto max-w-7xl px-4 pb-28 pt-28 sm:px-6 lg:px-8">
+        <Link
+          href="/vendors"
+          className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-ink"
+        >
+          <ArrowLeft size={16} />
+          All shops
+        </Link>
+
+        {/* Cover */}
+        <div className="relative h-44 overflow-hidden rounded-3xl bg-slate-100 sm:h-60 lg:h-72">
+          {vendor.cover ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={vendor.cover} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-[#FA3728] to-[#E31B23]" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-black/10" />
+
+          {vendor.rating > 0 && (
+            <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm backdrop-blur">
+              <Star size={12} className="fill-gold text-gold" />
+              {vendor.rating.toFixed(1)}
+            </span>
+          )}
+        </div>
+
+        {/* Centered identity */}
+        <div className="relative -mt-14 flex flex-col items-center px-4 text-center sm:-mt-16">
+          <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-canvas bg-white shadow-md sm:h-28 sm:w-28">
+            {vendor.avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={vendor.avatar} alt={vendor.name} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#FA3728] to-[#E31B23] text-3xl font-black text-white">
+                {vendor.name[0]}
               </div>
+            )}
+          </div>
+
+          <div className="mt-4 flex items-center gap-2">
+            <h1 className="font-bricolage text-3xl font-black tracking-tight text-ink sm:text-4xl">
+              {vendor.name}
+            </h1>
+            {vendor.verified && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-trust text-[10px] font-bold text-white">
+                ✓
+              </span>
+            )}
+          </div>
+
+          {vendor.rating > 0 && (
+            <div className="mt-2 flex items-center gap-2 text-sm text-slate-500">
+              <Stars value={vendor.rating} />
+              <span className="font-semibold text-ink">{vendor.rating.toFixed(1)}</span>
+              {vendor.reviews > 0 && <span>· {compactNumber(vendor.reviews)} reviews</span>}
+            </div>
+          )}
+
+          {(vendor.category || vendor.location) && (
+            <p className="mt-1.5 text-sm text-slate-500">
+              {[vendor.category, vendor.location].filter(Boolean).join(' • ')}
+            </p>
+          )}
+
+          {vendor.bio && (
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600">{vendor.bio}</p>
+          )}
+
+          {vendor.followers > 0 && (
+            <p className="mt-2 text-xs font-medium text-slate-400">
+              {compactNumber(vendor.followers)} followers
+            </p>
+          )}
+
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={toggleFollow}
+              disabled={followBusy}
+              className={`inline-flex h-11 items-center gap-2 rounded-full px-6 text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-70 ${
+                following
+                  ? 'border border-slate-200 bg-white text-ink hover:border-slate-300'
+                  : 'bg-ink text-white hover:bg-[#FA3728]'
+              }`}
+            >
+              {following && <Check size={15} strokeWidth={3} />}
+              {following ? 'Following' : 'Follow'}
+            </button>
+            <Link
+              href={`/chats/${vendor.id}`}
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-6 text-sm font-bold text-ink transition-colors hover:border-ink"
+            >
+              <MessageCircle size={16} />
+              Message
             </Link>
-            
-            <div className="flex items-center gap-0 flex-shrink-0">
-              <Link
-                href="/cart"
-                className="relative p-1.5 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
-              >
-                <ShoppingCart size={20} className="text-gray-700" />
-                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#FA3728] text-white text-[9px] flex items-center justify-center rounded-full font-bold border border-white">
-                  3
-                </span>
-              </Link>
-              <Link
-                href={`/chats/${vendorId}`}
-                className="relative p-1.5 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center mx-0.5"
-              >
-                <MessageCircle size={20} className="text-gray-700" />
-              </Link>
-              <button
-                 className="relative ml-1 w-7 h-7 rounded-full bg-[#FA3728] text-white flex items-center justify-center font-bold text-xs shadow-sm hover:opacity-90 transition-opacity"
-              >
-                 W
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content Wrapper */}
-      <div className="pt-14 sm:pt-16">
-        
-        {/* Cover Banner */}
-        <div className={`w-full h-28 sm:h-40 md:h-48 ${MOCK_VENDOR.coverBg} relative object-cover`}>
-           <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }}></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative mb-8">
-          
-          {/* Avatar Area - Aligned Left */}
-          <div className="flex flex-col items-start -mt-10 sm:-mt-12 mb-6">
-            <div className="relative">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-[4px] border-white bg-white shadow-md relative z-10">
-                <div className="w-full h-full rounded-full border-[2px] border-[#FA3728] overflow-hidden bg-gray-100 flex items-center justify-center relative">
-                   <img 
-                     src={MOCK_VENDOR.avatar} 
-                     alt={shopName} 
-                     className="w-full h-full object-cover"
-                     onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=' + shopName.replace(' ', '+') + '&background=FA3728&color=fff&size=128' }}
-                   />
-                </div>
-              </div>
-              <div className="absolute bottom-2 right-2 bg-[#FA3728] rounded-full p-1 z-20 border-[2.5px] border-white shadow-sm flex items-center justify-center">
-                 <Check className="text-white" strokeWidth={3} size={14} />
-              </div>
-            </div>
           </div>
 
-          {/* Simple Shop Header Container - Aligned Left */}
-          <div className="text-left max-w-2xl mb-4">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1 leading-tight">{shopName}</h1>
-            <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-3">
-              {MOCK_VENDOR.category} • {toTitleCase(MOCK_VENDOR.location)}
+          {vendor.verified && (
+            <p className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-slate-400">
+              <Shield size={13} className="text-ink" />
+              Verified vendor
             </p>
-            <p className="text-sm text-gray-700 leading-relaxed font-medium line-clamp-2">
-              {MOCK_VENDOR.bio}
-            </p>
-          </div>
+          )}
         </div>
 
-        {/* Tab Navigation Menu */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 border-b border-gray-100 w-full overflow-x-auto scrollbar-hide pt-2">
-          <div className="flex gap-8 sm:gap-10 min-w-max">
-            {['Products', 'Posts', 'Info'].map((tabLabel) => {
-              const tabId = tabLabel.toLowerCase() as 'info' | 'products' | 'posts';
+        {/* Tabs */}
+        <div className="mt-9 border-b border-slate-200/70">
+          <div className="flex justify-center gap-8 overflow-x-auto no-scrollbar">
+            {tabs.map((tab) => {
+              const active = activeTab === tab.id;
               return (
                 <button
-                  key={tabId}
-                  onClick={() => setActiveTab(tabId)}
-                  className={`py-3.5 text-[15px] font-bold whitespace-nowrap border-b-2 transition-all ${
-                    activeTab === tabId ? 'border-[#FA3728] text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-700'
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`whitespace-nowrap border-b-2 py-3 text-sm font-bold transition-colors ${
+                    active
+                      ? 'border-ink text-ink'
+                      : 'border-transparent text-slate-400 hover:text-slate-700'
                   }`}
                 >
-                  {tabLabel}
+                  {tab.label}
+                  {typeof tab.count === 'number' && (
+                    <span className={active ? 'text-slate-400' : 'text-slate-300'}> {tab.count}</span>
+                  )}
                 </button>
               );
             })}
           </div>
         </div>
 
+        {/* Products */}
         {activeTab === 'products' && (
-          <>
-            {/* Tools & Filters Section */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 relative z-30">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                 
-                 <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 items-center">
-                   {SECONDARY_CATEGORIES.map((cat) => (
-                     <button
-                       key={cat}
-                       onClick={() => setActiveCategory(cat)}
-                       className={`flex-shrink-0 px-4 sm:px-5 py-1.5 text-xs sm:text-[13px] font-semibold rounded-full transition-colors ${
-                         activeCategory === cat
-                         ? 'bg-gray-900 text-white'
-                         : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 shadow-sm'
-                       }`}
-                     >
-                       {cat}
-                     </button>
-                   ))}
-                 </div>
-                 
-                 <div className="flex items-center gap-2 w-full md:w-auto">
-                   <div className="relative w-full md:w-64 flex-shrink-0">
-                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
-                     <input
-                       type="text"
-                       placeholder="Search products..."
-                       value={searchQuery}
-                       onChange={(e) => setSearchQuery(e.target.value)}
-                       className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none outline-none text-sm text-gray-900 rounded-full focus:ring-1 focus:ring-gray-300 transition-all font-medium placeholder:text-gray-400"
-                     />
-                   </div>
-                 </div>
-              </div>
-            </div>
-
-        {/* Product Grid Area */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
-            {filteredProducts.map((product) => (
-              <motion.div 
-                key={product.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-gray-100 transition-all duration-200 group flex flex-col h-full"
-              >
-                <div className="relative aspect-[4/3] w-full bg-gray-50 flex items-center justify-center">
-                  <img 
-                    src={product.image} 
-                    alt={product.name} 
-                    className="w-full h-full object-contain mix-blend-multiply group-hover:scale-[1.02] transition-transform duration-300 p-3 sm:p-5"
-                    onError={(e) => { e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100%25" height="100%25" viewBox="0 0 24 24" fill="none" stroke="%239ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"%3E%3Crect x="3" y="3" width="18" height="18" rx="2" ry="2"/%3E%3Ccircle cx="8.5" cy="8.5" r="1.5"/%3E%3Cpolyline points="21 15 16 10 5 21"/%3E%3C/svg%3E'; e.currentTarget.className = 'w-1/3 h-1/3 object-contain opacity-40'; }}
+          <div className="mt-6">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-slate-500">
+                {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={15}
+                  />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search products"
+                    className="w-44 rounded-full border border-slate-200 bg-white py-2 pl-9 pr-3 text-base text-ink outline-none transition-colors placeholder:text-slate-400 focus:border-ink sm:w-64 sm:text-sm"
                   />
                 </div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="cursor-pointer rounded-full border border-slate-200 bg-white px-3 py-2 text-base font-semibold text-slate-700 outline-none focus:border-ink sm:text-xs"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                </select>
+              </div>
+            </div>
 
-                <div className="p-3 sm:p-4 flex flex-col flex-grow bg-white border-t border-gray-50/50">
-                  <h3 className="font-semibold text-xs sm:text-sm text-gray-800 mb-1 line-clamp-2 leading-snug">{product.name}</h3>
-                  <p className="text-[10px] sm:text-xs text-gray-500 mb-2 line-clamp-2">{product.description}</p>
-                  
-                  {/* Footer Layout with Flexbox */}
-                  <div className="mt-auto pt-2 flex justify-between items-center bg-white z-10 gap-2">
-                     <span className="font-extrabold text-sm sm:text-[15px] text-[#FA3728] truncate pr-1">₦{product.price.toLocaleString()}</span>
-                     <button 
-                       className="w-8 h-8 rounded-full bg-[#FA3728] text-white flex items-center justify-center shadow-sm hover:bg-[#E31B23] active:scale-95 transition-all duration-200 flex-shrink-0"
-                       onClick={(e) => { e.preventDefault(); console.log('Added to cart'); }}
-                       aria-label="Add to cart"
-                     >
-                       <Plus size={16} strokeWidth={2.5} />
-                     </button>
+            {filteredProducts.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-slate-200 py-20 text-center">
+                <p className="text-lg font-semibold text-ink">No products found</p>
+                <p className="mt-1 text-sm text-slate-500">Try a different search.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3.5 md:grid-cols-4 lg:grid-cols-5 lg:gap-4 xl:grid-cols-6">
+                {filteredProducts.map((item, index) => (
+                  <ProductCard key={item.id} product={item} index={index} onAddToCart={addToCart} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Posts */}
+        {activeTab === 'posts' && (
+          <div className="mx-auto mt-6 max-w-xl">
+            {posts.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-slate-200 py-20 text-center">
+                <p className="text-lg font-semibold text-ink">No posts yet</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {vendor.name} hasn&apos;t shared any updates.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {posts.map((post, index) => (
+                  <PostCard key={post.id} post={post} index={index} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Info */}
+        {activeTab === 'info' && (
+          <div className="mx-auto mt-6 max-w-2xl">
+            <div className="rounded-3xl border border-slate-200/70 bg-white p-6 sm:p-8">
+              <h2 className="text-lg font-bold text-ink">About {vendor.name}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                {vendor.bio || 'This vendor has not added a description yet.'}
+              </p>
+
+              <dl className="mt-6 space-y-4">
+                {(vendor.category || vendor.location) && (
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50">
+                      <MapPin size={18} className="text-ink" />
+                    </div>
+                    <div>
+                      <dt className="text-xs font-medium text-slate-400">Location</dt>
+                      <dd className="text-sm font-semibold text-ink">
+                        {vendor.location || 'Not provided'}
+                      </dd>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50">
+                    <Shield size={18} className="text-ink" />
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium text-slate-400">Verification</dt>
+                    <dd className="text-sm font-semibold text-ink">
+                      {vendor.verified ? 'Verified vendor' : 'Not verified'}
+                    </dd>
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </div>
+              </dl>
 
-          {filteredProducts.length === 0 && (
-            <div className="py-16 text-center">
-              <div className="w-14 h-14 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Search size={22} />
-              </div>
-              <h3 className="text-base font-bold text-gray-900 mb-1">No products found</h3>
-              <p className="text-gray-500 text-xs sm:text-sm">Try adjusting your filters.</p>
-            </div>
-          )}
-        </div>
-        </>
-        )}
-
-        {activeTab === 'posts' && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20 text-center">
-            <div className="w-16 h-16 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MessageCircle size={28} />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">No posts yet</h3>
-            <p className="text-sm text-gray-500">{shopName} hasn't shared any updates.</p>
-          </div>
-        )}
-
-        {activeTab === 'info' && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-            <div className="max-w-2xl bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 mb-5">Contact Information</h3>
-              <div className="space-y-5">
-                <a href={`tel:${MOCK_VENDOR.phone.replace(/\s/g, '')}`} className="flex items-center gap-4 text-sm text-gray-800 hover:text-[#FA3728] transition-colors font-semibold">
-                  <div className="w-12 h-12 rounded-full bg-[#FA3728]/10 flex items-center justify-center flex-shrink-0">
-                    <Phone size={20} className="text-[#FA3728]" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium mb-0.5">Phone Number</p>
-                    {MOCK_VENDOR.phone}
-                  </div>
-                </a>
-                <a href={`mailto:${MOCK_VENDOR.email}`} className="flex items-center gap-4 text-sm text-gray-800 hover:text-[#FA3728] transition-colors font-semibold">
-                  <div className="w-12 h-12 rounded-full bg-[#FA3728]/10 flex items-center justify-center flex-shrink-0">
-                    <Mail size={20} className="text-[#FA3728]" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium mb-0.5">Email Address</p>
-                    {MOCK_VENDOR.email}
-                  </div>
-                </a>
-                <a href={`https://maps.google.com/?q=${MOCK_VENDOR.location}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-sm text-gray-800 hover:text-[#FA3728] transition-colors font-semibold">
-                  <div className="w-12 h-12 rounded-full bg-[#FA3728]/10 flex items-center justify-center flex-shrink-0">
-                    <MapPin size={20} className="text-[#FA3728]" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium mb-0.5">Location</p>
-                    {toTitleCase(MOCK_VENDOR.location)}
-                  </div>
-                </a>
-              </div>
+              <Link
+                href={`/chats/${vendor.id}`}
+                className="mt-8 inline-flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-sm font-bold text-white transition-colors hover:bg-[#FA3728]"
+              >
+                <MessageCircle size={16} />
+                Message {vendor.name}
+              </Link>
             </div>
           </div>
         )}
-        
-      </div>
+      </main>
 
-      {/* Floating Return to Chat Button */}
+      {/* Floating message button (mobile) */}
       <Link
-        href={`/chats/${vendorId}`}
-        className="fixed bottom-6 right-6 bg-[#FA3728] text-white px-5 py-3 sm:py-3.5 rounded-full flex items-center justify-center gap-2.5 shadow-lg hover:shadow-xl hover:bg-[#E31B23] hover:-translate-y-1 transition-all z-50 font-bold group"
-        style={{ borderRadius: '9999px' }}
+        href={`/chats/${vendor.id}`}
+        aria-label={`Message ${vendor.name}`}
+        className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-ink text-white shadow-lg transition-colors hover:bg-[#FA3728] sm:hidden"
       >
-        <MessageCircle size={20} className="group-hover:scale-110 transition-transform" />
-        <span className="hidden sm:inline">Message {shopName}</span>
-        <span className="sm:hidden">Message</span>
+        <MessageCircle size={20} />
       </Link>
     </div>
   );

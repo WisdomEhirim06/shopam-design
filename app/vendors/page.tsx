@@ -1,369 +1,331 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SlidersHorizontal, MapPin, Loader2, Check } from 'lucide-react';
+import { vendorsService } from '@/lib/api';
+import type { Vendor } from '@/lib/api';
+import Navbar from '../components/home/Navbar';
+import SearchBar from '../components/home/SearchBar';
+import CategoryPills from '../components/home/CategoryPills';
+import VendorCard from './components/VendorCard';
 import {
-  Search,
-  Star,
-  MapPin,
-  Package,
-  ShoppingCart,
-  CheckCircle,
-  MessageCircle,
-  UserPlus,
-  Heart,
-} from 'lucide-react';
-import { authService } from '@/lib/api';
-import ProfileButton from '../components/ProfileButton';
+  FALLBACK_VENDORS,
+  VENDOR_SORTS,
+  uniqueLocations,
+  matchesCategory,
+  type VendorSort,
+} from './data';
 
-interface ShopProduct {
-  name: string;
-  color: string;
-}
-
-interface Vendor {
-  id: number;
-  name: string;
-  bio: string;
-  category: string;
-  rating: number;
-  reviews: number;
-  products: number;
-  location: string;
-  verified: boolean;
-  responseTime: string;
-  shopProducts: ShopProduct[];
-}
+const ALL_LOCATIONS = 'All';
 
 export default function VendorsPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [toast, setToast] = useState<string | null>(null);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [location, setLocation] = useState(ALL_LOCATIONS);
+  const [sort, setSort] = useState<VendorSort>('top-rated');
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
 
-  const showToast = (message: string) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 3000);
-  };
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    vendorsService
+      .getVendors({ page_size: 50 })
+      .then((res) => {
+        if (active) setVendors(res.results.length > 0 ? res.results : FALLBACK_VENDORS);
+      })
+      .catch(() => {
+        if (active) setVendors(FALLBACK_VENDORS);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
-  const categories = [
-    'All',
-    'Food & Drinks',
-    'Home & Living',
-    'Beauty, Hair & Personal Care',
-    'Accessories',
-    'Women\'s Fashion',
-    'Men\'s Fashion',
-    'Baby & Kids',
-  ];
+  const locations = useMemo(() => uniqueLocations(vendors), [vendors]);
 
-  const vendors: Vendor[] = [
-    {
-      id: 1,
-      name: "Sarah's Fashion",
-      bio: 'Authentic African fashion and accessories',
-      category: 'Fashion',
-      rating: 4.9,
-      reviews: 234,
-      products: 45,
-      location: 'Lagos, Nigeria',
-      verified: true,
-      responseTime: '< 1 hour',
-      shopProducts: [
-        { name: 'Ankara Dress', color: 'bg-orange-100' },
-        { name: 'Print Scarf', color: 'bg-yellow-100' },
-        { name: 'Ankara Bag', color: 'bg-red-100' },
-      ],
-    },
-    {
-      id: 2,
-      name: 'TechHub Nigeria',
-      bio: 'Your trusted source for gadgets and electronics',
-      category: 'Electronics',
-      rating: 4.8,
-      reviews: 567,
-      products: 128,
-      location: 'Abuja, Nigeria',
-      verified: true,
-      responseTime: '< 2 hours',
-      shopProducts: [
-        { name: 'Earbuds', color: 'bg-blue-100' },
-        { name: 'Charger', color: 'bg-indigo-100' },
-        { name: 'Phone Case', color: 'bg-sky-100' },
-      ],
-    },
-    {
-      id: 3,
-      name: 'Kiara Takeaway',
-      bio: 'Delicious meals delivered to your doorstep',
-      category: 'Food & Drinks',
-      rating: 5.0,
-      reviews: 1240,
-      products: 67,
-      location: 'Port Harcourt, Nigeria',
-      verified: true,
-      responseTime: '< 30 mins',
-      shopProducts: [
-        { name: 'Jollof Rice', color: 'bg-red-100' },
-        { name: 'Puff Puff', color: 'bg-amber-100' },
-        { name: 'Chapman', color: 'bg-pink-100' },
-      ],
-    },
-    {
-      id: 4,
-      name: 'Book Zone',
-      bio: 'Wide selection of books across all genres',
-      category: 'Books',
-      rating: 4.7,
-      reviews: 345,
-      products: 234,
-      location: 'Ibadan, Nigeria',
-      verified: false,
-      responseTime: '< 3 hours',
-      shopProducts: [
-        { name: 'Fiction', color: 'bg-green-100' },
-        { name: 'Self Help', color: 'bg-teal-100' },
-        { name: 'Academic', color: 'bg-emerald-100' },
-      ],
-    },
-    {
-      id: 5,
-      name: 'BeautyPlus NG',
-      bio: 'Premium beauty products and cosmetics',
-      category: 'Beauty',
-      rating: 4.8,
-      reviews: 678,
-      products: 156,
-      location: 'Lagos, Nigeria',
-      verified: true,
-      responseTime: '< 1 hour',
-      shopProducts: [
-        { name: 'Lipstick', color: 'bg-rose-100' },
-        { name: 'Foundation', color: 'bg-orange-100' },
-        { name: 'Serum', color: 'bg-purple-100' },
-      ],
-    },
-    {
-      id: 6,
-      name: 'Home & Office NG',
-      bio: 'Furniture and office supplies for every need',
-      category: 'Home & Office',
-      rating: 4.6,
-      reviews: 234,
-      products: 89,
-      location: 'Lagos, Nigeria',
-      verified: true,
-      responseTime: '< 2 hours',
-      shopProducts: [
-        { name: 'Desk Chair', color: 'bg-gray-100' },
-        { name: 'Table Lamp', color: 'bg-yellow-100' },
-        { name: 'Bookshelf', color: 'bg-stone-100' },
-      ],
-    },
-  ];
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const list = vendors.filter((vendor) => {
+      const haystack = `${vendor.name} ${vendor.category} ${vendor.location}`.toLowerCase();
+      const matchQuery = !q || haystack.includes(q);
+      const matchCategory =
+        selectedCategories.length === 0 ||
+        selectedCategories.some((slug) => matchesCategory(vendor, slug));
+      const matchLocation = location === ALL_LOCATIONS || vendor.location === location;
+      const matchVerified = !verifiedOnly || vendor.verified;
+      return matchQuery && matchCategory && matchLocation && matchVerified;
+    });
 
-  const filteredVendors = vendors.filter(
-    (vendor) =>
-      (selectedCategory === 'All' || vendor.category.includes(selectedCategory)) &&
-      (searchQuery === '' || vendor.name.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
-  const handleFollow = (vendorId: number) => {
-    if (!authService.isAuthenticated()) {
-      window.location.href = '/auth/signin';
-      return;
+    switch (sort) {
+      case 'most-reviewed':
+        return [...list].sort((a, b) => b.reviews - a.reviews);
+      case 'name':
+        return [...list].sort((a, b) => a.name.localeCompare(b.name));
+      case 'top-rated':
+      default:
+        return [...list].sort((a, b) => b.rating - a.rating);
     }
-    // Implement follow logic here
-    showToast('Follow feature coming soon!');
+  }, [vendors, query, selectedCategories, location, sort, verifiedOnly]);
+
+  const toggleCategory = (slug: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
+    );
   };
+
+  const hasActiveFilters =
+    query.trim() !== '' ||
+    selectedCategories.length > 0 ||
+    location !== ALL_LOCATIONS ||
+    verifiedOnly;
+
+  const clearFilters = () => {
+    setQuery('');
+    setSelectedCategories([]);
+    setLocation(ALL_LOCATIONS);
+    setSort('top-rated');
+    setVerifiedOnly(false);
+  };
+
+  const locationOptions = [ALL_LOCATIONS, ...locations];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Toast */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-xl shadow-lg text-sm font-semibold text-white bg-gray-900"
-          >
-            {toast}
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="min-h-screen bg-canvas font-sans text-ink antialiased">
+      <Navbar actions />
 
-      {/* Fixed Top Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-3 py-3">
-            {/* Top Row: Logo & Action Icons */}
-            <div className="flex items-center justify-between">
-              <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-                <div className="relative flex items-center justify-center">
-                  <img src="/images/black-logo.png" alt="ShopAm Logo" width={100} height={100} />
-                </div>
-              </Link>
-
-              {/* Action Buttons - Gap reduced */}
-              <div className="flex items-center gap-0 flex-shrink-0">
-                <Link
-                  href="/cart"
-                  className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
-                >
-                  <ShoppingCart size={20} className="text-gray-700" />
-                  <span className="absolute top-0 right-0 w-4 h-4 bg-[#FA3728] text-white text-[10px] flex items-center justify-center rounded-full font-bold">
-                    3
-                  </span>
-                </Link>
-                <Link
-                  href="/chats"
-                  className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
-                >
-                  <MessageCircle size={20} className="text-gray-700" />
-                </Link>
-                <ProfileButton />
-              </div>
-            </div>
-
-            {/* Middle Row: Full Width Search Bar */}
-            <div className="w-full">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input
-                  type="text"
-                  placeholder="Search vendors by name or category..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ border: '1px solid #D1D5DB', backgroundColor: '#fff', color: '#111827' }}
-                  className="w-full pl-12 pr-4 py-2.5 text-sm rounded-full outline-none transition-all focus:!border-[#FA3728] placeholder:text-gray-400/60"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Secondary Nav - Explore Tabs */}
-          <div className="flex items-center gap-8 pb-3 overflow-x-auto">
-            <Link
-              href="/explore"
-              className="text-gray-600 hover:text-[#FA3728] font-medium pb-1 transition-colors whitespace-nowrap"
-            >
-              Products
-            </Link>
-            <Link
-              href="/feed"
-              className="text-gray-600 hover:text-[#FA3728] font-medium pb-1 transition-colors whitespace-nowrap"
-            >
-              Feed
-            </Link>
-            <Link
-              href="/vendors"
-              className="text-[#FA3728] border-b border-[#FA3728]/70 font-semibold pb-1 whitespace-nowrap"
-            >
-              Vendors
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <div className="pt-48 pb-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Page Header */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">
-              Discover Shops
-            </h1>
-            <p className="text-sm text-gray-500 font-medium">
-              Browse shops and find what you need
-            </p>
-          </div>
-
-          {/* Categories Filter */}
-          <div className="mb-8 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-            <div className="flex gap-2 min-w-max">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-1.5 text-xs rounded-full font-semibold whitespace-nowrap transition-all ${selectedCategory === category
-                      ? 'bg-[#FA3728] text-white shadow-md'
-                      : 'bg-white text-gray-600 border border-gray-100 hover:border-[#FA3728]/30'
-                    }`}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Results Count */}
-          <p className="text-gray-600 mb-6">
-            <span className="font-semibold text-gray-900">{filteredVendors.length}</span> shops found
+      <main className="mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
+        {/* Hero */}
+        <div className="mx-auto max-w-2xl text-center">
+          <h1 className="font-bricolage text-3xl font-black tracking-tight text-ink sm:text-4xl lg:text-5xl">
+            Discover Shops
+          </h1>
+          <p className="mx-auto mt-2 max-w-md text-sm text-slate-500 sm:text-base">
+            Find and follow{' '}
+            <strong className="font-semibold text-slate-800">verified vendors</strong> from across
+            Nigeria.
           </p>
-
-          {/* Vendors Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-8">
-            {filteredVendors.map((vendor, index) => (
-              <motion.div
-                key={vendor.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 }}
-                className="group cursor-pointer p-3 rounded-2xl border border-gray-100/80 hover:border-[#FA3728]/20 transition-all hover:bg-white hover:shadow-xl shadow-sm"
-              >
-                <Link href={`/vendors/${vendor.id}`}>
-                  {/* Brand Image Area (STRICT SQUARE) */}
-                  <div className="relative aspect-square rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden mb-3">
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#FA3728]/5 to-transparent flex items-center justify-center">
-                      <span className="text-5xl font-black text-[#FA3728]/10 group-hover:scale-110 transition-transform duration-500">
-                        {vendor.name[0]}
-                      </span>
-                    </div>
-                    {/* Heart/Follow Overlay */}
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleFollow(vendor.id);
-                      }}
-                      className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:scale-110 active:scale-95 transition-all z-10 flex items-center justify-center"
-                    >
-                      <Heart size={16} className="text-[#FA3728]" />
-                    </button>
-                  </div>
-
-                  {/* Vendor Info Section */}
-                  <div className="px-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate group-hover:text-[#FA3728] transition-colors">
-                        {vendor.name}
-                      </h3>
-                      <div className="flex items-center gap-1">
-                        <Star size={12} className="text-amber-500 fill-amber-500" />
-                        <span className="text-[10px] sm:text-xs font-bold text-gray-700">{vendor.rating}</span>
-                      </div>
-                    </div>
-                    <p className="text-[10px] sm:text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">
-                      {vendor.category}
-                    </p>
-                    <p className="text-[11px] text-gray-500 line-clamp-2 mb-4 h-8 leading-relaxed">
-                      {vendor.bio}
-                    </p>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Load More */}
-          <div className="text-center mt-12">
-            <button className="px-8 py-3 bg-white text-gray-900 border border-gray-200 hover:border-[#FA3728] rounded-full font-semibold transition-all">
-              Load More Shops
-            </button>
+          <div className="mt-5 sm:mt-7">
+            <SearchBar
+              key={query}
+              initialValue={query}
+              onSubmit={setQuery}
+              placeholder="Search shops by name, category, or city..."
+            />
           </div>
         </div>
-      </div>
+
+        {/* Category pills — same as the homepage */}
+        <div className="mt-5 sm:mt-7">
+          <CategoryPills
+            selected={selectedCategories}
+            onSelect={toggleCategory}
+            spacing="compact"
+          />
+        </div>
+
+        {/* Mobile filter bar */}
+        <div className="mt-4 flex flex-wrap items-center gap-2 lg:hidden">
+          <select
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            className="min-w-0 flex-1 cursor-pointer rounded-full border border-slate-200 bg-white px-3 py-2 text-base font-semibold text-slate-700 outline-none focus:border-ink"
+          >
+            {locationOptions.map((loc) => (
+              <option key={loc} value={loc}>
+                {loc === ALL_LOCATIONS ? 'All locations' : loc}
+              </option>
+            ))}
+          </select>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as VendorSort)}
+            className="min-w-0 flex-1 cursor-pointer rounded-full border border-slate-200 bg-white px-3 py-2 text-base font-semibold text-slate-700 outline-none focus:border-ink"
+          >
+            {VENDOR_SORTS.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setVerifiedOnly((v) => !v)}
+            className={`rounded-full border px-3 py-2 text-sm font-semibold transition-colors ${
+              verifiedOnly
+                ? 'border-ink bg-ink text-white'
+                : 'border-slate-200 bg-white text-slate-700'
+            }`}
+          >
+            Verified
+          </button>
+        </div>
+
+        {/* Grid + filter rail */}
+        <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start lg:gap-8">
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm text-slate-500">
+                {loading ? 'Loading…' : `${filtered.length} ${filtered.length === 1 ? 'shop' : 'shops'}`}
+              </p>
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-xs font-semibold text-slate-400 transition-colors hover:text-[#FA3728]"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+
+            {loading ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="aspect-[4/5] animate-pulse rounded-3xl border border-slate-200/70 bg-white"
+                  />
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-slate-200 py-24 text-center">
+                <p className="text-lg font-semibold text-ink">No shops found</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Try a different search or clear your filters.
+                </p>
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="mt-5 rounded-full bg-ink px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-black"
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
+                {filtered.map((vendor, index) => (
+                  <VendorCard key={vendor.id || vendor.name} vendor={vendor} index={index} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop filter rail */}
+          <aside className="hidden lg:sticky lg:top-28 lg:block lg:self-start">
+            <div className="rounded-2xl border border-slate-200/70 bg-white p-4">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="inline-flex items-center gap-1.5 text-sm font-bold text-ink">
+                  <SlidersHorizontal size={14} />
+                  Filters
+                </h2>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="text-[11px] font-bold uppercase tracking-wide text-[#FA3728] hover:underline"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              {/* Location */}
+              <div className="mb-5">
+                <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">
+                  Location
+                </h3>
+                <div className="max-h-56 space-y-1 overflow-y-auto no-scrollbar">
+                  {locationOptions.map((loc) => {
+                    const active = location === loc;
+                    return (
+                      <button
+                        key={loc}
+                        type="button"
+                        onClick={() => setLocation(loc)}
+                        className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold transition-colors ${
+                          active ? 'bg-ink text-white' : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="inline-flex min-w-0 items-center gap-2">
+                          <MapPin size={13} className="shrink-0" />
+                          <span className="truncate">
+                            {loc === ALL_LOCATIONS ? 'All locations' : loc}
+                          </span>
+                        </span>
+                        {active && <Check size={13} className="shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Sort */}
+              <div className="mb-5">
+                <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">
+                  Sort by
+                </h3>
+                <div className="space-y-1">
+                  {VENDOR_SORTS.map((option) => {
+                    const active = sort === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => setSort(option.id)}
+                        className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold transition-colors ${
+                          active ? 'bg-slate-900/[0.04] text-ink' : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        {option.label}
+                        {active && <Check size={13} className="shrink-0 text-ink" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Verified */}
+              <label className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2.5 transition-colors hover:bg-slate-50">
+                <span className="text-sm font-semibold text-slate-600">Verified only</span>
+                <span
+                  className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${
+                    verifiedOnly ? 'border-ink bg-ink' : 'border-slate-300'
+                  }`}
+                >
+                  {verifiedOnly && <Check size={12} className="text-white" strokeWidth={3} />}
+                </span>
+                <input
+                  type="checkbox"
+                  className="hidden"
+                  checked={verifiedOnly}
+                  onChange={() => setVerifiedOnly((v) => !v)}
+                />
+              </label>
+            </div>
+          </aside>
+        </div>
+
+        {/* Loading overlay for subsequent loads */}
+        <AnimatePresence>
+          {loading && vendors.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="mt-10 text-center"
+            >
+              <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
     </div>
   );
 }
