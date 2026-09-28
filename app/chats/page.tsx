@@ -36,7 +36,7 @@ export default function ChatsListPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const user = localStorage.getItem('user);
+    const user = localStorage.getItem('user');
     if (!user) {
       setIsAuthenticated(false);
       setIsLoading(false);
