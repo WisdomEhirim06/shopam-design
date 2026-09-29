@@ -22,6 +22,7 @@ export default function CartPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
 
   const fetchCart = async () => {
     try {
@@ -37,12 +38,9 @@ export default function CartPage() {
   };
 
   useEffect(() => {
-    // Guard: if there's no token at all, redirect immediately rather than
-    // letting the API call hit a 401 and trigger the logout flow.
-    if (!localStorage.getItem('user')) {
-      window.location.replace('/auth/signin?redirect=/cart');
-      return;
-    }
+    // Guests can add to and view their cart locally. An account is only
+    // required at checkout (the guest cart is merged after sign-in).
+    setIsGuest(!localStorage.getItem('user'));
     fetchCart();
   }, []);
 
@@ -150,6 +148,21 @@ export default function CartPage() {
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
+          {isGuest && (
+            <div className="flex flex-col justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 sm:flex-row sm:items-center">
+              <p className="text-sm text-amber-800">
+                You&apos;re shopping as a guest. Sign in to check out and keep your cart across
+                devices.
+              </p>
+              <Link
+                href="/auth/signin?redirect=/cart"
+                className="shrink-0 self-start rounded-full bg-[#FA3728] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#E31B23] sm:self-auto"
+              >
+                Sign in
+              </Link>
+            </div>
+          )}
+
           {!hasItems ? (
             /* Empty Cart State */
             <div className="bg-white rounded-2xl p-12 text-center shadow-sm">
@@ -207,9 +220,18 @@ export default function CartPage() {
                         
                         {/* Product Image */}
                         <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-xl overflow-hidden block">
-                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                            <ShoppingBag className="text-gray-400" size={24} />
-                          </div>
+                          {item.product_details?.images?.[0]?.image_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.product_details.images[0].image_url}
+                              alt={item.product_details.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                              <ShoppingBag className="text-gray-400" size={24} />
+                            </div>
+                          )}
                         </div>
 
                         {/* Product Details */}

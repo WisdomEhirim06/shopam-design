@@ -114,13 +114,9 @@ export default function VendorShopPage() {
     setTimeout(() => setToast(null), 2500);
   };
 
-  const addToCart = async (productId: string) => {
-    if (!authService.isAuthenticated()) {
-      window.location.href = `/auth/signin?redirect=${encodeURIComponent(`/vendors/${vendorId}`)}`;
-      return;
-    }
+  const addToCart = async (item: ProductService) => {
     try {
-      await cartService.addToCart({ product_id: productId, quantity: 1 });
+      await cartService.addToCart({ product_id: item.id, quantity: 1, product: item });
       window.dispatchEvent(new Event('shopam:cart-updated'));
       showToast('Added to cart!', 'success');
     } catch {

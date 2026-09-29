@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlidersHorizontal, Loader2 } from 'lucide-react';
-import { productsService, cartService, authService } from '@/lib/api';
+import { productsService, cartService } from '@/lib/api';
 import type { Product } from '@/lib/api';
 import Navbar from '../components/home/Navbar';
 import SearchBar from '../components/home/SearchBar';
@@ -127,16 +127,12 @@ export default function ExplorePage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const addToCart = async (productId: string) => {
-    if (!authService.isAuthenticated()) {
-      window.location.href = `/auth/signin?redirect=${encodeURIComponent('/explore')}`;
-      return;
-    }
-
+  const addToCart = async (product: Product) => {
     try {
       await cartService.addToCart({
-        product_id: productId,
+        product_id: product.id,
         quantity: 1,
+        product,
       });
       window.dispatchEvent(new Event('shopam:cart-updated'));
       showToast('Added to cart!', 'success');

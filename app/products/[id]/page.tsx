@@ -20,7 +20,7 @@ import {
   Star,
   User,
 } from 'lucide-react';
-import { productsService, cartService, authService, reviewsService } from '@/lib/api';
+import { productsService, cartService, reviewsService } from '@/lib/api';
 import type { ProductService, Review } from '@/lib/api/types';
 import Navbar from '../../components/home/Navbar';
 import ProductCard from '../../explore/components/ProductCard';
@@ -168,12 +168,8 @@ export default function ProductDetailPage() {
     };
   }, [id]);
 
-  const addToCart = async (productId: string, qty = 1) => {
-    if (!authService.isAuthenticated()) {
-      window.location.href = `/auth/signin?redirect=${encodeURIComponent(`/products/${productId}`)}`;
-      return;
-    }
-    await cartService.addToCart({ product_id: productId, quantity: qty });
+  const addToCart = async (item: ProductService, qty = 1) => {
+    await cartService.addToCart({ product_id: item.id, quantity: qty, product: item });
     window.dispatchEvent(new Event('shopam:cart-updated'));
   };
 
@@ -181,7 +177,7 @@ export default function ProductDetailPage() {
     if (!product) return;
     setIsAddingToCart(true);
     try {
-      await addToCart(product.id, quantity);
+      await addToCart(product, quantity);
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2500);
     } catch {
@@ -598,7 +594,7 @@ export default function ProductDetailPage() {
                   key={related.id}
                   product={related}
                   index={index}
-                  onAddToCart={(pid) => addToCart(pid, 1)}
+                  onAddToCart={(item) => addToCart(item, 1)}
                 />
               ))}
             </div>

@@ -26,7 +26,7 @@ export default function ProductCard({
 }: {
   product: Product;
   index: number;
-  onAddToCart: (productId: string) => void;
+  onAddToCart: (product: Product) => void;
 }) {
   const rating = parseFloat(product.average_rating) || 0;
   const reviewCount = parseInt(product.review_count || '0', 10) || 0;
@@ -66,7 +66,7 @@ export default function ProductCard({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              onAddToCart(product.id);
+              onAddToCart(product);
             }}
             className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-ink shadow-md ring-1 ring-slate-900/5 backdrop-blur transition-all hover:bg-[#FA3728] hover:text-white active:scale-90 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
           >

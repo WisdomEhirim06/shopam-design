@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ShoppingCart, MessageCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { authService, cartService } from '@/lib/api';
+import { cartService } from '@/lib/api';
 import ProfileButton from '../ProfileButton';
 
 function NavLinks({ className = '' }: { className?: string }) {
@@ -62,12 +62,8 @@ export default function Navbar({ actions = false }: { actions?: boolean }) {
 
     const refresh = async () => {
       try {
-        if (authService.isAuthenticated()) {
-          const count = await cartService.getCartItemCount();
-          if (active) setCartCount(count);
-        } else if (active) {
-          setCartCount(0);
-        }
+        const count = await cartService.getCartItemCount();
+        if (active) setCartCount(count);
       } catch {
         /* cart count is non-critical */
       }

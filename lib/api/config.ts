@@ -19,17 +19,13 @@ const PUBLIC_ENDPOINTS = [
   '/api/accounts/user-verify',
   '/api/commerce/categories',
 ];
+
+const isPublicEndpoint = (url = '') => PUBLIC_ENDPOINTS.some((p) => url.startsWith(p));
+
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const url = config.url || '';
-    const isPublic = PUBLIC_ENDPOINTS.some((p) => url.startsWith(p));
-
-    // 2. REMOVED the localStorage 'access_token' logic. 
-    // We don't need it because withCredentials handles the session cookie automatically.
-    
-    // You can keep CSRF token logic here if Django requires it for POST requests
-    // Example: config.headers['X-CSRFToken'] = getCsrfTokenCookie();
-
+    // Auth is handled via the Bearer token attached below and the session
+    // cookie; no extra request headers are needed here.
     return config;
   },
   (error: AxiosError) => {
@@ -42,65 +38,102 @@ apiClient.interceptors.request.use(
 let _refreshPromise: Promise<string> | null = null;
 
 async function refreshAccessToken(): Promise<string> {
-  const refresh = localStorage.getItem('refresh_token');
-  if (!refresh) throw new Error('No refresh token');
+  if (_refreshPromise) return _refreshPromise;
 
-  
-  const access = localStorage.getItem('access_token');
-  const response = await fetch('/api/accounts/token/refresh', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(access ? { Authorization: `Bearer ${access}` } : {}),
-    },
-    body: JSON.stringify({ refresh }),
-  });
+  _refreshPromise = (async () => {
+    const refresh = localStorage.getItem('refresh_token');
+    if (!refresh) throw new Error('No refresh token');
 
-  if (!response.ok) throw new Error('Refresh failed');
+    const access = localStorage.getItem('access_token');
+    const response = await fetch('/api/accounts/token/refresh', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(access ? { Authorization: `Bearer ${access}` } : {}),
+      },
+      body: JSON.stringify({ refresh }),
+    });
 
-  const data = await response.json();
-  // Backend returns { access } or { tokens: { access } }
-  const newAccess: string = data.tokens?.access ?? data.access ?? '';
-  if (!newAccess) throw new Error('No access token in refresh response');
+    if (!response.ok) throw new Error('Refresh failed');
 
-  localStorage.setItem('access_token', newAccess);
+    const data = await response.json();
+    // Backend returns { access } or { tokens: { access } }
+    const newAccess: string = data.tokens?.access ?? data.access ?? '';
+    if (!newAccess) throw new Error('No access token in refresh response');
 
- 
-  const newRefresh: string = data.tokens?.refresh ?? data.refresh ?? '';
-  if (newRefresh) localStorage.setItem('refresh_token', newRefresh);
+    localStorage.setItem('access_token', newAccess);
 
-  return newAccess;
+    const newRefresh: string = data.tokens?.refresh ?? data.refresh ?? '';
+    if (newRefresh) localStorage.setItem('refresh_token', newRefresh);
+
+    return newAccess;
+  })();
+
+  try {
+    return await _refreshPromise;
+  } finally {
+    _refreshPromise = null;
+  }
 }
 
-let isRedirecting = false;
-
-function clearSessionAndRedirect() {
-  if (isRedirecting) return; // another 401 already triggered the redirect
-  isRedirecting = true;
+/** Drop all local session state (no navigation — callers decide what to show). */
+function clearSession() {
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
   localStorage.removeItem('user');
   // Expire the role-hint cookie set by authService.login.
   document.cookie = 'shopam_role=; Path=/; Max-Age=0; SameSite=Lax';
-  // Single sign-in page for all roles — no need to guess the role from
-  // (possibly already-cleared) localStorage to pick a destination.
-  window.location.href = '/auth/signin';
 }
+
+type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
-    console.log(`[AXIOS] Error triggered on request to: ${error.config?.url}`);
-    console.log(`[AXIOS] Status Code: ${error.response?.status}`);
+  async (error: AxiosError) => {
+    const config = error.config as RetryableConfig | undefined;
+    const status = error.response?.status;
+    const url = config?.url ?? '';
+    const isKeepalive = Boolean(
+      config?.headers && (config.headers as Record<string, unknown>)['X-Keepalive']
+    );
 
-    if (error.response?.status === 401 ) {
-      localStorage.removeItem('user');
+    // Only 401s are auth problems. Never bounce the user on 400/403/404/5xx
+    // or network failures — public pages render their own empty/fallback state.
+    if (status !== 401 || !config || isPublicEndpoint(url) || isKeepalive) {
+      return Promise.reject(error);
+    }
+
+    // A guest (never signed in) who hits an auth-required endpoint should NOT
+    // be redirected. The page/action decides whether to prompt for sign-in.
+    if (typeof window === 'undefined' || !localStorage.getItem('refresh_token')) {
+      return Promise.reject(error);
+    }
+
+    // Expired access token: try one silent refresh + replay before giving up.
+    if (!config._retry) {
+      config._retry = true;
+      try {
+        const access = await refreshAccessToken();
+        const headers = config.headers as unknown as { set?: (k: string, v: string) => void };
+        if (headers?.set) {
+          headers.set('Authorization', `Bearer ${access}`);
+        } else {
+          config.headers = {
+            ...(config.headers as Record<string, string>),
+            Authorization: `Bearer ${access}`,
+          } as InternalAxiosRequestConfig['headers'];
+        }
+        return apiClient(config);
+      } catch {
+        clearSession();
+        return Promise.reject(error);
       }
-      
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/signin')) {
-        window.location.href = '/auth/signin';
-      }
-    
+    }
+
+    // Refresh token is dead: clear the stale session but do NOT force a
+    // redirect. Protected areas guard themselves, so sign-in is only ever
+    // requested when the user takes an action that needs an account.
+    clearSession();
     return Promise.reject(error);
   }
 );
