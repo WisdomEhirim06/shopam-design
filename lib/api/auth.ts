@@ -1,4 +1,5 @@
 import apiClient, { API_ENDPOINTS } from './config';
+import { DEV_AUTH_BYPASS, DEV_USER } from '../devAuth';
 import type {
   UserRegister,
   VendorRegister,
@@ -98,11 +99,13 @@ export const authService = {
 
   // Check if user is authenticated
   isAuthenticated(): boolean {
+    if (DEV_AUTH_BYPASS) return true;
     return !!localStorage.getItem('user');
   },
 
   // Get stored user data
   getCurrentUser(): UserProfile | null {
+    if (DEV_AUTH_BYPASS) return DEV_USER;
     const userStr = localStorage.getItem('user');
     if (!userStr) return null;
 

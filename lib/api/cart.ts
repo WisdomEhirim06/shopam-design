@@ -1,5 +1,6 @@
 import apiClient, { API_ENDPOINTS } from './config';
 import { authService } from './auth';
+import { DEV_AUTH_BYPASS } from '../devAuth';
 import type {
   Cart,
   CartItem,
@@ -31,6 +32,13 @@ const isAuthed = () => {
     return false;
   }
 };
+
+/**
+ * Whether to talk to the server cart. In dev bypass there is no real session
+ * cookie, so we keep using the local cart even though `isAuthenticated()` is
+ * forced true for the route guards.
+ */
+const serverCartEnabled = () => isAuthed() && !DEV_AUTH_BYPASS;
 
 function readGuest(): GuestLine[] {
   if (!isBrowser()) return [];
@@ -111,7 +119,7 @@ async function mergeGuestCart(): Promise<void> {
 export const cartService = {
   /** Current cart — the local guest cart when signed out, else the server cart. */
   async getCart(): Promise<Cart> {
-    if (!isAuthed()) return toGuestCart(readGuest());
+    if (!serverCartEnabled()) return toGuestCart(readGuest());
 
     await mergeGuestCart();
     const response = await apiClient.get<Cart>(API_ENDPOINTS.CART.GET);
@@ -128,7 +136,7 @@ export const cartService = {
    * round-trip; signed-in users only need `product_id`.
    */
   async addToCart(data: AddToCartRequest & { product?: Product }): Promise<CartItem | void> {
-    if (!isAuthed()) {
+    if (!serverCartEnabled()) {
       if (!data.product) return; // nothing to snapshot — ignore for guests
       const quantity = data.quantity ?? 1;
       const lines = readGuest();
@@ -152,7 +160,7 @@ export const cartService = {
   },
 
   async updateCartItem(id: string, data: UpdateCartItemRequest): Promise<CartItem> {
-    if (!isAuthed()) {
+    if (!serverCartEnabled()) {
       const productId = id.replace('guest-item-', '');
       const lines = readGuest();
       const line = lines.find((entry) => entry.product.id === productId);
@@ -175,7 +183,7 @@ export const cartService = {
   },
 
   async removeFromCart(id: string): Promise<void> {
-    if (!isAuthed()) {
+    if (!serverCartEnabled()) {
       const productId = id.replace('guest-item-', '');
       writeGuest(readGuest().filter((line) => line.product.id !== productId));
       return;
@@ -184,7 +192,7 @@ export const cartService = {
   },
 
   async clearCart(): Promise<void> {
-    if (!isAuthed()) {
+    if (!serverCartEnabled()) {
       writeGuest([]);
       return;
     }

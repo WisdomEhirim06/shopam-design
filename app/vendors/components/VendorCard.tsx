@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Star, Check } from 'lucide-react';
 import { authService, followsService } from '@/lib/api';
 import type { Vendor } from '@/lib/api';
+import { DEV_AUTH_BYPASS } from '@/lib/devAuth';
 import { compactNumber } from '@/lib/format';
 
 export default function VendorCard({ vendor, index = 0 }: { vendor: Vendor; index?: number }) {
@@ -15,6 +16,12 @@ export default function VendorCard({ vendor, index = 0 }: { vendor: Vendor; inde
   const toggleFollow = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // Dev bypass: no real session — just toggle the UI state.
+    if (DEV_AUTH_BYPASS) {
+      setFollowing((v) => !v);
+      return;
+    }
 
     if (!authService.isAuthenticated()) {
       window.location.href = `/auth/signin?redirect=${encodeURIComponent(`/vendors/${vendor.id}`)}`;

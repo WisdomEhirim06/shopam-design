@@ -23,6 +23,7 @@ import {
 } from '@/lib/api';
 import type { ProductService, Vendor } from '@/lib/api';
 import { compactNumber } from '@/lib/format';
+import { DEV_AUTH_BYPASS } from '@/lib/devAuth';
 import Navbar from '../../components/home/Navbar';
 import ProductCard from '../../explore/components/ProductCard';
 import PostCard from '../../components/feed/PostCard';
@@ -125,6 +126,12 @@ export default function VendorShopPage() {
   };
 
   const toggleFollow = async () => {
+    // Dev bypass: no real session — just toggle the UI state.
+    if (DEV_AUTH_BYPASS) {
+      setFollowing((v) => !v);
+      return;
+    }
+
     if (!authService.isAuthenticated()) {
       window.location.href = `/auth/signin?redirect=${encodeURIComponent(`/vendors/${vendorId}`)}`;
       return;

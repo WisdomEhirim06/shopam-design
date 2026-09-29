@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { ensureDevSession } from '../devAuth';
 
 // Base URL for the API — empty string routes through Next.js rewrites (/api/* → https://api.shopam.net/api/*)
 export const API_BASE_URL = '';
@@ -8,6 +9,9 @@ const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000, // 30 seconds
 });
+
+// Dev-only: seed the mock session before any page guard reads localStorage.
+ensureDevSession();
 
 const PUBLIC_ENDPOINTS = [
   '/api/accounts/register',
