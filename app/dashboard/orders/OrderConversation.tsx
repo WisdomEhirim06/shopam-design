@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { ArrowLeft, Send, Check, X, Truck, CheckCircle2, MoreVertical } from 'lucide-react';
+import { SUGGESTED_SHIPPING_FEE } from '@/lib/order-steps';
 import type { UIOrder } from './order-transform';
 
 interface OrderConversationProps {
@@ -13,7 +14,8 @@ interface OrderConversationProps {
   onBack: () => void;
   onStartDelivery: (orderId: string) => void;
   onAccept: (orderId: string, msgId: string) => void;
-  onDecline: (orderId: string, msgId: string) => void;
+  onModify: (orderId: string, msgId: string) => void;
+  onReject: (orderId: string, msgId: string) => void;
   onSetShippingFee: (orderId: string, msgId: string, fee: number, total: number) => void;
   onSendMessage: () => void;
 }
@@ -27,7 +29,8 @@ export default function OrderConversation({
   onBack,
   onStartDelivery,
   onAccept,
-  onDecline,
+  onModify,
+  onReject,
   onSetShippingFee,
   onSendMessage,
 }: OrderConversationProps) {
@@ -98,6 +101,8 @@ export default function OrderConversation({
                         className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full ${
                           msg.orderStatus === 'Accepted' || msg.orderStatus === 'Shipping Fee Set'
                             ? 'bg-emerald-50 text-emerald-600'
+                            : msg.orderStatus === 'Changes Sent'
+                            ? 'bg-amber-50 text-amber-600'
                             : msg.orderStatus === 'Declined'
                             ? 'bg-gray-100 text-gray-500'
                             : 'bg-[#FA3728]/10 text-[#FA3728]'
@@ -151,26 +156,40 @@ export default function OrderConversation({
                           <Check size={12} strokeWidth={3} />
                           Accept
                         </button>
-                        <button className="flex-1 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-bold shadow-sm hover:bg-amber-600">
+                        <button
+                          onClick={() => onModify(order.id, msg.id)}
+                          className="flex-1 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-bold shadow-sm hover:bg-amber-600"
+                        >
                           Modify
                         </button>
                         <button
-                          onClick={() => onDecline(order.id, msg.id)}
+                          onClick={() => onReject(order.id, msg.id)}
                           className="flex-1 py-2 bg-gray-50 text-gray-700 rounded-xl text-[10px] font-bold border border-gray-200 hover:bg-gray-100"
                         >
-                          Decline
+                          Reject
                         </button>
+                      </div>
+                    )}
+
+                    {msg.orderStatus === 'Changes Sent' && (
+                      <div className="mt-3 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-center">
+                        <p className="text-xs font-semibold text-amber-700">
+                          Changes sent — awaiting the buyer&apos;s review
+                        </p>
                       </div>
                     )}
 
                     {/* Accepted → shipping fee input (Step 5) */}
                     {msg.orderStatus === 'Accepted' && (
                       <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
-                        <p className="text-xs font-semibold mb-2 text-gray-700">Set shipping fee (₦):</p>
+                        <p className="text-xs font-semibold mb-2 text-gray-700">
+                          Confirm delivery fee (₦)
+                        </p>
                         <input
                           type="number"
                           id={`fee-${msg.id}`}
-                          placeholder="e.g. 500"
+                          defaultValue={SUGGESTED_SHIPPING_FEE}
+                          placeholder="e.g. 1500"
                           className="w-full text-xs p-2.5 rounded-md border border-gray-300 mb-2.5 outline-none focus:border-[#FA3728] text-gray-900"
                         />
                         <button

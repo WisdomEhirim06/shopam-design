@@ -22,3 +22,15 @@ export function compactNumber(value: number): string {
   if (value >= 1_000) return `${(value / 1_000).toFixed(1).replace(/\.0$/, '')}k`;
   return String(value);
 }
+
+/** Group a card number into 4-digit blocks. */
+export function formatCardNumber(val: string) {
+  return val.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+}
+
+/** Format an expiry as MM/YY while typing. */
+export function formatExpiry(val: string) {
+  const digits = val.replace(/\D/g, '').slice(0, 4);
+  if (digits.length >= 3) return digits.slice(0, 2) + '/' + digits.slice(2);
+  return digits;
+}

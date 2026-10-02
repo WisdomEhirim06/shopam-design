@@ -20,7 +20,7 @@ export interface ConversationMessage {
   type: ConvMsgType;
   timestamp: string;
   fromBuyer?: boolean;
-  orderStatus?: 'Pending' | 'Accepted' | 'Declined' | 'Shipping Fee Set' | 'Shipped';
+  orderStatus?: 'Pending' | 'Accepted' | 'Changes Sent' | 'Declined' | 'Shipping Fee Set' | 'Shipped';
   buyerName?: string;
   items?: UIOrderItem[];
   total?: number;

@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Search, Loader2 } from 'lucide-react';
 import { ordersService } from '@/lib/api/services';
 import { transformOrder, type UIOrder, type UIOrderStatus, type ConversationMessage } from './order-transform';
 import OrderConversation from './OrderConversation';
+import ModifyOrderModal, { type ModifyChanges } from './ModifyOrderModal';
+import RejectOrderModal from './RejectOrderModal';
 
 /* ─────────────── Main Component ─────────────── */
 export default function OrdersPage() {
@@ -15,6 +17,8 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<UIOrder | null>(null);
   const [messageInput, setMessageInput] = useState('');
   const [convError, setConvError] = useState('');
+  const [modifyTarget, setModifyTarget] = useState<{ order: UIOrder; msgId: string } | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<{ order: UIOrder; msgId: string } | null>(null);
 
   const tabs: UIOrderStatus[] = ['All', 'Pending', 'Confirmed', 'Completed'];
   const filteredOrders = activeTab === 'All' ? orders : orders.filter((o) => o.status === activeTab);
@@ -81,7 +85,7 @@ export default function OrdersPage() {
   /* ── Accept order (Step 2) ── */
   const handleAccept = async (orderId: string, msgId: string) => {
     try {
-      await ordersService.vendorReview(orderId, { action: 'accept' });
+      await ordersService.acceptOrder(orderId);
     } catch {
       setConvError('Failed to accept order. Please try again.');
     }
@@ -94,20 +98,56 @@ export default function OrdersPage() {
     );
   };
 
-  /* ── Decline order (Step 2 — vendor declines) ── */
-  const handleDecline = async (orderId: string, msgId: string) => {
+  /* ── Modify order (Step 2b) — send proposed changes to the buyer ── */
+  const handleModifySave = async (changes: ModifyChanges) => {
+    if (!modifyTarget) return;
+    const { order, msgId } = modifyTarget;
     try {
-      await ordersService.vendorReview(orderId, { action: 'decline' });
+      await ordersService.modifyOrder(order.id, changes as unknown as Record<string, unknown>);
     } catch {
-      setConvError('Failed to decline order. Please try again.');
+      // TODO: wire to the real modify contract when the backend confirms it.
     }
-    updateConvMsg(orderId, msgId, { orderStatus: 'Declined' });
+    updateConvMsg(order.id, msgId, { orderStatus: 'Changes Sent' });
+    appendMsg(order.id, {
+      id: `changes-${Date.now()}`,
+      type: 'text',
+      timestamp: new Date().toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' }),
+      content: 'I’ve sent updated items, prices and delivery fee for your review.',
+      fromBuyer: false,
+    });
     setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: 'Declined', apiStatus: 'cancelled' } : o))
+      prev.map((o) => (o.id === order.id ? { ...o, status: 'Pending', apiStatus: 'pending_customer_approval' } : o))
     );
     setSelectedOrder((prev) =>
-      prev?.id === orderId ? { ...prev, status: 'Declined', apiStatus: 'cancelled' } : prev
+      prev?.id === order.id ? { ...prev, status: 'Pending', apiStatus: 'pending_customer_approval' } : prev
     );
+    setModifyTarget(null);
+  };
+
+  /* ── Reject order (Step 2c) — with a reason ── */
+  const handleRejectConfirm = async (reason: string) => {
+    if (!rejectTarget) return;
+    const { order, msgId } = rejectTarget;
+    try {
+      await ordersService.rejectOrder(order.id, reason);
+    } catch {
+      // TODO: wire to the real rejection contract when confirmed.
+    }
+    updateConvMsg(order.id, msgId, { orderStatus: 'Declined' });
+    appendMsg(order.id, {
+      id: `decline-${Date.now()}`,
+      type: 'text',
+      timestamp: new Date().toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' }),
+      content: `Sorry, I can’t fulfil this order. Reason: ${reason}.`,
+      fromBuyer: false,
+    });
+    setOrders((prev) =>
+      prev.map((o) => (o.id === order.id ? { ...o, status: 'Declined', apiStatus: 'cancelled' } : o))
+    );
+    setSelectedOrder((prev) =>
+      prev?.id === order.id ? { ...prev, status: 'Declined', apiStatus: 'cancelled' } : prev
+    );
+    setRejectTarget(null);
   };
 
   /* ── Set shipping fee (Step 5) ── */
@@ -146,20 +186,40 @@ export default function OrdersPage() {
      CONVERSATION VIEW
   ════════════════════════════════════════ */
   if (selectedOrder) {
+    const findOrder = (id: string) => orders.find((o) => o.id === id) ?? selectedOrder;
     return (
-      <OrderConversation
-        order={selectedOrder}
-        messageInput={messageInput}
-        onMessageInputChange={setMessageInput}
-        convError={convError}
-        onConvErrorChange={setConvError}
-        onBack={() => setSelectedOrder(null)}
-        onStartDelivery={handleStartDelivery}
-        onAccept={handleAccept}
-        onDecline={handleDecline}
-        onSetShippingFee={handleSetShippingFee}
-        onSendMessage={handleSendMessage}
-      />
+      <>
+        <OrderConversation
+          order={selectedOrder}
+          messageInput={messageInput}
+          onMessageInputChange={setMessageInput}
+          convError={convError}
+          onConvErrorChange={setConvError}
+          onBack={() => setSelectedOrder(null)}
+          onStartDelivery={handleStartDelivery}
+          onAccept={handleAccept}
+          onModify={(id, msgId) => setModifyTarget({ order: findOrder(id), msgId })}
+          onReject={(id, msgId) => setRejectTarget({ order: findOrder(id), msgId })}
+          onSetShippingFee={handleSetShippingFee}
+          onSendMessage={handleSendMessage}
+        />
+
+        <AnimatePresence>
+          {modifyTarget && (
+            <ModifyOrderModal
+              order={modifyTarget.order}
+              onClose={() => setModifyTarget(null)}
+              onSave={handleModifySave}
+            />
+          )}
+          {rejectTarget && (
+            <RejectOrderModal
+              onClose={() => setRejectTarget(null)}
+              onConfirm={handleRejectConfirm}
+            />
+          )}
+        </AnimatePresence>
+      </>
     );
   }
 

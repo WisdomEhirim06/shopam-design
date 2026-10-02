@@ -69,6 +69,36 @@ export const ordersService = {
     await apiClient.post(API_ENDPOINTS.ORDERS.VENDOR_REVIEW(orderId), body ?? {});
   },
 
+  /**
+   * Step 2a: Vendor accepts the order as-is.
+   * NOTE: payload shape is provisional (backend contract TBD).
+   */
+  async acceptOrder(orderId: string): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.ORDERS.VENDOR_REVIEW(orderId), { action: 'accept' });
+  },
+
+  /**
+   * Step 2b: Vendor proposes changes (items / quantity / price / delivery fee).
+   * NOTE: best-effort payload — wire to the real contract when available.
+   */
+  async modifyOrder(orderId: string, changes: Record<string, unknown>): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.ORDERS.VENDOR_REVIEW(orderId), {
+      action: 'modify',
+      ...changes,
+    });
+  },
+
+  /**
+   * Step 2c: Vendor rejects with a reason.
+   * NOTE: best-effort payload — wire to the real contract when available.
+   */
+  async rejectOrder(orderId: string, reason: string): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.ORDERS.VENDOR_REVIEW(orderId), {
+      action: 'decline',
+      rejection_reason: reason,
+    });
+  },
+
   /** Step 5: Vendor sets the shipping fee */
   async setShippingFee(orderId: string, shippingFee: string): Promise<void> {
     await apiClient.post(API_ENDPOINTS.ORDERS.SET_SHIPPING_FEE(orderId), { shipping_fee: shippingFee });

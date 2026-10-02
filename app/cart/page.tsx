@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   Trash2,
@@ -13,6 +14,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { cartService } from '@/lib/api/cart';
+import { ordersService } from '@/lib/api';
 import { Cart, SubCart, CartItem } from '@/lib/api/types';
 
 
@@ -23,6 +25,9 @@ export default function CartPage() {
   const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [placingVendor, setPlacingVendor] = useState<string | null>(null);
+  const [orderError, setOrderError] = useState('');
+  const router = useRouter();
 
   const fetchCart = async () => {
     try {
@@ -110,6 +115,24 @@ export default function CartPage() {
     }
   };
 
+  const placeOrder = async (subcartId: string) => {
+    if (isGuest) {
+      window.location.href = '/auth/signin?redirect=/cart';
+      return;
+    }
+    setOrderError('');
+    setPlacingVendor(subcartId);
+    try {
+      const orders = await ordersService.createOrder({ target_type: 'subcart', target_id: subcartId });
+      const order = orders[0];
+      if (!order?.id) throw new Error('No order returned');
+      router.push(`/chats/${order.id}`);
+    } catch {
+      setOrderError('Could not start this order. Please try again.');
+      setPlacingVendor(null);
+    }
+  };
+
   if (isLoading && !cart) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -163,6 +186,12 @@ export default function CartPage() {
             </div>
           )}
 
+          {orderError && (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+              {orderError}
+            </div>
+          )}
+
           {!hasItems ? (
             /* Empty Cart State */
             <div className="bg-white rounded-2xl p-12 text-center shadow-sm">
@@ -182,7 +211,6 @@ export default function CartPage() {
             /* Grouped Cart Items */
             cart.subcarts.map((subcart, index) => {
               const subtotal = subcart.items.reduce((sum, item) => sum + parseFloat(item.total_price), 0);
-              const vendorSlug = subcart.vendor_name.toLowerCase().replace(/\s+/g, '-');
               const isVendorSelected = selectedVendors.includes(subcart.vendor_id);
 
               return (
@@ -277,13 +305,18 @@ export default function CartPage() {
                       <span className="block text-gray-500 text-xs mb-0.5">Subtotal</span>
                       <span className="font-semibold text-gray-900 text-base">₦{subtotal.toLocaleString()}</span>
                     </div>
-                    <Link
-                      href={`/chats/${vendorSlug}`}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FA3728]/10 hover:bg-[#FA3728]/20 text-[#FA3728] font-medium text-sm rounded-full transition-colors"
+                    <button
+                      onClick={() => placeOrder(subcart.id)}
+                      disabled={placingVendor === subcart.id}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white font-semibold text-sm rounded-full transition-colors disabled:opacity-60"
                     >
-                      <MessageCircle size={16} />
-                      Order via Chat
-                    </Link>
+                      {placingVendor === subcart.id ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <MessageCircle size={16} />
+                      )}
+                      {placingVendor === subcart.id ? 'Starting…' : 'Order via Chat'}
+                    </button>
                   </div>
                 </motion.div>
               );
