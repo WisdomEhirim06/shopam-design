@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { MapPin, Mail, Phone, Instagram, Twitter, Facebook, Linkedin } from 'lucide-react';
 
 export default function HomeFooter() {
@@ -12,9 +13,13 @@ export default function HomeFooter() {
           {/* Brand & Compact Contact */}
           <div className="space-y-2.5">
             <Link href="/" className="inline-block">
-              <span className="font-bricolage font-black tracking-tight text-2xl text-ink">
-                Shop<span className="text-[#FA3728]">Am</span>
-              </span>
+              <Image
+                src="/images/black-logo.png"
+                alt="ShopAm"
+                width={124}
+                height={36}
+                className="h-7 w-auto object-contain"
+              />
             </Link>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
@@ -129,9 +134,13 @@ export default function HomeFooter() {
           {/* Brand & Address Column */}
           <div className="lg:col-span-2 space-y-4">
             <Link href="/" className="inline-block">
-              <span className="font-bricolage font-black tracking-tight text-3xl text-ink">
-                Shop<span className="text-[#FA3728]">Am</span>
-              </span>
+              <Image
+                src="/images/black-logo.png"
+                alt="ShopAm"
+                width={150}
+                height={44}
+                className="h-9 w-auto object-contain"
+              />
             </Link>
 
             <p className="max-w-sm text-sm text-slate-500 leading-relaxed">

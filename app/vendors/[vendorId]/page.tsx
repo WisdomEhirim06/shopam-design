@@ -12,6 +12,7 @@ import {
   Search,
   Shield,
   ArrowLeft,
+  Store,
 } from 'lucide-react';
 import {
   vendorsService,
@@ -228,7 +229,20 @@ export default function VendorShopPage() {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={vendor.cover} alt="" className="h-full w-full object-cover" />
           ) : (
-            <div className="h-full w-full bg-gradient-to-br from-[#FA3728] to-[#E31B23]" />
+            <div className="relative h-full w-full bg-gradient-to-br from-red-50 via-orange-50 to-amber-50">
+              <div
+                className="absolute inset-0 opacity-60"
+                style={{
+                  backgroundImage:
+                    'radial-gradient(circle at 1px 1px, rgba(250,55,40,0.12) 1px, transparent 0)',
+                  backgroundSize: '18px 18px',
+                }}
+              />
+              <Store
+                size={40}
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[#FA3728]/20"
+              />
+            </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-black/10" />
 
@@ -346,10 +360,7 @@ export default function VendorShopPage() {
         {/* Products */}
         {activeTab === 'products' && (
           <div className="mt-6">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-slate-500">
-                {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
-              </p>
+            <div className="mb-5 flex flex-wrap items-center justify-end gap-3">
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <Search

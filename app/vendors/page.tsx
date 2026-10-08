@@ -2,29 +2,20 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, MapPin, Loader2, Check } from 'lucide-react';
+import { SlidersHorizontal, Loader2, Check } from 'lucide-react';
 import { vendorsService } from '@/lib/api';
 import type { Vendor } from '@/lib/api';
 import Navbar from '../components/home/Navbar';
 import SearchBar from '../components/home/SearchBar';
 import CategoryPills from '../components/home/CategoryPills';
 import VendorCard from './components/VendorCard';
-import {
-  FALLBACK_VENDORS,
-  VENDOR_SORTS,
-  uniqueLocations,
-  matchesCategory,
-  type VendorSort,
-} from './data';
-
-const ALL_LOCATIONS = 'All';
+import { FALLBACK_VENDORS, VENDOR_SORTS, matchesCategory, type VendorSort } from './data';
 
 export default function VendorsPage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [location, setLocation] = useState(ALL_LOCATIONS);
   const [sort, setSort] = useState<VendorSort>('top-rated');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
 
@@ -47,8 +38,6 @@ export default function VendorsPage() {
     };
   }, []);
 
-  const locations = useMemo(() => uniqueLocations(vendors), [vendors]);
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = vendors.filter((vendor) => {
@@ -57,9 +46,8 @@ export default function VendorsPage() {
       const matchCategory =
         selectedCategories.length === 0 ||
         selectedCategories.some((slug) => matchesCategory(vendor, slug));
-      const matchLocation = location === ALL_LOCATIONS || vendor.location === location;
       const matchVerified = !verifiedOnly || vendor.verified;
-      return matchQuery && matchCategory && matchLocation && matchVerified;
+      return matchQuery && matchCategory && matchVerified;
     });
 
     switch (sort) {
@@ -71,7 +59,7 @@ export default function VendorsPage() {
       default:
         return [...list].sort((a, b) => b.rating - a.rating);
     }
-  }, [vendors, query, selectedCategories, location, sort, verifiedOnly]);
+  }, [vendors, query, selectedCategories, sort, verifiedOnly]);
 
   const toggleCategory = (slug: string) => {
     setSelectedCategories((prev) =>
@@ -80,20 +68,14 @@ export default function VendorsPage() {
   };
 
   const hasActiveFilters =
-    query.trim() !== '' ||
-    selectedCategories.length > 0 ||
-    location !== ALL_LOCATIONS ||
-    verifiedOnly;
+    query.trim() !== '' || selectedCategories.length > 0 || verifiedOnly;
 
   const clearFilters = () => {
     setQuery('');
     setSelectedCategories([]);
-    setLocation(ALL_LOCATIONS);
     setSort('top-rated');
     setVerifiedOnly(false);
   };
-
-  const locationOptions = [ALL_LOCATIONS, ...locations];
 
   return (
     <div className="min-h-screen bg-canvas font-sans text-ink antialiased">
@@ -105,12 +87,11 @@ export default function VendorsPage() {
           <h1 className="font-bricolage text-3xl font-black tracking-tight text-ink sm:text-4xl lg:text-5xl">
             Discover Shops
           </h1>
-          <p className="mx-auto mt-2 max-w-md text-sm text-slate-500 sm:text-base">
+          <p className="mx-auto mt-3 max-w-md text-sm text-slate-600 sm:text-base">
             Find and follow{' '}
-            <strong className="font-semibold text-slate-800">verified vendors</strong> from across
-            Nigeria.
+            <strong className="font-semibold text-ink">verified vendors</strong> from across Nigeria.
           </p>
-          <div className="mt-5 sm:mt-7">
+          <div className="mt-6">
             <SearchBar
               key={query}
               initialValue={query}
@@ -121,7 +102,7 @@ export default function VendorsPage() {
         </div>
 
         {/* Category pills — same as the homepage */}
-        <div className="mt-5 sm:mt-7">
+        <div className="mt-6">
           <CategoryPills
             selected={selectedCategories}
             onSelect={toggleCategory}
@@ -129,23 +110,12 @@ export default function VendorsPage() {
           />
         </div>
 
-        {/* Mobile filter bar */}
-        <div className="mt-4 flex flex-wrap items-center gap-2 lg:hidden">
-          <select
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="min-w-0 flex-1 cursor-pointer rounded-full border border-slate-200 bg-white px-3 py-2 text-base font-semibold text-slate-700 outline-none focus:border-ink"
-          >
-            {locationOptions.map((loc) => (
-              <option key={loc} value={loc}>
-                {loc === ALL_LOCATIONS ? 'All locations' : loc}
-              </option>
-            ))}
-          </select>
+        {/* Mobile sort */}
+        <div className="mt-5 flex justify-end lg:hidden">
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as VendorSort)}
-            className="min-w-0 flex-1 cursor-pointer rounded-full border border-slate-200 bg-white px-3 py-2 text-base font-semibold text-slate-700 outline-none focus:border-ink"
+            className="cursor-pointer rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-ink"
           >
             {VENDOR_SORTS.map((option) => (
               <option key={option.id} value={option.id}>
@@ -153,50 +123,36 @@ export default function VendorsPage() {
               </option>
             ))}
           </select>
-          <button
-            type="button"
-            onClick={() => setVerifiedOnly((v) => !v)}
-            className={`rounded-full border px-3 py-2 text-sm font-semibold transition-colors ${
-              verifiedOnly
-                ? 'border-ink bg-ink text-white'
-                : 'border-slate-200 bg-white text-slate-700'
-            }`}
-          >
-            Verified
-          </button>
         </div>
 
         {/* Grid + filter rail */}
         <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start lg:gap-8">
           <div>
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm text-slate-500">
-                {loading ? 'Loading…' : `${filtered.length} ${filtered.length === 1 ? 'shop' : 'shops'}`}
-              </p>
-              {hasActiveFilters && (
+            {hasActiveFilters && (
+              <div className="mb-4 flex justify-end">
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="text-xs font-semibold text-slate-400 transition-colors hover:text-[#FA3728]"
+                  className="text-xs font-semibold text-slate-500 transition-colors hover:text-[#FA3728]"
                 >
                   Clear all
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {loading ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div
                     key={i}
-                    className="aspect-[4/5] animate-pulse rounded-3xl border border-slate-200/70 bg-white"
+                    className="aspect-[4/5] animate-pulse rounded-2xl bg-slate-200/70"
                   />
                 ))}
               </div>
             ) : filtered.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-slate-200 py-24 text-center">
                 <p className="text-lg font-semibold text-ink">No shops found</p>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-slate-600">
                   Try a different search or clear your filters.
                 </p>
                 {hasActiveFilters && (
@@ -209,7 +165,7 @@ export default function VendorsPage() {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5">
                 {filtered.map((vendor, index) => (
                   <VendorCard key={vendor.id || vendor.name} vendor={vendor} index={index} />
                 ))}
@@ -234,36 +190,6 @@ export default function VendorsPage() {
                     Clear
                   </button>
                 )}
-              </div>
-
-              {/* Location */}
-              <div className="mb-5">
-                <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">
-                  Location
-                </h3>
-                <div className="max-h-56 space-y-1 overflow-y-auto no-scrollbar">
-                  {locationOptions.map((loc) => {
-                    const active = location === loc;
-                    return (
-                      <button
-                        key={loc}
-                        type="button"
-                        onClick={() => setLocation(loc)}
-                        className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold transition-colors ${
-                          active ? 'bg-ink text-white' : 'text-slate-600 hover:bg-slate-50'
-                        }`}
-                      >
-                        <span className="inline-flex min-w-0 items-center gap-2">
-                          <MapPin size={13} className="shrink-0" />
-                          <span className="truncate">
-                            {loc === ALL_LOCATIONS ? 'All locations' : loc}
-                          </span>
-                        </span>
-                        {active && <Check size={13} className="shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
 
               {/* Sort */}

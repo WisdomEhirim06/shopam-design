@@ -33,7 +33,7 @@ export default function ProfileButton() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="relative flex items-center justify-center group"
+        className="group relative flex min-w-0 items-center justify-center"
         aria-label="Profile"
       >
         {isAuthenticated && userInitial ? (

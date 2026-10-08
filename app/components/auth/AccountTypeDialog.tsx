@@ -8,23 +8,24 @@ export default function AccountTypeDialog({ open, onClose }: { open: boolean; on
   return (
     <AnimatePresence>
       {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-[80] bg-black/45 backdrop-blur-md"
-          />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) onClose();
+          }}
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-6 py-8 backdrop-blur-md"
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.94, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 10 }}
             transition={{ type: 'spring', damping: 28, stiffness: 360 }}
-            className="fixed left-1/2 top-1/2 z-[90] w-[calc(100%-3rem)] max-w-[320px] sm:max-w-[340px] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white/90 backdrop-blur-2xl p-5 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.25)] border border-white/70 ring-1 ring-slate-900/5"
+            className="w-full max-w-[340px] rounded-3xl border border-white/70 bg-white/95 p-5 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.25)] ring-1 ring-slate-900/5 backdrop-blur-2xl"
           >
             <div className="flex items-center justify-between">
-              <h2 className="font-bricolage text-base sm:text-lg font-bold text-ink">Create an account</h2>
+              <h2 className="font-bricolage text-base font-bold text-ink sm:text-lg">Create an account</h2>
               <button
                 onClick={onClose}
                 aria-label="Close"
@@ -46,7 +47,7 @@ export default function AccountTypeDialog({ open, onClose }: { open: boolean; on
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-bold text-ink">Shop</span>
-                  <span className="block text-[11px] text-slate-500 truncate">Buy products &amp; services</span>
+                  <span className="block truncate text-[11px] text-slate-500">Buy products &amp; services</span>
                 </span>
               </Link>
 
@@ -60,12 +61,12 @@ export default function AccountTypeDialog({ open, onClose }: { open: boolean; on
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-bold text-ink">Sell</span>
-                  <span className="block text-[11px] text-slate-500 truncate">Open a vendor store</span>
+                  <span className="block truncate text-[11px] text-slate-500">Open a vendor store</span>
                 </span>
               </Link>
             </div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

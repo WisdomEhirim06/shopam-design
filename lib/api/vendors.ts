@@ -1,4 +1,5 @@
 import apiClient, { API_ENDPOINTS } from './config';
+import { formatCategory, formatVendorName } from '../format';
 import type { PaginatedResponse } from './types';
 
 /**
@@ -43,8 +44,10 @@ export function normalizeVendor(raw: any): Vendor {
 
   return {
     id,
-    name,
-    category: asString(raw?.business_category_display) || asString(raw?.business_category) || asString(raw?.category),
+    name: formatVendorName(name),
+    category: formatCategory(
+      asString(raw?.business_category_display) || asString(raw?.business_category) || asString(raw?.category)
+    ),
     location: asString(raw?.business_address) || asString(raw?.location) || asString(raw?.city) || asString(raw?.state) || asString(user?.city),
     bio: asString(raw?.bio) || asString(raw?.description) || asString(raw?.business_description),
     avatar: asString(raw?.logo) || asString(raw?.logo_url) || asString(raw?.avatar) || asString(raw?.profile_pic) || asString(user?.profile_pic),

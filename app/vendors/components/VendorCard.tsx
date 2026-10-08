@@ -3,15 +3,16 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Star, Check } from 'lucide-react';
+import { Heart, Star } from 'lucide-react';
 import { authService, followsService } from '@/lib/api';
 import type { Vendor } from '@/lib/api';
 import { DEV_AUTH_BYPASS } from '@/lib/devAuth';
-import { compactNumber } from '@/lib/format';
+import { compactNumber, formatCategory, formatVendorName } from '@/lib/format';
 
 export default function VendorCard({ vendor, index = 0 }: { vendor: Vendor; index?: number }) {
   const [following, setFollowing] = useState(vendor.isFollowing);
   const [busy, setBusy] = useState(false);
+  const href = `/vendors/${vendor.id}`;
 
   const toggleFollow = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -24,7 +25,7 @@ export default function VendorCard({ vendor, index = 0 }: { vendor: Vendor; inde
     }
 
     if (!authService.isAuthenticated()) {
-      window.location.href = `/auth/signin?redirect=${encodeURIComponent(`/vendors/${vendor.id}`)}`;
+      window.location.href = `/auth/signin?redirect=${encodeURIComponent(href)}`;
       return;
     }
 
@@ -38,85 +39,96 @@ export default function VendorCard({ vendor, index = 0 }: { vendor: Vendor; inde
         setFollowing(false);
       }
     } catch {
-      /* surface nothing — follow is non-critical */
+      /* follow is non-critical */
     } finally {
       setBusy(false);
     }
   };
 
+  const name = formatVendorName(vendor.name);
+  const category = formatCategory(vendor.category);
+  const meta = [category, vendor.location].filter(Boolean).join(' • ') || 'Verified vendor';
+
   return (
     <motion.article
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
-      transition={{ delay: Math.min(index * 0.04, 0.28), duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ delay: Math.min(index * 0.03, 0.24), duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       className="group h-full"
     >
-      <div className="relative h-full overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-slate-300/80 hover:shadow-[0_24px_50px_-24px_rgba(15,23,42,0.35)]">
-        <Link href={`/vendors/${vendor.id}`} className="block">
-          <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100">
-            {vendor.cover ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={vendor.cover}
-                alt={vendor.name}
-                loading="lazy"
-                className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#FA3728] to-[#E31B23]">
-                <span className="text-5xl font-black text-white/80">{vendor.name[0]}</span>
-              </div>
-            )}
-
-            {/* Readability gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/5" />
-
-            {/* Rating badge */}
-            {vendor.rating > 0 && (
-              <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-bold text-slate-800 shadow-sm backdrop-blur">
-                <Star size={11} className="fill-gold text-gold" />
-                {vendor.rating.toFixed(1)}
-                {vendor.reviews > 0 && (
-                  <span className="font-medium text-slate-400">({compactNumber(vendor.reviews)})</span>
-                )}
-              </span>
-            )}
-
-            {/* Name + meta */}
-            <div className="absolute inset-x-3 bottom-3">
-              <div className="flex items-center gap-1.5">
-                <h3 className="truncate text-base font-bold text-white drop-shadow-sm">
-                  {vendor.name}
-                </h3>
-                {vendor.verified && (
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-trust text-[9px] font-bold text-white">
-                    ✓
+      <div className="flex h-full flex-col">
+        {/* Cover + heart */}
+        <div className="relative">
+          <Link href={href} className="block">
+            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-slate-900/5">
+              {vendor.cover ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={vendor.cover}
+                  alt={name}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
+                />
+              ) : (
+                <div className="relative flex h-full w-full items-center justify-center bg-gradient-to-br from-red-50 via-orange-50 to-amber-50">
+                  <div
+                    className="absolute inset-0 opacity-60"
+                    style={{
+                      backgroundImage:
+                        'radial-gradient(circle at 1px 1px, rgba(250,55,40,0.12) 1px, transparent 0)',
+                      backgroundSize: '16px 16px',
+                    }}
+                  />
+                  <span className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white/80 text-sm font-black text-[#FA3728] shadow-sm ring-1 ring-white/90">
+                    {name[0]}
                   </span>
-                )}
-              </div>
-              <p className="mt-0.5 truncate text-[11px] font-medium text-white/80">
-                {[vendor.category, vendor.location].filter(Boolean).join(' • ')}
-              </p>
+                </div>
+              )}
             </div>
-          </div>
-        </Link>
+          </Link>
 
-        {/* Follow — text button, not a heart */}
-        <button
-          type="button"
-          onClick={toggleFollow}
-          disabled={busy}
-          aria-pressed={following}
-          className={`absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold shadow-sm backdrop-blur transition-all active:scale-95 disabled:opacity-70 ${
-            following
-              ? 'border border-white/40 bg-white/20 text-white hover:bg-white/30'
-              : 'bg-white text-ink hover:bg-[#FA3728] hover:text-white'
-          }`}
-        >
-          {following && <Check size={11} strokeWidth={3} />}
-          {following ? 'Following' : 'Follow'}
-        </button>
+          <button
+            type="button"
+            onClick={toggleFollow}
+            disabled={busy}
+            aria-pressed={following}
+            aria-label={following ? `Unfollow ${name}` : `Follow ${name}`}
+            className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm ring-1 ring-slate-900/5 backdrop-blur transition-all hover:bg-white active:scale-90 disabled:opacity-60"
+          >
+            <Heart
+              size={15}
+              className={following ? 'fill-[#FA3728] text-[#FA3728]' : 'text-slate-600'}
+            />
+          </button>
+        </div>
+
+        {/* Details */}
+        <div className="mt-2.5 flex flex-1 flex-col px-0.5">
+          <Link href={href} className="min-w-0">
+            <div className="flex items-center gap-1">
+              <h3 className="truncate text-[12px] font-bold text-ink transition-colors group-hover:text-[#FA3728]">
+                {name}
+              </h3>
+              {vendor.verified && (
+                <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-trust text-[8px] font-bold text-white">
+                  ✓
+                </span>
+              )}
+            </div>
+            <p className="mt-1 truncate text-[11px] font-medium text-slate-600">{meta}</p>
+          </Link>
+
+          {vendor.rating > 0 && (
+            <span className="mt-auto inline-flex items-center gap-1 pt-2 text-[11px] font-semibold text-slate-600">
+              <Star size={12} className="shrink-0 fill-gold text-gold" />
+              {vendor.rating.toFixed(1)}
+              {vendor.reviews > 0 && (
+                <span className="font-medium text-slate-500">({compactNumber(vendor.reviews)})</span>
+              )}
+            </span>
+          )}
+        </div>
       </div>
     </motion.article>
   );

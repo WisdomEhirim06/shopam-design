@@ -14,7 +14,6 @@ import FilterDropdown from './components/FilterDropdown';
 
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('newest');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
@@ -24,7 +23,6 @@ export default function ExplorePage() {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [totalProducts, setTotalProducts] = useState(0);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Pick up deep-link params from the homepage: ?q= (search) and ?category= (category slug)
@@ -40,7 +38,7 @@ export default function ExplorePage() {
   useEffect(() => {
     loadProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategories, sortBy, searchQuery, page]);
+  }, [selectedCategories, searchQuery, page]);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -64,17 +62,7 @@ export default function ExplorePage() {
           filters.category = selectedCategories.join(',');
         }
 
-        switch (sortBy) {
-          case 'price-low':
-            filters.ordering = 'price';
-            break;
-          case 'price-high':
-            filters.ordering = '-price';
-            break;
-          case 'newest':
-          default:
-            filters.ordering = '-created_at';
-        }
+        filters.ordering = '-created_at';
 
         response = await productsService.getProducts(filters);
       }
@@ -87,7 +75,6 @@ export default function ExplorePage() {
         setProducts((prev) => [...prev, ...results]);
       }
 
-      setTotalProducts(response.count || DUMMY_PRODUCTS.length);
       setHasMore(!!response.next);
     } catch {
       if (page === 1) setProducts(DUMMY_PRODUCTS);
@@ -108,11 +95,6 @@ export default function ExplorePage() {
         ? prev.filter((c) => c !== categoryName)
         : [...prev, categoryName]
     );
-    setPage(1);
-  };
-
-  const handleSortChange = (sort: string) => {
-    setSortBy(sort);
     setPage(1);
   };
 
@@ -170,12 +152,12 @@ export default function ExplorePage() {
           <h1 className="font-bricolage text-3xl font-black tracking-tight text-ink sm:text-4xl lg:text-5xl">
             Discover Products
           </h1>
-          <p className="mx-auto mt-2 max-w-md text-sm text-slate-500 sm:text-base">
+          <p className="mx-auto mt-3 max-w-md text-sm text-slate-600 sm:text-base">
             Quality products and services from{' '}
-            <strong className="font-semibold text-slate-800">verified vendors</strong> across Nigeria.
+            <strong className="font-semibold text-ink">verified vendors</strong> across Nigeria.
           </p>
 
-          <div className="mt-5 sm:mt-7">
+          <div className="mt-6">
             <SearchBar
               key={searchQuery}
               initialValue={searchQuery}
@@ -186,7 +168,7 @@ export default function ExplorePage() {
         </div>
 
         {/* Category pills — same as the homepage */}
-        <div className="mt-5 sm:mt-7">
+        <div className="mt-6">
           <CategoryPills
             selected={selectedCategories}
             onSelect={toggleCategory}
@@ -195,7 +177,7 @@ export default function ExplorePage() {
         </div>
 
         {/* Toolbar */}
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 pb-4">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 pb-4">
           <div className="flex items-center gap-2">
             <div className="relative">
               <button
@@ -241,29 +223,10 @@ export default function ExplorePage() {
               </button>
             )}
           </div>
-
-          <div className="flex items-center gap-4">
-            <span className="hidden text-xs font-medium text-slate-400 sm:block">
-              {loading && products.length === 0 ? 'Loading…' : `${totalProducts} products`}
-            </span>
-
-            <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
-              <span className="hidden sm:inline">Sort</span>
-              <select
-                value={sortBy}
-                onChange={(e) => handleSortChange(e.target.value)}
-                className="cursor-pointer rounded-full border border-slate-200 bg-white px-3 py-2 text-base font-semibold text-slate-700 outline-none transition-colors hover:border-slate-300 focus:border-ink sm:text-xs"
-              >
-                <option value="newest">Newest</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-              </select>
-            </label>
-          </div>
         </div>
 
         {/* Products */}
-        <div className="mt-6">
+        <div className="mt-8">
           {loading && products.length === 0 ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3.5 md:grid-cols-4 lg:grid-cols-5 lg:gap-4 xl:grid-cols-6">
               {Array.from({ length: 8 }).map((_, i) => (

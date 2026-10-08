@@ -35,7 +35,7 @@ export const FALLBACK_VENDORS: Vendor[] = [
   {
     id: 'kiara-takeaway',
     name: 'Kiara Takeaway',
-    category: 'Food and Drinks',
+    category: 'Food & Drinks',
     location: 'Port Harcourt',
     bio: 'Delicious meals delivered to your doorstep, hot and fresh.',
     avatar: '/images/shopam pictures/food-vendors.jpg',
@@ -65,7 +65,7 @@ export const FALLBACK_VENDORS: Vendor[] = [
   {
     id: 'beautyplus-ng',
     name: 'BeautyPlus NG',
-    category: 'Beauty, Hair and Personal Care',
+    category: 'Beauty, Hair & Personal Care',
     location: 'Lagos',
     bio: 'Premium beauty products and everyday skincare essentials.',
     avatar: '/images/shopam pictures/ladiesskincare.jpg',
@@ -80,7 +80,7 @@ export const FALLBACK_VENDORS: Vendor[] = [
   {
     id: 'home-office-ng',
     name: 'Home & Office NG',
-    category: 'Home and Living',
+    category: 'Home & Living',
     location: 'Nationwide',
     bio: 'Furniture, décor and office supplies delivered nationwide.',
     avatar: '/images/products/lamp.jpg',
@@ -95,7 +95,7 @@ export const FALLBACK_VENDORS: Vendor[] = [
   {
     id: 'naija-fresh-farm',
     name: 'Naija Fresh Farm',
-    category: 'Food and Drinks',
+    category: 'Food & Drinks',
     location: 'Nationwide',
     bio: 'Organic farm produce sourced directly from local farmers.',
     avatar: '/images/products/fruits.jpg',
@@ -110,7 +110,7 @@ export const FALLBACK_VENDORS: Vendor[] = [
   {
     id: 'kemi-beauty-bar',
     name: 'Kemi Beauty Bar',
-    category: 'Beauty, Hair and Personal Care',
+    category: 'Beauty, Hair & Personal Care',
     location: 'Abuja',
     bio: 'Wigs, hair care and beauty services by appointment.',
     avatar: '/images/products/hair.jpg',
@@ -131,20 +131,6 @@ export const VENDOR_SORTS: { id: VendorSort; label: string }[] = [
   { id: 'most-reviewed', label: 'Most reviewed' },
   { id: 'name', label: 'Name (A–Z)' },
 ];
-
-/** Distinct, non-empty locations from the current vendor list. */
-export function uniqueLocations(vendors: Vendor[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const v of vendors) {
-    const loc = (v.location || '').trim();
-    if (loc && !seen.has(loc.toLowerCase())) {
-      seen.add(loc.toLowerCase());
-      out.push(loc);
-    }
-  }
-  return out.sort((a, b) => a.localeCompare(b));
-}
 
 /** Maps the shared category-pill slugs to keywords found in vendor categories. */
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
