@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { authService } from '@/lib/api';
 import { isValidEmail } from '@/lib/validation';
 import AuthShell from '../../components/auth/AuthShell';
@@ -213,11 +213,10 @@ function UserSignUpForm() {
           type="submit"
           disabled={disabled}
           className={`flex h-11 sm:h-12 w-full items-center justify-center gap-2 rounded-full text-sm sm:text-base font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed ${
-            status === 'success' ? 'bg-emerald-600' : 'bg-[#FA3728] hover:bg-[#E31B23] disabled:opacity-80'
+            status === 'success' ? 'bg-ink' : 'bg-[#FA3728] hover:bg-[#E31B23] disabled:opacity-80'
           }`}
         >
           {status === 'loading' && <Loader2 size={18} className="animate-spin" />}
-          {status === 'success' && <Check size={18} strokeWidth={3} />}
           <span>{status === 'loading' ? 'Creating account…' : status === 'success' ? 'Account created' : 'Create Account'}</span>
         </button>
       </form>

@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
         subtitle={<>We sent a password reset link to <span className="font-semibold text-ink">{email}</span>.</>}
       >
         <div className="flex flex-col items-center gap-5 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-green-500">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-ink text-white">
             <CheckCircle2 size={32} />
           </div>
           <p className="text-sm text-slate-500">

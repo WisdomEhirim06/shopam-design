@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Check, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { authService } from '@/lib/api';
 import { isValidEmail } from '@/lib/validation';
 import AuthShell from '../../components/auth/AuthShell';
@@ -94,7 +94,7 @@ function SignInForm() {
       >
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5" noValidate>
           {justVerified && (
-            <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-ink">
               Your email is verified. Sign in to continue.
             </div>
           )}
@@ -146,11 +146,10 @@ function SignInForm() {
           <button
             type="submit"
             disabled={disabled}
-            className={`flex h-11 sm:h-12 w-full items-center justify-center gap-2 rounded-full text-sm sm:text-base font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed ${status === 'success' ? 'bg-emerald-600' : 'bg-[#FA3728] hover:bg-[#E31B23] disabled:opacity-80'
+            className={`flex h-11 sm:h-12 w-full items-center justify-center gap-2 rounded-full text-sm sm:text-base font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed ${status === 'success' ? 'bg-ink' : 'bg-[#FA3728] hover:bg-[#E31B23] disabled:opacity-80'
               }`}
           >
             {status === 'loading' && <Loader2 size={18} className="animate-spin" />}
-            {status === 'success' && <Check size={18} strokeWidth={3} />}
             <span>{status === 'loading' ? 'Signing in…' : status === 'success' ? 'Signed in' : 'Sign in'}</span>
           </button>
         </form>

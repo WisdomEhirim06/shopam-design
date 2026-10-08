@@ -65,7 +65,7 @@ function ResetPasswordForm() {
     return (
       <AuthShell align="center" title="Password updated" subtitle="Redirecting you to sign in…">
         <div className="flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-green-500">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-ink text-white">
             <CheckCircle2 size={32} />
           </div>
         </div>

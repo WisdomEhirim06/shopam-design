@@ -174,7 +174,7 @@ export default function VendorSignUpPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center"
           >
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-50 text-green-500">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-ink text-white">
               <CheckCircle2 size={40} />
             </div>
             <p className="text-sm text-slate-500">
