@@ -17,11 +17,11 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-slate-200/70 bg-white md:flex">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col overflow-y-auto border-r border-slate-200/70 bg-white md:flex">
       <div className="flex items-center gap-2 px-5 pb-2 pt-6">
         <Image src="/images/black-logo.png" alt="ShopAm" width={104} height={28} className="h-6 w-auto object-contain" />
       </div>
-      <p className="px-5 pb-3 text-[11px] font-bold uppercase tracking-widest text-slate-500">Vendor dashboard</p>
+      <p className="px-5 pb-3 pt-2 text-[11px] font-bold uppercase tracking-widest text-slate-500">Vendor dashboard</p>
 
       <nav className="flex-1 space-y-1 px-3">
         {NAV_ITEMS.map((item) => {

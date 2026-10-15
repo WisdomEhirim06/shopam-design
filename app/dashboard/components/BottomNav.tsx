@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Home, Package, ShoppingBag, User, MoreHorizontal, MessageSquare, Wallet, Settings, LogOut, X } from 'lucide-react';
+import { Home, Package, ShoppingBag, User, MoreHorizontal, Wallet, Settings, LogOut, X } from 'lucide-react';
 import { authService } from '@/lib/api';
 
 const PRIMARY = [
@@ -15,7 +15,6 @@ const PRIMARY = [
 ];
 
 const MORE = [
-  { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
   { href: '/dashboard/earnings', label: 'Earnings', icon: Wallet },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
