@@ -1,8 +1,8 @@
-// Export all API services
 export { authService } from './auth';
 export { productsService, categoriesService } from './products';
 export { vendorsService } from './vendors';
 export type { Vendor } from './vendors';
+export { notificationsService } from './notifications';
 export { cartService } from './cart';
 export {
   ordersService,
@@ -18,5 +18,4 @@ export { paymentsService } from './payments';
 // Export API config
 export { default as apiClient, API_BASE_URL, API_ENDPOINTS } from './config';
 
-// Export types
 export * from './types';
