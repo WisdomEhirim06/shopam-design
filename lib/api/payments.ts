@@ -1,4 +1,5 @@
 import apiClient, { API_ENDPOINTS } from './config';
+import { devMockEnabled } from '../devOrders';
 import type {
   Payment,
   CheckoutInitRequest,
@@ -15,6 +16,9 @@ export const paymentsService = {
    * needed for direct card charge.
    */
   async initCheckout(data: CheckoutInitRequest): Promise<CheckoutInitResponse> {
+    if (devMockEnabled()) {
+      return { checkout_url: '#', transaction_reference: `dev-tx-${Date.now()}` };
+    }
     const response = await apiClient.post<CheckoutInitResponse>(
       API_ENDPOINTS.PAYMENTS.INIT,
       data
@@ -28,6 +32,7 @@ export const paymentsService = {
    * Response may be: success, OTP_REQUIRED, or BANK_AUTHORIZATION_REQUIRED.
    */
   async directCharge(data: DirectCardChargeRequest): Promise<Record<string, unknown>> {
+    if (devMockEnabled()) return { status: 'success' };
     const response = await apiClient.post<Record<string, unknown>>(
       API_ENDPOINTS.PAYMENTS.DIRECT_CHARGE,
       data
@@ -40,6 +45,9 @@ export const paymentsService = {
    * Show the returned account number to the customer.
    */
   async bankTransfer(data: BankTransferInitRequest): Promise<Record<string, unknown>> {
+    if (devMockEnabled()) {
+      return { bankName: 'Wema Bank', accountNumber: '0123456789', accountName: 'ShopAm Dev' };
+    }
     const response = await apiClient.post<Record<string, unknown>>(
       API_ENDPOINTS.PAYMENTS.BANK_TRANSFER,
       data
@@ -51,6 +59,7 @@ export const paymentsService = {
    * Submit OTP when directCharge returns OTP_REQUIRED.
    */
   async authorizeOTP(data: OTPAuthorizeRequest): Promise<Record<string, unknown>> {
+    if (devMockEnabled()) return { status: 'success' };
     const response = await apiClient.post<Record<string, unknown>>(
       API_ENDPOINTS.PAYMENTS.AUTHORIZE_OTP,
       data
@@ -78,6 +87,7 @@ export const paymentsService = {
    * Check the current status of a transaction by its tx_ref.
    */
   async getStatus(txRef: string): Promise<Record<string, unknown>> {
+    if (devMockEnabled()) return { paymentStatus: 'PAID', status: 'successful' };
     const response = await apiClient.get<Record<string, unknown>>(
       API_ENDPOINTS.PAYMENTS.STATUS(txRef)
     );

@@ -445,7 +445,7 @@ export default function ProductDetailPage() {
                 onClick={handleAddToCart}
                 disabled={isAddingToCart}
                 className={`flex h-[52px] flex-1 items-center justify-center gap-2 rounded-full text-sm font-bold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70 sm:text-base ${
-                  addedToCart ? 'bg-emerald-600' : 'bg-ink hover:bg-[#FA3728]'
+                  addedToCart ? 'bg-ink' : 'bg-ink hover:bg-[#FA3728]'
                 }`}
               >
                 {isAddingToCart && <Loader2 size={18} className="animate-spin" />}

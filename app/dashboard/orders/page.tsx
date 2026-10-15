@@ -9,7 +9,6 @@ import OrderConversation from './OrderConversation';
 import ModifyOrderModal, { type ModifyChanges } from './ModifyOrderModal';
 import RejectOrderModal from './RejectOrderModal';
 
-/* ─────────────── Main Component ─────────────── */
 export default function OrdersPage() {
   const [activeTab, setActiveTab] = useState<UIOrderStatus>('All');
   const [orders, setOrders] = useState<UIOrder[]>([]);
@@ -17,176 +16,86 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<UIOrder | null>(null);
   const [messageInput, setMessageInput] = useState('');
   const [convError, setConvError] = useState('');
-  const [modifyTarget, setModifyTarget] = useState<{ order: UIOrder; msgId: string } | null>(null);
-  const [rejectTarget, setRejectTarget] = useState<{ order: UIOrder; msgId: string } | null>(null);
+  const [modifyTarget, setModifyTarget] = useState<UIOrder | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<UIOrder | null>(null);
 
   const tabs: UIOrderStatus[] = ['All', 'Pending', 'Confirmed', 'Completed'];
-  const filteredOrders = activeTab === 'All' ? orders : orders.filter((o) => o.status === activeTab);
 
-  const loadOrders = useCallback(async () => {
-    setIsLoading(true);
+  const refresh = useCallback(async (keepId?: string) => {
     try {
       const data = await ordersService.getVendorOrders();
-      setOrders(data.results.map(transformOrder));
+      const list = data.results.map(transformOrder);
+      setOrders(list);
+      if (keepId) setSelectedOrder(list.find((o) => o.id === keepId) ?? null);
     } catch {
-      // keep empty list on error
-    } finally {
-      setIsLoading(false);
+      /* keep the current list on error */
     }
   }, []);
 
   useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
+    (async () => {
+      setIsLoading(true);
+      await refresh();
+      setIsLoading(false);
+    })();
+  }, [refresh]);
 
-  /* ── Helpers ── */
-  const updateConvMsg = (
-    orderId: string,
-    msgId: string,
-    updates: Partial<ConversationMessage>
-  ) => {
-    const applyTo = (order: UIOrder): UIOrder => ({
-      ...order,
-      messages: order.messages.map((m) => (m.id === msgId ? { ...m, ...updates } : m)),
-    });
-    setOrders((prev) => prev.map((o) => (o.id === orderId ? applyTo(o) : o)));
-    setSelectedOrder((prev) => (prev?.id === orderId ? applyTo(prev) : prev));
-  };
-
-  const appendMsg = (orderId: string, msg: ConversationMessage) => {
-    const applyTo = (order: UIOrder): UIOrder => ({
-      ...order,
-      messages: [...order.messages, msg],
-    });
-    setOrders((prev) => prev.map((o) => (o.id === orderId ? applyTo(o) : o)));
-    setSelectedOrder((prev) => (prev?.id === orderId ? applyTo(prev) : prev));
-  };
-
-  /* ── Start delivery (Step 7) ── */
-  const handleStartDelivery = async (orderId: string) => {
+  /** Run an action, then re-read the order so the timeline reflects reality. */
+  const run = async (action: () => Promise<unknown>, id: string, errorMessage: string) => {
+    setConvError('');
     try {
-      await ordersService.startDelivery(orderId);
-      setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, apiStatus: 'shipped' } : o))
-      );
-      setSelectedOrder((prev) =>
-        prev?.id === orderId ? { ...prev, apiStatus: 'shipped' } : prev
-      );
-      const order = orders.find((o) => o.id === orderId);
-      if (order) {
-        const cardMsgId = `order-${orderId}`;
-        updateConvMsg(orderId, cardMsgId, { orderStatus: 'Shipped' });
-      }
+      await action();
     } catch {
-      setConvError('Failed to mark as shipped. Please try again.');
+      setConvError(errorMessage);
     }
+    await refresh(id);
   };
 
-  /* ── Accept order (Step 2) ── */
-  const handleAccept = async (orderId: string, msgId: string) => {
-    try {
-      await ordersService.acceptOrder(orderId);
-    } catch {
-      setConvError('Failed to accept order. Please try again.');
-    }
-    updateConvMsg(orderId, msgId, { orderStatus: 'Accepted' });
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: 'Confirmed', apiStatus: 'awaiting_shipping_details' } : o))
-    );
-    setSelectedOrder((prev) =>
-      prev?.id === orderId ? { ...prev, status: 'Confirmed', apiStatus: 'awaiting_shipping_details' } : prev
-    );
-  };
+  const handleAccept = (id: string) => run(() => ordersService.acceptOrder(id), id, 'Failed to accept order. Please try again.');
+  const handleSetShippingFee = (id: string, fee: number) => run(() => ordersService.setShippingFee(id, fee.toFixed(2)), id, 'Failed to set the delivery fee.');
+  const handleStartDelivery = (id: string) => run(() => ordersService.startDelivery(id), id, 'Failed to mark as shipped.');
+  const handleResolveDispute = (id: string, resolution: string) => run(() => ordersService.resolveDispute(id, resolution), id, 'Failed to resolve the dispute.');
 
-  /* ── Modify order (Step 2b) — send proposed changes to the buyer ── */
+  const openModify = (id: string) => setModifyTarget(orders.find((o) => o.id === id) ?? selectedOrder);
+  const openReject = (id: string) => setRejectTarget(orders.find((o) => o.id === id) ?? selectedOrder);
+
   const handleModifySave = async (changes: ModifyChanges) => {
     if (!modifyTarget) return;
-    const { order, msgId } = modifyTarget;
-    try {
-      await ordersService.modifyOrder(order.id, changes as unknown as Record<string, unknown>);
-    } catch {
-      // TODO: wire to the real modify contract when the backend confirms it.
-    }
-    updateConvMsg(order.id, msgId, { orderStatus: 'Changes Sent' });
-    appendMsg(order.id, {
-      id: `changes-${Date.now()}`,
-      type: 'text',
-      timestamp: new Date().toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' }),
-      content: 'I’ve sent updated items, prices and delivery fee for your review.',
-      fromBuyer: false,
-    });
-    setOrders((prev) =>
-      prev.map((o) => (o.id === order.id ? { ...o, status: 'Pending', apiStatus: 'pending_customer_approval' } : o))
-    );
-    setSelectedOrder((prev) =>
-      prev?.id === order.id ? { ...prev, status: 'Pending', apiStatus: 'pending_customer_approval' } : prev
+    await run(
+      () => ordersService.modifyOrder(modifyTarget.id, changes as unknown as Record<string, unknown>),
+      modifyTarget.id,
+      'Failed to send changes. Please try again.'
     );
     setModifyTarget(null);
   };
 
-  /* ── Reject order (Step 2c) — with a reason ── */
   const handleRejectConfirm = async (reason: string) => {
     if (!rejectTarget) return;
-    const { order, msgId } = rejectTarget;
-    try {
-      await ordersService.rejectOrder(order.id, reason);
-    } catch {
-      // TODO: wire to the real rejection contract when confirmed.
-    }
-    updateConvMsg(order.id, msgId, { orderStatus: 'Declined' });
-    appendMsg(order.id, {
-      id: `decline-${Date.now()}`,
-      type: 'text',
-      timestamp: new Date().toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' }),
-      content: `Sorry, I can’t fulfil this order. Reason: ${reason}.`,
-      fromBuyer: false,
-    });
-    setOrders((prev) =>
-      prev.map((o) => (o.id === order.id ? { ...o, status: 'Declined', apiStatus: 'cancelled' } : o))
-    );
-    setSelectedOrder((prev) =>
-      prev?.id === order.id ? { ...prev, status: 'Declined', apiStatus: 'cancelled' } : prev
+    await run(
+      () => ordersService.rejectOrder(rejectTarget.id, reason),
+      rejectTarget.id,
+      'Failed to decline the order.'
     );
     setRejectTarget(null);
   };
 
-  /* ── Set shipping fee (Step 5) ── */
-  const handleSetShippingFee = async (orderId: string, msgId: string, fee: number, total: number) => {
-    try {
-      await ordersService.setShippingFee(orderId, fee.toFixed(2));
-    } catch {
-      setConvError('Failed to set shipping fee. Please try again.');
-      return;
-    }
-    updateConvMsg(orderId, msgId, { orderStatus: 'Shipping Fee Set', shippingFee: fee });
-    appendMsg(orderId, {
-      id: `shipping-${Date.now()}`,
-      type: 'shipping_notification',
-      timestamp: new Date().toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' }),
-      fromBuyer: false,
-      shippingFee: fee,
-      total: total + fee,
-    });
-  };
-
-  /* ── Send text message ── */
   const handleSendMessage = () => {
     if (!messageInput.trim() || !selectedOrder) return;
-    appendMsg(selectedOrder.id, {
+    const message: ConversationMessage = {
       id: `m${Date.now()}`,
       type: 'text',
       timestamp: new Date().toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' }),
       content: messageInput.trim(),
       fromBuyer: false,
-    });
+    };
+    setSelectedOrder((prev) => (prev ? { ...prev, messages: [...prev.messages, message] } : prev));
     setMessageInput('');
   };
 
-  /* ════════════════════════════════════════
-     CONVERSATION VIEW
-  ════════════════════════════════════════ */
+  const filteredOrders = activeTab === 'All' ? orders : orders.filter((o) => o.status === activeTab);
+
+  /* ── Conversation view ── */
   if (selectedOrder) {
-    const findOrder = (id: string) => orders.find((o) => o.id === id) ?? selectedOrder;
     return (
       <>
         <OrderConversation
@@ -198,16 +107,17 @@ export default function OrdersPage() {
           onBack={() => setSelectedOrder(null)}
           onStartDelivery={handleStartDelivery}
           onAccept={handleAccept}
-          onModify={(id, msgId) => setModifyTarget({ order: findOrder(id), msgId })}
-          onReject={(id, msgId) => setRejectTarget({ order: findOrder(id), msgId })}
+          onModify={openModify}
+          onReject={openReject}
           onSetShippingFee={handleSetShippingFee}
+          onResolveDispute={handleResolveDispute}
           onSendMessage={handleSendMessage}
         />
 
         <AnimatePresence>
           {modifyTarget && (
             <ModifyOrderModal
-              order={modifyTarget.order}
+              order={modifyTarget}
               onClose={() => setModifyTarget(null)}
               onSave={handleModifySave}
             />
@@ -223,33 +133,29 @@ export default function OrdersPage() {
     );
   }
 
-  /* ════════════════════════════════════════
-     ORDERS LIST VIEW
-  ════════════════════════════════════════ */
+  /* ── List view ── */
   return (
-    <div className="px-4 py-2 md:p-8 space-y-6 max-w-lg mx-auto md:max-w-none">
-      {/* Header */}
+    <div className="mx-auto max-w-lg space-y-6 px-4 py-2 md:max-w-none md:p-8">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Orders</h1>
-          <p className="text-gray-500 text-sm md:text-base mt-1">
+          <h1 className="text-2xl font-bold text-ink md:text-3xl">Orders</h1>
+          <p className="mt-1 text-sm text-slate-500 md:text-base">
             {isLoading ? 'Loading…' : `${orders.filter((o) => o.status === 'Pending').length} pending`}
           </p>
         </div>
-        <button className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+        <button className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm">
           <Search size={18} strokeWidth={2.5} />
         </button>
       </motion.div>
 
-      {/* Tabs */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <div className="flex bg-white p-1 rounded-full border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-x-auto scrollbar-hide">
+        <div className="flex overflow-x-auto rounded-full border border-slate-200 bg-white p-1">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 min-w-[80px] py-2 px-3 rounded-full text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
-                activeTab === tab ? 'bg-[#FA3728] text-white shadow-sm' : 'text-gray-500'
+              className={`min-w-[80px] flex-1 whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold transition-all md:text-sm ${
+                activeTab === tab ? 'bg-ink text-white shadow-sm' : 'text-slate-500'
               }`}
             >
               {tab}
@@ -258,75 +164,57 @@ export default function OrdersPage() {
         </div>
       </motion.div>
 
-      {/* List */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-3 pb-8">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 size={28} className="animate-spin text-[#FA3728]" />
           </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="text-center py-10 bg-white rounded-2xl border border-gray-100">
-            <p className="text-gray-500 font-medium">No orders found.</p>
+          <div className="rounded-2xl border border-slate-200 bg-white py-10 text-center">
+            <p className="font-medium text-slate-500">No orders found.</p>
           </div>
         ) : (
           filteredOrders.map((order) => (
-            <div
+            <button
               key={order.id}
               onClick={() => setSelectedOrder(order)}
-              className="bg-white rounded-2xl p-4 md:p-5 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] cursor-pointer active:scale-[0.99] transition-transform"
+              className="w-full rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-transform active:scale-[0.99] md:p-5"
             >
               <div className="flex gap-4">
-                <div
-                  className={`w-12 h-12 rounded-full ${order.avatarColor} text-white flex items-center justify-center font-bold flex-shrink-0 text-lg`}
-                >
+                <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${order.avatarColor} text-lg font-bold text-white`}>
                   {order.avatar}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between mb-0.5">
-                    <h3 className="font-semibold text-gray-900 truncate pr-4 text-sm md:text-base leading-tight">
-                      {order.name}
-                    </h3>
-                    <span className="text-xs text-gray-400 whitespace-nowrap font-medium">{order.time}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-0.5 flex items-start justify-between">
+                    <h3 className="truncate pr-4 text-sm font-semibold leading-tight text-ink md:text-base">{order.name}</h3>
+                    <span className="whitespace-nowrap text-xs font-medium text-slate-400">{order.time}</span>
                   </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <div className="flex flex-col">
-                      <p className="text-xs md:text-sm text-gray-500 truncate mb-1">{order.item}</p>
-                      <span className="font-bold text-gray-900 text-sm md:text-base">{order.price}</span>
+                  <div className="mt-1 flex items-center justify-between">
+                    <div className="flex min-w-0 flex-col">
+                      <p className="mb-1 truncate text-xs text-slate-500 md:text-sm">{order.item}</p>
+                      <span className="text-sm font-bold text-ink md:text-base">{order.price}</span>
                     </div>
                     <div className="flex flex-col items-end gap-2">
                       {order.status === 'Pending' && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] md:text-xs font-bold text-[#FA3728] bg-red-50 px-2 py-0.5 rounded-full">
-                            Pending
-                          </span>
-                          {order.unreadCount && (
-                            <span className="flex items-center justify-center w-5 h-5 bg-[#FA3728] text-white text-[10px] font-bold rounded-full">
-                              {order.unreadCount}
-                            </span>
-                          )}
-                        </div>
+                        <span className="rounded-full bg-[#FA3728]/10 px-2.5 py-1 text-[10px] font-bold text-[#FA3728] md:text-xs">
+                          {order.apiStatus === 'pending_customer_approval' ? 'Changes sent' : 'Pending'}
+                        </span>
                       )}
                       {order.status === 'Confirmed' && (
-                        <span className="text-[10px] md:text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
-                          Confirmed
+                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-600 md:text-xs">
+                          {order.apiStatus === 'disputed' ? 'Disputed' : 'Confirmed'}
                         </span>
                       )}
                       {order.status === 'Completed' && (
-                        <span
-                          className={`text-[10px] md:text-xs font-bold px-2.5 py-1 rounded-full ${
-                            order.apiStatus === 'cancelled'
-                              ? 'text-gray-500 bg-gray-100'
-                              : 'text-blue-500 bg-blue-50'
-                          }`}
-                        >
-                          {order.apiStatus === 'cancelled' ? 'Cancelled' : 'Completed'}
+                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold md:text-xs ${order.apiStatus === 'cancelled' ? 'bg-slate-100 text-slate-500' : 'bg-blue-50 text-blue-600'}`}>
+                          {order.apiStatus === 'cancelled' ? 'Declined' : 'Completed'}
                         </span>
                       )}
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </button>
           ))
         )}
       </motion.div>

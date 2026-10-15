@@ -115,15 +115,18 @@ export default function CartPage() {
     }
   };
 
-  const placeOrder = async (subcartId: string) => {
+  const placeOrder = async (subcart: SubCart) => {
     if (isGuest) {
       window.location.href = '/auth/signin?redirect=/cart';
       return;
     }
     setOrderError('');
-    setPlacingVendor(subcartId);
+    setPlacingVendor(subcart.id);
     try {
-      const orders = await ordersService.createOrder({ target_type: 'subcart', target_id: subcartId });
+      const orders = await ordersService.createOrder(
+        { target_type: 'subcart', target_id: subcart.id },
+        subcart
+      );
       const order = orders[0];
       if (!order?.id) throw new Error('No order returned');
       router.push(`/chats/${order.id}`);
@@ -306,7 +309,7 @@ export default function CartPage() {
                       <span className="font-semibold text-gray-900 text-base">₦{subtotal.toLocaleString()}</span>
                     </div>
                     <button
-                      onClick={() => placeOrder(subcart.id)}
+                      onClick={() => placeOrder(subcart)}
                       disabled={placingVendor === subcart.id}
                       className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white font-semibold text-sm rounded-full transition-colors disabled:opacity-60"
                     >

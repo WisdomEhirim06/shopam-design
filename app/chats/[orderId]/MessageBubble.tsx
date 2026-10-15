@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Check, CheckCircle2, Pencil, ShoppingBag, Truck, X } from 'lucide-react';
+import { Check, CheckCircle2, Pencil, ShoppingBag, Star, Truck, X } from 'lucide-react';
 import { money } from '@/lib/order-steps';
 import type { ChatMessage } from './chat-logic';
 
@@ -13,6 +13,9 @@ interface Props {
   onAcceptChanges: () => void;
   onRequestChanges: () => void;
   onReviewAndPay: () => void;
+  onConfirmDelivery: () => void;
+  onLeaveReview: () => void;
+  onRaiseDispute: () => void;
 }
 
 function Items({ message }: { message: ChatMessage }) {
@@ -36,9 +39,7 @@ function Items({ message }: { message: ChatMessage }) {
             <div className="min-w-0 flex-1">
               <p className="truncate text-[13px] font-semibold text-ink">{item.name}</p>
               <p className="text-[11px] text-slate-400">
-                {changedPrice && (
-                  <span className="mr-1 line-through">{money(item.originalPrice!)}</span>
-                )}
+                {changedPrice && <span className="mr-1 line-through">{money(item.originalPrice!)}</span>}
                 {money(item.price)}
                 {' · '}
                 {changedQty ? (
@@ -51,9 +52,7 @@ function Items({ message }: { message: ChatMessage }) {
                 )}
               </p>
             </div>
-            <p className="shrink-0 text-[13px] font-bold text-ink">
-              {money(item.price * item.quantity)}
-            </p>
+            <p className="shrink-0 text-[13px] font-bold text-ink">{money(item.price * item.quantity)}</p>
           </div>
         );
       })}
@@ -82,13 +81,13 @@ function Totals({ message }: { message: ChatMessage }) {
   );
 }
 
-function Card({ message, tone = 'default' }: { message: ChatMessage; tone?: 'default' | 'amber' | 'emerald' | 'muted' }) {
-  const ring = {
-    default: 'border-slate-200/80',
-    amber: 'border-amber-200',
-    emerald: 'border-emerald-200',
-    muted: 'border-slate-200',
-  }[tone];
+function Card({ message }: { message: ChatMessage }) {
+  const ring =
+    message.kind === 'changes'
+      ? 'border-amber-200'
+      : message.kind === 'accepted' || message.kind === 'delivered'
+      ? 'border-emerald-200'
+      : 'border-slate-200/80';
 
   return (
     <div className={`w-full max-w-md rounded-2xl border bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ${ring}`}>
@@ -157,6 +156,45 @@ function Card({ message, tone = 'default' }: { message: ChatMessage; tone?: 'def
           </div>
         </div>
       )}
+
+      {message.kind === 'shipped' && (
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-blue-500">
+            <Truck size={18} />
+          </span>
+          <div>
+            <p className="text-[13px] font-bold text-ink">Order shipped</p>
+            <p className="text-[11px] text-slate-500">On the way to you.</p>
+          </div>
+        </div>
+      )}
+
+      {message.kind === 'delivered' && (
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+            <CheckCircle2 size={18} />
+          </span>
+          <div>
+            <p className="text-[13px] font-bold text-emerald-800">Delivered</p>
+            <p className="text-[11px] text-slate-500">Enjoy your order.</p>
+          </div>
+        </div>
+      )}
+
+      {message.kind === 'disputed' && (
+        <>
+          <div className="mb-2 flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+              <X size={15} strokeWidth={3} />
+            </span>
+            <span className="text-[13px] font-bold text-ink">Dispute raised</span>
+          </div>
+          <p className="text-xs text-slate-500">{message.reason}</p>
+          <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-700">
+            The vendor has been notified and will respond. Your payment stays protected meanwhile.
+          </p>
+        </>
+      )}
     </div>
   );
 }
@@ -169,6 +207,9 @@ export default function MessageBubble({
   onAcceptChanges,
   onRequestChanges,
   onReviewAndPay,
+  onConfirmDelivery,
+  onLeaveReview,
+  onRaiseDispute,
 }: Props) {
   const isSelf = message.from === 'customer';
 
@@ -198,7 +239,6 @@ export default function MessageBubble({
     );
   }
 
-  // System cards are centered and full-width for readability.
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -207,9 +247,9 @@ export default function MessageBubble({
       className="flex justify-center"
     >
       <div className="w-full max-w-md">
-        <Card message={message} tone={message.kind === 'changes' ? 'amber' : message.kind === 'accepted' ? 'emerald' : 'default'} />
+        <Card message={message} />
 
-        {/* Order awaiting vendor confirmation */}
+        {/* Awaiting vendor */}
         {message.kind === 'order' && message.awaiting === 'vendor' && !isVendor && (
           <div className="mt-2 flex items-start gap-2 rounded-xl bg-white/70 px-3 py-2.5 text-[11px] leading-relaxed text-slate-500 ring-1 ring-slate-200/70">
             <Truck size={14} className="mt-0.5 shrink-0 text-slate-400" />
@@ -217,7 +257,7 @@ export default function MessageBubble({
           </div>
         )}
 
-        {/* Customer reviewing vendor changes */}
+        {/* Customer reviewing changes */}
         {message.kind === 'changes' && message.awaiting === 'customer' && !isVendor && (
           <div className="mt-2 flex gap-2">
             <button
@@ -235,7 +275,7 @@ export default function MessageBubble({
           </div>
         )}
 
-        {/* Customer payment CTA */}
+        {/* Payment CTA */}
         {message.kind === 'accepted' && message.awaiting === 'payment' && !isVendor && (
           <button
             onClick={onReviewAndPay}
@@ -249,6 +289,42 @@ export default function MessageBubble({
           <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-center text-[11px] font-semibold text-amber-700">
             Awaiting payment from the buyer
           </p>
+        )}
+
+        {/* Confirm delivery */}
+        {message.kind === 'shipped' && message.awaiting === 'delivery' && !isVendor && (
+          <button
+            onClick={onConfirmDelivery}
+            className="mt-2 w-full rounded-full bg-ink py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#FA3728]"
+          >
+            Confirm delivery
+          </button>
+        )}
+
+        {message.kind === 'shipped' && message.awaiting === 'delivery' && isVendor && (
+          <p className="mt-2 rounded-xl bg-blue-50 px-3 py-2 text-center text-[11px] font-semibold text-blue-700">
+            Awaiting the buyer to confirm delivery
+          </p>
+        )}
+
+        {/* Delivered: review + dispute */}
+        {message.kind === 'delivered' && message.awaiting === 'post' && !isVendor && (
+          <div className="mt-2 flex gap-2">
+            <button
+              onClick={onRaiseDispute}
+              className="flex-1 rounded-full border border-slate-200 bg-white py-2.5 text-[13px] font-semibold text-slate-600 transition-colors hover:border-slate-300"
+            >
+              Raise a dispute
+            </button>
+            <button
+              onClick={onLeaveReview}
+              className="flex-1 rounded-full bg-ink py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-[#FA3728]"
+            >
+              <span className="inline-flex items-center justify-center gap-1">
+                <Star size={13} /> Leave a review
+              </span>
+            </button>
+          </div>
         )}
 
         <p className="mt-1.5 text-center text-[10px] text-slate-400">{message.time}</p>

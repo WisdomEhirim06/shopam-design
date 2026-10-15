@@ -7,6 +7,7 @@ import { Search, Bell, Home, Package, MessageSquare, User, X } from 'lucide-reac
 import MobileBottomNav from '../components/MobileBottomNav';
 import { useState, useEffect, useRef } from 'react';
 import apiClient, { API_ENDPOINTS } from '@/lib/api/config';
+import { DEV_AUTH_BYPASS } from '@/lib/devAuth';
 
 export default function DashboardLayout({
   children,
@@ -44,7 +45,9 @@ export default function DashboardLayout({
     
     try {
       const storedUser = JSON.parse(localStorage.getItem('user') ?? 'null');
-      if (storedUser && storedUser.is_vendor === false) {
+      // In dev bypass, allow the mock user into the dashboard regardless of role
+      // so both the buyer flow and the vendor dashboard can be tested in one browser.
+      if (storedUser && storedUser.is_vendor === false && !DEV_AUTH_BYPASS) {
         window.location.replace('/explore');
         return;
       }

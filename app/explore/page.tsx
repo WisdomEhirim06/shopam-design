@@ -136,7 +136,7 @@ export default function ExplorePage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className={`fixed left-1/2 top-20 z-[200] -translate-x-1/2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-lg ${
-              toast.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
+              toast.type === 'success' ? 'bg-ink' : 'bg-red-500'
             }`}
           >
             {toast.message}
