@@ -72,7 +72,7 @@ export default function VendorMessagesPage() {
           </div>
 
           <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-            {messages.length === 0 && <p className="text-center text-sm text-slate-400">No messages yet.</p>}
+            {messages.length === 0 && <p className="text-center text-sm text-slate-500">No messages yet.</p>}
             {messages.map((m) => {
               const mine = m.sender === me;
               return (
@@ -101,13 +101,13 @@ export default function VendorMessagesPage() {
       ) : (
         <div>
           <h2 className="text-2xl font-black tracking-tight text-ink">Messages</h2>
-          <p className="mt-1 text-sm text-slate-500">Chat with buyers.</p>
+          <p className="mt-1 text-sm text-slate-600">Chat with buyers.</p>
 
           <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
             {loading ? (
               <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#FA3728]" size={26} /></div>
             ) : threads.length === 0 ? (
-              <p className="px-4 py-12 text-center text-sm text-slate-400">No conversations yet.</p>
+              <p className="px-4 py-12 text-center text-sm text-slate-500">No conversations yet.</p>
             ) : (
               threads.map((t) => (
                 <button
@@ -120,7 +120,7 @@ export default function VendorMessagesPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13px] font-semibold text-ink">Buyer #{t.otherId.substring(0, 6).toUpperCase()}</p>
-                    <p className="truncate text-xs text-slate-400">{t.last.content}</p>
+                    <p className="truncate text-xs text-slate-500">{t.last.content}</p>
                   </div>
                 </button>
               ))

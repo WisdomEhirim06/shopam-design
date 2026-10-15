@@ -139,11 +139,11 @@ export default function OrdersPage() {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-ink md:text-3xl">Orders</h1>
-          <p className="mt-1 text-sm text-slate-500 md:text-base">
+          <p className="mt-1 text-sm text-slate-600 md:text-base">
             {isLoading ? 'Loading…' : `${orders.filter((o) => o.status === 'Pending').length} pending`}
           </p>
         </div>
-        <button className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm">
+        <button className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm">
           <Search size={18} strokeWidth={2.5} />
         </button>
       </motion.div>
@@ -155,7 +155,7 @@ export default function OrdersPage() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`min-w-[80px] flex-1 whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold transition-all md:text-sm ${
-                activeTab === tab ? 'bg-ink text-white shadow-sm' : 'text-slate-500'
+                activeTab === tab ? 'bg-ink text-white shadow-sm' : 'text-slate-600'
               }`}
             >
               {tab}
@@ -171,7 +171,7 @@ export default function OrdersPage() {
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white py-10 text-center">
-            <p className="font-medium text-slate-500">No orders found.</p>
+            <p className="font-medium text-slate-600">No orders found.</p>
           </div>
         ) : (
           filteredOrders.map((order) => (
@@ -187,11 +187,11 @@ export default function OrdersPage() {
                 <div className="min-w-0 flex-1">
                   <div className="mb-0.5 flex items-start justify-between">
                     <h3 className="truncate pr-4 text-sm font-semibold leading-tight text-ink md:text-base">{order.name}</h3>
-                    <span className="whitespace-nowrap text-xs font-medium text-slate-400">{order.time}</span>
+                    <span className="whitespace-nowrap text-xs font-medium text-slate-500">{order.time}</span>
                   </div>
                   <div className="mt-1 flex items-center justify-between">
                     <div className="flex min-w-0 flex-col">
-                      <p className="mb-1 truncate text-xs text-slate-500 md:text-sm">{order.item}</p>
+                      <p className="mb-1 truncate text-xs text-slate-600 md:text-sm">{order.item}</p>
                       <span className="text-sm font-bold text-ink md:text-base">{order.price}</span>
                     </div>
                     <div className="flex flex-col items-end gap-2">
@@ -206,7 +206,7 @@ export default function OrdersPage() {
                         </span>
                       )}
                       {order.status === 'Completed' && (
-                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold md:text-xs ${order.apiStatus === 'cancelled' ? 'bg-slate-100 text-slate-500' : 'bg-blue-50 text-blue-600'}`}>
+                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold md:text-xs ${order.apiStatus === 'cancelled' ? 'bg-slate-100 text-slate-600' : 'bg-blue-50 text-blue-600'}`}>
                           {order.apiStatus === 'cancelled' ? 'Declined' : 'Completed'}
                         </span>
                       )}

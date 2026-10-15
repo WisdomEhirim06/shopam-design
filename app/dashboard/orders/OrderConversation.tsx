@@ -54,7 +54,7 @@ function ItemRows({ items }: { items: ConversationMessage['items'] }) {
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-semibold text-ink">{item.name}</p>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-slate-500">
               {money(item.unitPrice)} × {item.quantity}
             </p>
           </div>
@@ -101,9 +101,9 @@ export default function OrderConversation({
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold leading-tight text-ink">{order.name}</p>
-          <p className="text-xs text-slate-400">Buyer</p>
+          <p className="text-xs text-slate-500">Buyer</p>
         </div>
-        <button className="p-1 text-slate-400">
+        <button className="p-1 text-slate-500">
           <MoreVertical size={20} />
         </button>
       </div>
@@ -130,7 +130,7 @@ export default function OrderConversation({
                   )}
                   <div className={`max-w-[72%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm sm:max-w-[60%] ${isSelf ? 'rounded-br-sm bg-ink text-white' : 'rounded-bl-sm border border-slate-200/80 bg-white text-slate-700'}`}>
                     {msg.content}
-                    <p className={`mt-1 text-right text-[10px] ${isSelf ? 'text-white/60' : 'text-slate-400'}`}>{msg.timestamp}</p>
+                    <p className={`mt-1 text-right text-[10px] ${isSelf ? 'text-white/60' : 'text-slate-500'}`}>{msg.timestamp}</p>
                   </div>
                 </div>
               );
@@ -142,17 +142,17 @@ export default function OrderConversation({
                   <div className="w-full max-w-md rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                     <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2.5">
                       <span className="text-[13px] font-bold text-ink">Order request</span>
-                      <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">New</span>
+                      <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600">New</span>
                     </div>
                     <ItemRows items={msg.items} />
                     <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3">
-                      <div className="flex justify-between text-xs text-slate-500"><span>Subtotal</span><span className="font-medium text-slate-700">{money(msg.subtotal ?? 0)}</span></div>
+                      <div className="flex justify-between text-xs text-slate-600"><span>Subtotal</span><span className="font-medium text-slate-700">{money(msg.subtotal ?? 0)}</span></div>
                       {msg.shippingFee !== undefined && (
-                        <div className="flex justify-between text-xs text-slate-500"><span>Delivery fee</span><span className="font-medium text-slate-700">{money(msg.shippingFee)}</span></div>
+                        <div className="flex justify-between text-xs text-slate-600"><span>Delivery fee</span><span className="font-medium text-slate-700">{money(msg.shippingFee)}</span></div>
                       )}
                       <div className="flex justify-between pt-0.5 text-sm font-bold text-ink"><span>Total</span><span>{money(msg.total ?? 0)}</span></div>
                     </div>
-                    <p className="mt-2 text-right text-[10px] text-slate-400">{msg.timestamp}</p>
+                    <p className="mt-2 text-right text-[10px] text-slate-500">{msg.timestamp}</p>
                   </div>
                 </div>
               );
@@ -167,7 +167,7 @@ export default function OrderConversation({
                       <span className="text-[13px] font-bold text-ink">Delivery fee set</span>
                     </div>
                     <div className="space-y-1.5">
-                      <div className="flex justify-between text-xs text-slate-500"><span>Delivery fee</span><span className="font-medium text-slate-700">{money(msg.shippingFee ?? 0)}</span></div>
+                      <div className="flex justify-between text-xs text-slate-600"><span>Delivery fee</span><span className="font-medium text-slate-700">{money(msg.shippingFee ?? 0)}</span></div>
                       <div className="flex justify-between text-sm font-bold text-ink"><span>New total</span><span>{money(msg.total ?? 0)}</span></div>
                     </div>
                   </div>
@@ -185,7 +185,7 @@ export default function OrderConversation({
                 <div key={msg.id} className="flex justify-center">
                   <div className="w-full max-w-md rounded-2xl border border-slate-200/80 bg-white p-4 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                     <div className="mb-1 flex items-center justify-center gap-2 text-[13px] font-bold text-ink"><X size={14} className="text-red-500" /> Order declined</div>
-                    <p className="text-xs text-slate-500">{msg.reason}</p>
+                    <p className="text-xs text-slate-600">{msg.reason}</p>
                   </div>
                 </div>
               );
@@ -196,7 +196,7 @@ export default function OrderConversation({
                 <div key={msg.id} className="flex justify-center">
                   <div className="w-full max-w-md rounded-2xl border border-amber-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                     <div className="mb-1 flex items-center gap-2 text-[13px] font-bold text-ink"><X size={14} className="text-amber-500" /> Dispute raised</div>
-                    <p className="text-xs text-slate-500">{msg.reason}</p>
+                    <p className="text-xs text-slate-600">{msg.reason}</p>
                   </div>
                 </div>
               );
@@ -270,7 +270,7 @@ export default function OrderConversation({
           )}
 
           {status === 'cancelled' && (
-            <p className="rounded-full bg-slate-100 py-2.5 text-center text-xs font-semibold text-slate-500">This order was declined</p>
+            <p className="rounded-full bg-slate-100 py-2.5 text-center text-xs font-semibold text-slate-600">This order was declined</p>
           )}
 
           {['delivered', 'completed'].includes(status) && (
@@ -289,7 +289,7 @@ export default function OrderConversation({
               onChange={(e) => onMessageInputChange(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && onSendMessage()}
               placeholder="Type a message…"
-              className="w-full bg-transparent px-5 py-3 text-sm text-ink outline-none placeholder:text-slate-400"
+              className="w-full bg-transparent px-5 py-3 text-sm text-ink outline-none placeholder:text-slate-500"
             />
           </div>
           <button

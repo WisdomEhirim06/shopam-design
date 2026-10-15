@@ -71,22 +71,26 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
     <div className="min-h-screen bg-canvas font-sans text-ink antialiased">
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/95 backdrop-blur-md md:pl-60">
-        <div className="flex h-14 items-center justify-between px-4 md:px-8">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-5 py-3.5 md:px-8">
+          <div className="flex items-center">
             <Link href="/dashboard" className="md:hidden">
-              <Image src="/images/black-logo.png" alt="ShopAm" width={88} height={24} className="h-6 w-auto object-contain" />
+              <Image src="/images/black-logo.png" alt="ShopAm" width={96} height={26} className="h-7 w-auto object-contain" />
             </Link>
-            <h1 className="text-[15px] font-bold text-ink">{pageTitle(pathname)}</h1>
+            <h1 className="hidden text-base font-bold text-ink md:block">{pageTitle(pathname)}</h1>
           </div>
 
-          <div className="relative flex items-center gap-1">
+          <div className="relative flex items-center gap-1.5">
             <button
               onClick={() => setNotifOpen((v) => !v)}
               aria-label="Notifications"
               className="relative flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100"
             >
               <Bell size={18} />
-              {unread > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#FA3728]" />}
+              {unread > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#FA3728] px-1 text-[9px] font-bold text-white">
+                  {unread > 9 ? '9+' : unread}
+                </span>
+              )}
             </button>
             <NotificationsPanel open={notifOpen} items={notifications} onClose={() => setNotifOpen(false)} onMarkAllRead={markAllRead} />
             <Link
@@ -104,7 +108,7 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
 
       {/* Content */}
       <main className="md:pl-60">
-        <div className="mx-auto max-w-5xl px-4 pb-24 pt-5 md:px-8 md:pb-12 md:pt-8">{children}</div>
+        <div className="mx-auto max-w-5xl px-5 pb-24 pt-6 md:px-8 md:pb-12 md:pt-9">{children}</div>
       </main>
 
       {/* Mobile bottom nav */}

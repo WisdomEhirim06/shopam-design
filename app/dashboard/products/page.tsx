@@ -37,7 +37,7 @@ export default function ProductsPage() {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-ink md:text-3xl">Products</h1>
-          <p className="mt-0.5 text-sm text-slate-500 md:text-base">
+          <p className="mt-0.5 text-sm text-slate-600 md:text-base">
             {isLoading ? 'Loading…' : `${products.length} item${products.length !== 1 ? 's' : ''}`}
           </p>
         </div>
@@ -58,8 +58,8 @@ export default function ProductsPage() {
         ) : products.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200 py-16 text-center">
             <Package size={40} className="mx-auto mb-3 text-slate-300" />
-            <p className="font-medium text-slate-500">No products yet</p>
-            <p className="mt-1 text-sm text-slate-400">Tap &ldquo;Add New&rdquo; to create your first listing</p>
+            <p className="font-medium text-slate-600">No products yet</p>
+            <p className="mt-1 text-sm text-slate-500">Tap &ldquo;Add New&rdquo; to create your first listing</p>
           </div>
         ) : (
           products.map((product) => <ProductCard key={product.id} product={product} formatPrice={formatPrice} />)

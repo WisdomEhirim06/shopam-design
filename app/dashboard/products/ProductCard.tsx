@@ -26,7 +26,7 @@ export default function ProductCard({
           Listed
         </span>
       </div>
-      <button className="absolute bottom-3 right-3 z-10 text-slate-400 transition-colors hover:text-ink">
+      <button className="absolute bottom-3 right-3 z-10 text-slate-500 transition-colors hover:text-ink">
         <MoreVertical size={20} />
       </button>
 
@@ -54,14 +54,14 @@ export default function ProductCard({
             {product.title}
           </h3>
 
-          {hasDescription && <p className="mb-1.5 line-clamp-1 text-xs text-slate-400">{product.description}</p>}
+          {hasDescription && <p className="mb-1.5 line-clamp-1 text-xs text-slate-500">{product.description}</p>}
 
           <p className="mb-2 text-sm font-bold text-ink md:text-base">
             {formatPrice(product.price)}
-            {product.tax_inclusive && <span className="ml-1 text-[10px] font-normal text-slate-400">incl. tax</span>}
+            {product.tax_inclusive && <span className="ml-1 text-[10px] font-normal text-slate-500">incl. tax</span>}
           </p>
 
-          <div className="flex flex-wrap items-center gap-3 text-[10px] font-medium text-slate-500 md:text-xs">
+          <div className="flex flex-wrap items-center gap-3 text-[10px] font-medium text-slate-600 md:text-xs">
             {hasStock && (
               <span className="flex items-center gap-1">
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-ink" />
@@ -70,7 +70,7 @@ export default function ProductCard({
             )}
             {parseFloat(product.average_rating) > 0 && <span>★ {parseFloat(product.average_rating).toFixed(1)}</span>}
             {parseInt(product.review_count) > 0 && <span>{product.review_count} reviews</span>}
-            <span className="capitalize text-slate-400">{product.item_type}</span>
+            <span className="capitalize text-slate-500">{product.item_type}</span>
           </div>
 
           {subImages.length > 0 && (
@@ -80,7 +80,7 @@ export default function ProductCard({
                 <img key={i} src={src} alt={`img ${i + 1}`} className="h-8 w-8 rounded-md border border-slate-100 object-cover" />
               ))}
               {subImages.length > 4 && (
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 text-[10px] font-bold text-slate-500">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 text-[10px] font-bold text-slate-600">
                   +{subImages.length - 4}
                 </div>
               )}

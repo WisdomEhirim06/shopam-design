@@ -31,6 +31,7 @@ export default function BottomNav() {
   };
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const moreActive = MORE.some((m) => isActive(m.href));
 
   return (
     <>
@@ -41,14 +42,14 @@ export default function BottomNav() {
             const Icon = item.icon;
             return (
               <Link key={item.href} href={item.href} className="flex w-16 flex-col items-center gap-0.5 py-2">
-                <Icon size={21} className={active ? 'text-[#FA3728]' : 'text-slate-400'} strokeWidth={active ? 2.5 : 2} />
-                <span className={`text-[10px] font-medium ${active ? 'text-[#FA3728]' : 'text-slate-400'}`}>{item.label}</span>
+                <Icon size={21} className={active ? 'text-[#FA3728]' : 'text-slate-600'} strokeWidth={active ? 2.5 : 2} />
+                <span className={`text-[10px] ${active ? 'font-bold text-[#FA3728]' : 'font-medium text-slate-600'}`}>{item.label}</span>
               </Link>
             );
           })}
           <button onClick={() => setMoreOpen(true)} className="flex w-16 flex-col items-center gap-0.5 py-2">
-            <MoreHorizontal size={21} className="text-slate-400" />
-            <span className="text-[10px] font-medium text-slate-400">More</span>
+            <MoreHorizontal size={21} className={moreActive ? 'text-[#FA3728]' : 'text-slate-600'} strokeWidth={moreActive ? 2.5 : 2} />
+            <span className={`text-[10px] ${moreActive ? 'font-bold text-[#FA3728]' : 'font-medium text-slate-600'}`}>More</span>
           </button>
         </div>
       </div>
@@ -72,7 +73,7 @@ export default function BottomNav() {
             >
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-base font-bold text-ink">More</h2>
-                <button onClick={() => setMoreOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100">
+                <button onClick={() => setMoreOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100">
                   <X size={18} />
                 </button>
               </div>
