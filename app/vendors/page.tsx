@@ -82,16 +82,16 @@ export default function VendorsPage() {
     <div className="min-h-screen bg-canvas font-sans text-ink antialiased">
       <AppHeader />
 
-      <main className="mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 pb-24 pt-10 sm:px-6 lg:px-8">
         {/* Compact heading + search */}
-        <div className="mb-5">
+        <div className="mb-5 text-center">
           <h1 className="font-bricolage text-2xl font-black tracking-tight text-ink sm:text-3xl">
             Discover Shops
           </h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mx-auto mt-1 max-w-md text-sm text-slate-600">
             Find and follow verified vendors from across Nigeria.
           </p>
-          <div className="mt-4 max-w-2xl">
+          <div className="mx-auto mt-4 max-w-2xl">
             <SearchBar
               key={query}
               initialValue={query}
