@@ -4,25 +4,17 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import {
-  Trash2,
-  Plus,
-  Minus,
-  MessageCircle,
-  ArrowLeft,
-  ShoppingBag,
-  Loader2,
-} from 'lucide-react';
+import { Trash2, Plus, Minus, MessageCircle, ShoppingBag, Loader2 } from 'lucide-react';
 import { cartService } from '@/lib/api/cart';
 import { ordersService } from '@/lib/api';
-import { Cart, SubCart, CartItem } from '@/lib/api/types';
-
-
+import { Cart, SubCart } from '@/lib/api/types';
+import { money } from '@/lib/order-steps';
+import AppBar from '@/app/components/ui/AppBar';
+import BottomNav from '@/app/components/BottomNav';
 
 export default function CartPage() {
   const [cart, setCart] = useState<Cart | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isGuest, setIsGuest] = useState(false);
   const [placingVendor, setPlacingVendor] = useState<string | null>(null);
@@ -54,34 +46,28 @@ export default function CartPage() {
     if (newQty === currentQty) return;
 
     try {
-      // Optimistic update
       if (cart) {
-        const updatedSubcarts = cart.subcarts.map(sub => ({
+        const updatedSubcarts = cart.subcarts.map((sub) => ({
           ...sub,
-          items: sub.items.map(item => 
-            item.id === itemId ? { ...item, quantity: newQty } : item
-          )
+          items: sub.items.map((item) => (item.id === itemId ? { ...item, quantity: newQty } : item)),
         }));
         setCart({ ...cart, subcarts: updatedSubcarts });
       }
 
       await cartService.updateQuantity(itemId, newQty);
-      // Re-fetch to sync with server (price calculations, etc.)
       fetchCart();
     } catch (err) {
       console.error('Failed to update quantity:', err);
-      fetchCart(); // Rollback on error
+      fetchCart();
     }
   };
 
   const handleRemoveItem = async (itemId: string) => {
     try {
-      // Optimistic update
       if (cart) {
-        const updatedSubcarts = cart.subcarts.map(sub => ({
-          ...sub,
-          items: sub.items.filter(item => item.id !== itemId)
-        })).filter(sub => sub.items.length > 0);
+        const updatedSubcarts = cart.subcarts
+          .map((sub) => ({ ...sub, items: sub.items.filter((item) => item.id !== itemId) }))
+          .filter((sub) => sub.items.length > 0);
         setCart({ ...cart, subcarts: updatedSubcarts });
       }
 
@@ -91,14 +77,6 @@ export default function CartPage() {
       console.error('Failed to remove item:', err);
       fetchCart();
     }
-  };
-
-  const toggleSelectVendor = (vendorId: string) => {
-    setSelectedVendors((prev) => 
-      prev.includes(vendorId) 
-        ? prev.filter((id) => id !== vendorId) 
-        : [...prev, vendorId]
-    );
   };
 
   const handleClearCart = async () => {
@@ -123,10 +101,7 @@ export default function CartPage() {
     setOrderError('');
     setPlacingVendor(subcart.id);
     try {
-      const orders = await ordersService.createOrder(
-        { target_type: 'subcart', target_id: subcart.id },
-        subcart
-      );
+      const orders = await ordersService.createOrder({ target_type: 'subcart', target_id: subcart.id }, subcart);
       const order = orders[0];
       if (!order?.id) throw new Error('No order returned');
       router.push(`/chats/${order.id}`);
@@ -136,197 +111,166 @@ export default function CartPage() {
     }
   };
 
-  if (isLoading && !cart) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-10 h-10 text-[#FA3728] animate-spin" />
-      </div>
-    );
-  }
-
   const hasItems = cart && cart.subcarts.length > 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-36">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+    <div className="min-h-screen bg-canvas pb-28 md:pb-16">
+      <AppBar
+        title="Cart"
+        backHref="/explore"
+        action={
+          hasItems ? (
+            <button
+              onClick={handleClearCart}
+              className="shrink-0 text-[12px] font-bold text-slate-600 transition-colors hover:text-[#FA3728]"
+            >
+              Clear all
+            </button>
+          ) : undefined
+        }
+      />
+
+      <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 sm:px-6">
+        {isGuest && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[13px] text-amber-800">
+              You&rsquo;re shopping as a guest. Sign in to check out and keep your cart across devices.
+            </p>
+            <Link
+              href="/auth/signin?redirect=/cart"
+              className="shrink-0 self-start rounded-full bg-[#FA3728] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#E31B23] sm:self-auto"
+            >
+              Sign in
+            </Link>
+          </div>
+        )}
+
+        {orderError && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{orderError}</div>
+        )}
+
+        {isLoading && !cart ? (
+          <div className="flex justify-center py-24">
+            <Loader2 className="animate-spin text-[#FA3728]" size={30} />
+          </div>
+        ) : !hasItems ? (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-14 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+              <ShoppingBag size={28} />
+            </span>
+            <h2 className="text-lg font-bold text-ink">Your cart is empty</h2>
+            <p className="text-sm text-slate-600">Add products to get started.</p>
             <Link
               href="/explore"
-              className="flex items-center gap-2 text-gray-900 hover:text-[#FA3728] transition-colors"
+              className="mt-1 rounded-full bg-[#FA3728] px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-[#E31B23]"
             >
-              <ArrowLeft size={24} />
-              <span className="font-bold text-xl hidden sm:inline">My Cart</span>
+              Start shopping
             </Link>
-            <h1 className="text-xl font-bold text-gray-900 sm:hidden">My Cart</h1>
-            {hasItems && (
-              <button 
-                onClick={handleClearCart}
-                className="text-sm font-medium text-gray-500 hover:text-[#FA3728] transition-colors"
-              >
-                Clear All
-              </button>
-            )}
           </div>
-        </div>
-      </header>
+        ) : (
+          cart.subcarts.map((subcart, index) => {
+            const subtotal = subcart.items.reduce((sum, item) => sum + parseFloat(item.total_price), 0);
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-6">
-          {isGuest && (
-            <div className="flex flex-col justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 sm:flex-row sm:items-center">
-              <p className="text-sm text-amber-800">
-                You&apos;re shopping as a guest. Sign in to check out and keep your cart across
-                devices.
-              </p>
-              <Link
-                href="/auth/signin?redirect=/cart"
-                className="shrink-0 self-start rounded-full bg-[#FA3728] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#E31B23] sm:self-auto"
+            return (
+              <motion.div
+                key={subcart.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.06 }}
+                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white"
               >
-                Sign in
-              </Link>
-            </div>
-          )}
+                {/* Vendor header */}
+                <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] text-sm font-bold text-white">
+                    {subcart.vendor_name[0]}
+                  </span>
+                  <h3 className="truncate text-sm font-bold text-ink">{subcart.vendor_name}</h3>
+                </div>
 
-          {orderError && (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-              {orderError}
-            </div>
-          )}
-
-          {!hasItems ? (
-            /* Empty Cart State */
-            <div className="bg-white rounded-2xl p-12 text-center shadow-sm">
-              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <ShoppingBag size={40} className="text-gray-400" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h2>
-              <p className="text-gray-600 mb-6">Add items to get started</p>
-              <Link
-                href="/explore"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#FA3728] hover:bg-[#E31B23] text-white rounded-full font-semibold transition-all shadow-md"
-              >
-                Start Shopping
-              </Link>
-            </div>
-          ) : (
-            /* Grouped Cart Items */
-            cart.subcarts.map((subcart, index) => {
-              const subtotal = subcart.items.reduce((sum, item) => sum + parseFloat(item.total_price), 0);
-              const isVendorSelected = selectedVendors.includes(subcart.vendor_id);
-
-              return (
-                <motion.div
-                  key={subcart.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-                >
-                  {/* Vendor Header */}
-                  <div className="p-4 border-b border-gray-100 flex items-center gap-4">
-                    <input
-                      type="checkbox"
-                      checked={isVendorSelected}
-                      onChange={() => toggleSelectVendor(subcart.vendor_id)}
-                      className="w-5 h-5 border-gray-300 rounded text-[#FA3728] focus:ring-[#FA3728] cursor-pointer"
-                    />
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FA3728] to-[#E31B23] flex items-center justify-center text-white font-bold text-lg">
-                        {subcart.vendor_name[0]}
+                {/* Items */}
+                <div className="divide-y divide-slate-50">
+                  {subcart.items.map((item) => (
+                    <div key={item.id} className="flex items-start gap-3.5 p-4">
+                      <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                        {item.product_details?.images?.[0]?.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={item.product_details.images[0].image_url}
+                            alt={item.product_details.title}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <ShoppingBag className="text-slate-400" size={22} />
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-800 leading-tight">
-                          {subcart.vendor_name}
-                        </h3>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Vendor Items */}
-                  <div className="divide-y divide-gray-50">
-                    {subcart.items.map((item) => (
-                      <div key={item.id} className="p-4 flex flex-row items-center gap-4">
-                        
-                        {/* Product Image */}
-                        <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-xl overflow-hidden block">
-                          {item.product_details?.images?.[0]?.image_url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={item.product_details.images[0].image_url}
-                              alt={item.product_details.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                              <ShoppingBag className="text-gray-400" size={24} />
-                            </div>
-                          )}
-                        </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="line-clamp-2 text-sm font-semibold text-ink">{item.product_details.title}</h4>
+                        <p className="mt-1 text-sm font-bold text-[#FA3728]">{money(parseFloat(item.total_price))}</p>
 
-                        {/* Product Details */}
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-sm text-gray-800 line-clamp-2 mb-1">
-                            {item.product_details.title}
-                          </h4>
-                          <p className="font-semibold text-sm text-[#FA3728]">₦{parseFloat(item.total_price).toLocaleString()}</p>
-                          
-                          {/* Controls Row */}
-                          <div className="flex items-center justify-between mt-3">
-                             {/* Quantity Controls */}
-                            <div className="flex items-center bg-gray-50 rounded-full px-2 py-1 border border-gray-100">
-                              <button
-                                onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
-                                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-white rounded-full transition-colors"
-                              >
-                                <Minus size={16} />
-                              </button>
-                              <span className="font-semibold text-gray-900 w-8 text-center bg-transparent">
-                                {item.quantity}
-                              </span>
-                              <button
-                                onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
-                                className="w-8 h-8 flex items-center justify-center text-[#FA3728] bg-[#FA3728]/10 hover:bg-[#FA3728]/20 rounded-full transition-colors"
-                              >
-                                <Plus size={16} />
-                              </button>
-                            </div>
-                            
-                            <button onClick={() => handleRemoveItem(item.id)} className="text-[#FA3728] p-2 hover:bg-[#FA3728]/10 rounded-full transition-colors">
-                              <Trash2 size={20} />
+                        <div className="mt-2.5 flex items-center justify-between">
+                          <div className="flex items-center gap-0.5 rounded-full border border-slate-200 p-0.5">
+                            <button
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
+                              disabled={item.quantity <= 1}
+                              aria-label="Decrease quantity"
+                              className="flex h-7 w-7 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 disabled:opacity-40"
+                            >
+                              <Minus size={15} />
+                            </button>
+                            <span className="w-7 text-center text-sm font-bold text-ink">{item.quantity}</span>
+                            <button
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
+                              aria-label="Increase quantity"
+                              className="flex h-7 w-7 items-center justify-center rounded-full text-slate-700 transition-colors hover:bg-slate-100"
+                            >
+                              <Plus size={15} />
                             </button>
                           </div>
+
+                          <button
+                            onClick={() => handleRemoveItem(item.id)}
+                            aria-label="Remove item"
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 size={17} />
+                          </button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                  
-                  {/* Vendor Subtotal & Order */}
-                  <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
-                    <div>
-                      <span className="block text-gray-500 text-xs mb-0.5">Subtotal</span>
-                      <span className="font-semibold text-gray-900 text-base">₦{subtotal.toLocaleString()}</span>
                     </div>
-                    <button
-                      onClick={() => placeOrder(subcart)}
-                      disabled={placingVendor === subcart.id}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FA3728] hover:bg-[#E31B23] text-white font-semibold text-sm rounded-full transition-colors disabled:opacity-60"
-                    >
-                      {placingVendor === subcart.id ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : (
-                        <MessageCircle size={16} />
-                      )}
-                      {placingVendor === subcart.id ? 'Starting…' : 'Order via Chat'}
-                    </button>
+                  ))}
+                </div>
+
+                {/* Subtotal + action */}
+                <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/60 px-4 py-3.5">
+                  <div>
+                    <span className="block text-[11px] text-slate-500">Subtotal</span>
+                    <span className="text-base font-bold text-ink">{money(subtotal)}</span>
                   </div>
-                </motion.div>
-              );
-            })
-          )}
-        </div>
+                  <button
+                    onClick={() => placeOrder(subcart)}
+                    disabled={placingVendor === subcart.id}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[#FA3728] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#E31B23] disabled:opacity-60"
+                  >
+                    {placingVendor === subcart.id ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <MessageCircle size={16} />
+                    )}
+                    {placingVendor === subcart.id ? 'Starting…' : isGuest ? 'Sign in to order' : 'Order via chat'}
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })
+        )}
+
+        {error && <p className="px-1 text-center text-xs text-red-500">{error}</p>}
       </div>
+
+      <BottomNav />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import Navbar from './components/home/Navbar';
+import AppHeader from './components/AppHeader';
 import FloatingGallery from './components/home/FloatingGallery';
 import HeroBrand from './components/home/HeroBrand';
 import CategoryPills from './components/home/CategoryPills';
@@ -10,6 +10,7 @@ import VendorsSpotlight from './components/home/VendorsSpotlight';
 import CustomersSpotlight from './components/home/CustomersSpotlight';
 import TypewriterLine from './components/home/TypewriterLine';
 import HomeFooter from './components/home/HomeFooter';
+import BottomNav from './components/BottomNav';
 
 export default function LandingPage() {
   // The homepage is always light, regardless of the saved global theme.
@@ -23,8 +24,8 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div data-theme="light" className="min-h-screen bg-canvas font-sans text-ink antialiased">
-      <Navbar />
+    <div data-theme="light" className="min-h-screen bg-canvas pb-16 font-sans text-ink antialiased md:pb-0">
+      <AppHeader />
       <main>
         <FloatingGallery />
         <HeroBrand />
@@ -35,6 +36,7 @@ export default function LandingPage() {
         <TypewriterLine />
       </main>
       <HomeFooter />
+      <BottomNav />
     </div>
   );
 }

@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Home, Users, Bookmark, Hash, ArrowRight } from 'lucide-react';
 import { authService } from '@/lib/api';
-import Navbar from '../components/home/Navbar';
+import AppHeader from '../components/AppHeader';
 import PostCard from '../components/feed/PostCard';
 import { FEED_POSTS } from '../components/feed/data';
 import { vendorCards, trendingProducts } from '../components/home/data';
+import BottomNav from '../components/BottomNav';
 
 export default function FeedPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -27,15 +28,15 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-canvas font-sans text-ink antialiased">
-      <Navbar actions />
+      <AppHeader />
 
-      <main className="mx-auto max-w-7xl px-4 pb-40 pt-28 sm:px-6 sm:pb-28 sm:pt-28 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 pb-40 pt-6 sm:px-6 sm:pb-28 lg:px-8">
         {/* Accessible page heading — visibly redundant with the navbar */}
         <h1 className="sr-only">Feed</h1>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[200px_minmax(0,1fr)_200px] xl:grid-cols-[240px_minmax(0,1fr)_240px]">
           {/* Left rail — feed filters + trending tags */}
-          <aside className="hidden self-start lg:sticky lg:top-28 lg:block">
+          <aside className="hidden self-start lg:sticky lg:top-24 lg:block">
             <div className="rounded-2xl border border-slate-200/70 bg-white p-2">
               <nav className="space-y-0.5">
                 {tabs.map((tab) => {
@@ -95,7 +96,7 @@ export default function FeedPage() {
           </div>
 
           {/* Right rail — suggested vendors + trending products */}
-          <aside className="hidden self-start lg:sticky lg:top-28 lg:block">
+          <aside className="hidden self-start lg:sticky lg:top-24 lg:block">
             <div className="rounded-2xl border border-slate-200/70 bg-white p-4">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-xs font-bold uppercase tracking-wide text-slate-400">
@@ -186,7 +187,7 @@ export default function FeedPage() {
 
       {/* Sign Up prompt (only for signed-out visitors) */}
       {!isAuthenticated && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 p-3.5 backdrop-blur-xl sm:hidden">
+        <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 p-3.5 backdrop-blur-xl sm:hidden">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-ink">Join ShopAm Today</p>
@@ -201,6 +202,8 @@ export default function FeedPage() {
           </div>
         </div>
       )}
+
+      <BottomNav />
     </div>
   );
 }

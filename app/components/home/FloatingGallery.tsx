@@ -26,7 +26,7 @@ export default function FloatingGallery() {
   const yOffsets = [4, -4, 2, -2, 5];
 
   return (
-    <section className="relative overflow-hidden bg-canvas pt-20 sm:pt-24 pb-4">
+    <section className="relative overflow-hidden bg-canvas pt-6 sm:pt-8 pb-4">
       {/* Soft atmospheric color glows */}
       <div className="pointer-events-none absolute -top-10 left-1/4 h-56 w-56 rounded-full bg-[#FA3728]/8 blur-[90px]" />
       <div className="pointer-events-none absolute top-4 right-1/4 h-56 w-56 rounded-full bg-[#2563EB]/8 blur-[90px]" />

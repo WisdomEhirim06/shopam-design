@@ -22,8 +22,9 @@ import {
 } from 'lucide-react';
 import { productsService, cartService, reviewsService } from '@/lib/api';
 import type { ProductService, Review } from '@/lib/api/types';
-import Navbar from '../../components/home/Navbar';
+import AppHeader from '../../components/AppHeader';
 import ProductCard from '../../explore/components/ProductCard';
+import BottomNav from '../../components/BottomNav';
 
 /* ── Helpers ─────────────────────────────────────────────── */
 
@@ -191,8 +192,8 @@ export default function ProductDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-canvas">
-        <Navbar actions />
-        <main className="mx-auto max-w-7xl px-4 pb-28 pt-28 sm:px-6 sm:pt-28 lg:px-8">
+        <AppHeader />
+        <main className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8">
           <div className="grid animate-pulse grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-7">
               <div className="aspect-square w-full rounded-3xl bg-slate-100" />
@@ -214,7 +215,7 @@ export default function ProductDetailPage() {
   if (error || !product) {
     return (
       <div className="min-h-screen bg-canvas">
-        <Navbar actions />
+        <AppHeader />
         <div className="flex min-h-[60vh] items-center justify-center px-4">
           <div className="text-center">
             <p className="mb-4 text-slate-500">{error || 'Product not found.'}</p>
@@ -252,9 +253,9 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-canvas font-sans text-ink antialiased">
-      <Navbar actions />
+      <AppHeader />
 
-      <main className="mx-auto max-w-7xl px-4 pb-28 pt-28 sm:px-6 sm:pt-28 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8">
         {/* Back / actions toolbar */}
         <div className="mb-5 flex items-center justify-between">
           <Link
@@ -601,6 +602,8 @@ export default function ProductDetailPage() {
           </section>
         )}
       </main>
+
+      <BottomNav />
 
       {/* Floating search pill (desktop) — mirrors the shop.app footer search */}
       <Link

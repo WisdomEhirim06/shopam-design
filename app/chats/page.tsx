@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Loader2, ShoppingBag } from 'lucide-react';
+import { Loader2, ShoppingBag } from 'lucide-react';
 import { ordersService } from '@/lib/api';
 import type { Order } from '@/lib/api';
+import AppBar from '@/app/components/ui/AppBar';
+import BottomNav from '@/app/components/BottomNav';
 
 function statusLabel(order: Order): string {
   switch (order.status) {
@@ -43,13 +45,10 @@ export default function ChatsListPage() {
       return;
     }
     setIsAuthenticated(true);
-    ordersService.getOrderHistory()
-      .then((data) => {
-        setOrders(data.results ?? []);
-      })
-      .catch(() => {
-        setError('Failed to load orders. Please try again.');
-      })
+    ordersService
+      .getOrderHistory()
+      .then((data) => setOrders(data.results ?? []))
+      .catch(() => setError('Failed to load orders. Please try again.'))
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -57,78 +56,72 @@ export default function ChatsListPage() {
   const pastOrders = orders.filter((o) => o.status === 'completed' || o.status === 'cancelled');
 
   return (
-    <div className="min-h-screen bg-white md:bg-gray-50 flex flex-col">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center h-16 gap-4">
-            <Link href="/explore" className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors text-gray-700">
-              <ArrowLeft size={20} />
-            </Link>
-            <h1 className="text-xl font-bold text-gray-900">Orders & Chats</h1>
-          </div>
-        </div>
-      </header>
-      <main className="flex-1 max-w-3xl mx-auto w-full">
+    <div className="min-h-screen bg-canvas pb-28 md:pb-16">
+      <AppBar title="Chats" showBack={false} />
+
+      <div className="mx-auto max-w-2xl px-4 py-5 sm:px-6">
         {isAuthenticated === false ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center px-6">
-            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center">
-              <ShoppingBag size={28} className="text-gray-400" />
-            </div>
-            <p className="font-semibold text-gray-700">Sign in to view your orders</p>
-            <p className="text-sm text-gray-400">Track your purchases and chat with vendors.</p>
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-14 text-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+              <ShoppingBag size={24} />
+            </span>
+            <p className="text-sm font-bold text-ink">Sign in to view your orders</p>
+            <p className="text-xs text-slate-600">Track your purchases and chat with vendors.</p>
             <Link
-              href={`/auth/signin?redirect=/chats`}
-              className="mt-2 px-6 py-2.5 bg-[#FA3728] text-white rounded-full font-semibold text-sm hover:bg-[#E31B23] transition-colors"
+              href="/auth/signin?redirect=/chats"
+              className="mt-1 rounded-full bg-[#FA3728] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#E31B23]"
             >
-              Sign In
+              Sign in
             </Link>
           </div>
         ) : isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 size={32} className="animate-spin text-[#FA3728]" />
+          <div className="flex justify-center py-24">
+            <Loader2 className="animate-spin text-[#FA3728]" size={28} />
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+        ) : activeOrders.length === 0 && pastOrders.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-14 text-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+              <ShoppingBag size={24} />
+            </span>
+            <p className="text-sm font-bold text-ink">No orders yet</p>
+            <p className="text-xs text-slate-600">When you place an order it will appear here.</p>
+            <Link
+              href="/explore"
+              className="mt-1 rounded-full bg-[#FA3728] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#E31B23]"
+            >
+              Start shopping
+            </Link>
           </div>
         ) : (
-          <div className="md:my-6 md:bg-white md:rounded-2xl md:shadow-sm overflow-hidden">
-            {error && (
-              <div className="mx-5 mt-5 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600 font-medium">
-                {error}
-              </div>
-            )}
-            {!error && activeOrders.length === 0 && pastOrders.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
-                <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center">
-                  <ShoppingBag size={28} className="text-gray-400" />
-                </div>
-                <p className="font-semibold text-gray-700">No orders yet</p>
-                <p className="text-sm text-gray-400">When you place an order it will appear here.</p>
-                <Link href="/explore" className="mt-2 text-sm font-semibold text-[#FA3728] hover:underline">
-                  Start shopping
-                </Link>
-              </div>
-            )}
+          <div className="space-y-6">
             {activeOrders.length > 0 && (
-              <>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-5 pt-5 pb-2">Active</p>
-                <div className="divide-y divide-gray-100">
+              <section className="space-y-2">
+                <h2 className="px-1 text-[11px] font-bold uppercase tracking-widest text-slate-500">Active</h2>
+                <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
                   {activeOrders.map((order, i) => (
                     <OrderRow key={order.id} order={order} index={i} />
                   ))}
                 </div>
-              </>
+              </section>
             )}
+
             {pastOrders.length > 0 && (
-              <>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-5 pt-5 pb-2">Past Orders</p>
-                <div className="divide-y divide-gray-100">
+              <section className="space-y-2">
+                <h2 className="px-1 text-[11px] font-bold uppercase tracking-widest text-slate-500">Past orders</h2>
+                <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
                   {pastOrders.map((order, i) => (
                     <OrderRow key={order.id} order={order} index={i} />
                   ))}
                 </div>
-              </>
+              </section>
             )}
           </div>
         )}
-      </main>
+      </div>
+
+      <BottomNav />
     </div>
   );
 }
@@ -136,36 +129,37 @@ export default function ChatsListPage() {
 function OrderRow({ order, index }: { order: Order; index: number }) {
   const initials = (order.vendor_name || '??').slice(0, 2).toUpperCase();
   const colorCls = avatarColor(order.vendor);
-  const needsAction = ['pending_customer_approval', 'awaiting_shipping_details', 'awaiting_payment', 'delivered'].includes(order.status);
+  const needsAction = ['pending_customer_approval', 'awaiting_shipping_details', 'awaiting_payment', 'delivered'].includes(
+    order.status
+  );
   const firstItem = order.items[0];
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}>
-      <Link href={`/chats/${order.id}`} className="flex items-center gap-4 p-4 sm:p-5 hover:bg-gray-50 transition-colors group">
-        <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0 text-white ${colorCls}`}>
+      <Link
+        href={`/chats/${order.id}`}
+        className="flex items-center gap-3.5 border-b border-slate-100 px-4 py-3.5 transition-colors last:border-0 hover:bg-slate-50/60"
+      >
+        <span
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${colorCls}`}
+        >
           {initials}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline justify-between mb-1">
-            <h3 className="font-semibold text-gray-900 group-hover:text-[#FA3728] transition-colors truncate">
-              {order.vendor_name}
-            </h3>
-            <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <h3 className="truncate text-sm font-bold text-ink">{order.vendor_name}</h3>
+            <span className="shrink-0 text-[11px] text-slate-500">
               {new Date(order.created_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })}
             </span>
           </div>
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm text-gray-500 truncate">
-              {firstItem ? `${firstItem.product_details.title} ×${firstItem.quantity}` : '—'}
-            </p>
-            {needsAction && (
-              <span className="flex-shrink-0 w-2 h-2 bg-[#FA3728] rounded-full" />
-            )}
-          </div>
-          <p className={`text-xs mt-0.5 font-medium ${needsAction ? 'text-[#FA3728]' : 'text-gray-400'}`}>
+          <p className="mt-0.5 truncate text-[13px] text-slate-600">
+            {firstItem ? `${firstItem.product_details.title} ×${firstItem.quantity}` : '—'}
+          </p>
+          <p className={`mt-0.5 truncate text-[11px] font-medium ${needsAction ? 'text-[#FA3728]' : 'text-slate-500'}`}>
             {statusLabel(order)}
           </p>
         </div>
+        {needsAction && <span className="h-2 w-2 shrink-0 rounded-full bg-[#FA3728]" />}
       </Link>
     </motion.div>
   );
