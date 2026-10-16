@@ -1,8 +1,21 @@
 import apiClient, { API_ENDPOINTS } from './config';
+import {
+  devMockEnabled,
+  isDevOrderId,
+  getDevOrder,
+  listDevOrders,
+  createDevOrderFromSubcart,
+  updateDevOrder,
+  applyDevOrderModification,
+  setDevShippingFee,
+  getDevMessages,
+  addDevMessage,
+} from '../devOrders';
 import type {
   Order,
   CreateOrderRequest,
   OrderFilters,
+  SubCart,
   PaginatedResponse,
   Post,
   CreatePostRequest,
@@ -28,11 +41,23 @@ import type {
 export const ordersService = {
   /** Get the vendor's incoming orders */
   async getVendorOrders(filters?: OrderFilters): Promise<PaginatedResponse<Order>> {
-    const response = await apiClient.get<PaginatedResponse<Order>>(
-      API_ENDPOINTS.ORDERS.VENDOR_LIST,
-      { params: filters }
-    );
-    return response.data;
+    const dev = devMockEnabled() ? listDevOrders() : [];
+    try {
+      const response = await apiClient.get<PaginatedResponse<Order>>(
+        API_ENDPOINTS.ORDERS.VENDOR_LIST,
+        { params: filters }
+      );
+      return {
+        ...response.data,
+        results: [...dev, ...(response.data.results ?? [])],
+        count: (response.data.count ?? 0) + dev.length,
+      };
+    } catch (err) {
+      if (devMockEnabled()) {
+        return { results: dev, count: dev.length, next: null, previous: null };
+      }
+      throw err;
+    }
   },
 
   /** Get all orders (general) */
@@ -46,22 +71,40 @@ export const ordersService = {
 
   /** Get single order by ID — tries vendor detail endpoint first, falls back to customer history search */
   async getOrder(id: string): Promise<Order> {
+    if (devMockEnabled() && isDevOrderId(id)) {
+      const dev = getDevOrder(id);
+      if (dev) return dev;
+    }
     try {
       const response = await apiClient.get<Order>(API_ENDPOINTS.ORDERS.DETAIL(id));
       return response.data;
     } catch {
       // Buyer can't access /commerceorders/{id}/ directly — search history instead
-      const hist = await apiClient.get<PaginatedResponse<Order>>(API_ENDPOINTS.ORDERS.HISTORY);
-      const match = hist.data.results?.find((o) => o.id === id);
-      if (match) return match;
+      try {
+        const hist = await apiClient.get<PaginatedResponse<Order>>(API_ENDPOINTS.ORDERS.HISTORY);
+        const match = hist.data.results?.find((o) => o.id === id);
+        if (match) return match;
+      } catch {
+        /* fall through to the dev store */
+      }
+      if (devMockEnabled()) {
+        const dev = getDevOrder(id);
+        if (dev) return dev;
+      }
       throw new Error('Order not found');
     }
   },
 
   /** Place a new order (Step 1) — returns the created orders array */
-  async createOrder(data: CreateOrderRequest): Promise<Order[]> {
-    const response = await apiClient.post<Order[]>(API_ENDPOINTS.ORDERS.PLACE, data);
-    return Array.isArray(response.data) ? response.data : [response.data as unknown as Order];
+  async createOrder(data: CreateOrderRequest, snapshot?: SubCart): Promise<Order[]> {
+    try {
+      const response = await apiClient.post<Order[]>(API_ENDPOINTS.ORDERS.PLACE, data);
+      return Array.isArray(response.data) ? response.data : [response.data as unknown as Order];
+    } catch (err) {
+      // Dev: no real session — build a local order so the flow is testable.
+      if (devMockEnabled() && snapshot) return [createDevOrderFromSubcart(snapshot)];
+      throw err;
+    }
   },
 
   /** Step 2: Vendor reviews (accepts or proposes changes to) an order */
@@ -74,6 +117,10 @@ export const ordersService = {
    * NOTE: payload shape is provisional (backend contract TBD).
    */
   async acceptOrder(orderId: string): Promise<void> {
+    if (devMockEnabled() && isDevOrderId(orderId)) {
+      updateDevOrder(orderId, { status: 'awaiting_shipping_details' });
+      return;
+    }
     await apiClient.post(API_ENDPOINTS.ORDERS.VENDOR_REVIEW(orderId), { action: 'accept' });
   },
 
@@ -82,6 +129,16 @@ export const ordersService = {
    * NOTE: best-effort payload — wire to the real contract when available.
    */
   async modifyOrder(orderId: string, changes: Record<string, unknown>): Promise<void> {
+    if (devMockEnabled() && isDevOrderId(orderId)) {
+      applyDevOrderModification(
+        orderId,
+        changes as unknown as {
+          items: { name: string; quantity: number; price: number; variant?: string }[];
+          delivery_fee: number;
+        }
+      );
+      return;
+    }
     await apiClient.post(API_ENDPOINTS.ORDERS.VENDOR_REVIEW(orderId), {
       action: 'modify',
       ...changes,
@@ -93,6 +150,13 @@ export const ordersService = {
    * NOTE: best-effort payload — wire to the real contract when available.
    */
   async rejectOrder(orderId: string, reason: string): Promise<void> {
+    if (devMockEnabled() && isDevOrderId(orderId)) {
+      updateDevOrder(orderId, {
+        status: 'cancelled',
+        rejection_reason: reason,
+      } as unknown as Partial<Order>);
+      return;
+    }
     await apiClient.post(API_ENDPOINTS.ORDERS.VENDOR_REVIEW(orderId), {
       action: 'decline',
       rejection_reason: reason,
@@ -101,11 +165,19 @@ export const ordersService = {
 
   /** Step 5: Vendor sets the shipping fee */
   async setShippingFee(orderId: string, shippingFee: string): Promise<void> {
+    if (devMockEnabled() && isDevOrderId(orderId)) {
+      setDevShippingFee(orderId, Number(shippingFee) || 0);
+      return;
+    }
     await apiClient.post(API_ENDPOINTS.ORDERS.SET_SHIPPING_FEE(orderId), { shipping_fee: shippingFee });
   },
 
   /** Step 7: Vendor marks order as shipped / starts delivery */
   async startDelivery(orderId: string): Promise<void> {
+    if (devMockEnabled() && isDevOrderId(orderId)) {
+      updateDevOrder(orderId, { status: 'shipped' });
+      return;
+    }
     await apiClient.patch(API_ENDPOINTS.ORDERS.START_DELIVERY(orderId));
   },
 
@@ -120,21 +192,44 @@ export const ordersService = {
 
   /** Step 3: Customer accepts or rejects vendor modifications */
   async customerApprove(orderId: string, data: CustomerApprovalRequest): Promise<void> {
+    if (devMockEnabled() && isDevOrderId(orderId)) {
+      updateDevOrder(orderId, {
+        status: data.action === 'accept' ? 'awaiting_payment' : 'pending_vendor_review',
+      });
+      return;
+    }
     await apiClient.post(API_ENDPOINTS.ORDERS.CUSTOMER_APPROVE(orderId), data);
   },
 
   /** Step 4: Customer provides shipping type and address */
   async setShipping(orderId: string, data: SetShippingRequest): Promise<void> {
+    if (devMockEnabled() && isDevOrderId(orderId)) {
+      updateDevOrder(orderId, {
+        shipping_type: data.shipping_type,
+        shipping_address:
+          data.shipping_address ?? (data.shipping_type === 'pickup' ? 'Pickup' : null),
+        status: 'shipping_set',
+      });
+      return;
+    }
     await apiClient.post(API_ENDPOINTS.ORDERS.SET_SHIPPING(orderId), data);
   },
 
   /** Step 6: Customer decides to pay or cancel (must call paymentsService.initCheckout first) */
   async paymentDecision(orderId: string, data: CustomerPaymentDecisionRequest): Promise<void> {
+    if (devMockEnabled() && isDevOrderId(orderId)) {
+      updateDevOrder(orderId, { status: data.action === 'pay' ? 'paid' : 'cancelled' });
+      return;
+    }
     await apiClient.post(API_ENDPOINTS.ORDERS.PAYMENT_DECISION(orderId), data);
   },
 
   /** Step 8: Customer confirms delivery with the handover code */
   async confirmHandover(orderId: string, data: ConfirmHandoverRequest): Promise<{ status: string; payout_date: string }> {
+    if (devMockEnabled() && isDevOrderId(orderId)) {
+      updateDevOrder(orderId, { status: 'completed' });
+      return { status: 'completed', payout_date: new Date().toISOString() };
+    }
     const response = await apiClient.post<{ status: string; payout_date: string }>(
       API_ENDPOINTS.ORDERS.CONFIRM_HANDOVER(orderId),
       data
@@ -144,16 +239,52 @@ export const ordersService = {
 
   /** Step 9: Customer raises a dispute within 7 days of delivery */
   async raiseDispute(orderId: string, data: RaiseDisputeRequest): Promise<void> {
+    if (devMockEnabled() && isDevOrderId(orderId)) {
+      updateDevOrder(orderId, {
+        status: 'disputed',
+        dispute_reason: data.reason,
+      } as unknown as Partial<Order>);
+      return;
+    }
     await apiClient.post(API_ENDPOINTS.ORDERS.RAISE_DISPUTE(orderId), data);
+  },
+
+  /**
+   * Vendor resolves a dispute (refund / replace / reorder / partial refund).
+   * NOTE: provisional contract — wire to the backend when available.
+   */
+  async resolveDispute(orderId: string, resolution: string): Promise<void> {
+    if (devMockEnabled() && isDevOrderId(orderId)) {
+      updateDevOrder(orderId, {
+        status: 'completed',
+        dispute_resolution: resolution,
+      } as unknown as Partial<Order>);
+      return;
+    }
+    await apiClient.patch(API_ENDPOINTS.ORDERS.UPDATE(orderId), {
+      dispute_resolution: resolution,
+    } as unknown as Partial<Order>);
   },
 
   /** Customer's full order history (paginated, newest first) */
   async getOrderHistory(page = 1, pageSize = 20): Promise<PaginatedResponse<Order>> {
-    const response = await apiClient.get<PaginatedResponse<Order>>(
-      API_ENDPOINTS.ORDERS.HISTORY,
-      { params: { page, page_size: pageSize } }
-    );
-    return response.data;
+    const dev = devMockEnabled() ? listDevOrders() : [];
+    try {
+      const response = await apiClient.get<PaginatedResponse<Order>>(
+        API_ENDPOINTS.ORDERS.HISTORY,
+        { params: { page, page_size: pageSize } }
+      );
+      return {
+        ...response.data,
+        results: [...dev, ...(response.data.results ?? [])],
+        count: (response.data.count ?? 0) + dev.length,
+      };
+    } catch (err) {
+      if (devMockEnabled()) {
+        return { results: dev, count: dev.length, next: null, previous: null };
+      }
+      throw err;
+    }
   },
 
   /** Smart filter endpoint — auto-detects vendor vs customer */
@@ -332,6 +463,17 @@ export const reviewsService = {
    * Create review
    */
   async createReview(data: CreateReviewRequest): Promise<Review> {
+    if (devMockEnabled()) {
+      return {
+        id: `dev-review-${Date.now()}`,
+        customer: 'dev-customer',
+        product: data.product ?? null,
+        order: data.order ?? null,
+        rating: data.rating,
+        comment: data.comment,
+        created_at: new Date().toISOString(),
+      } as Review;
+    }
     const response = await apiClient.post<Review>(
       API_ENDPOINTS.REVIEWS.CREATE,
       data
@@ -368,6 +510,7 @@ export const messagesService = {
 
   /** Get the full chat thread between current user and another user */
   async getThread(userId: string): Promise<Message[]> {
+    if (devMockEnabled()) return getDevMessages(userId) as unknown as Message[];
     const response = await apiClient.get<Message[]>(
       API_ENDPOINTS.MESSAGES.THREAD,
       { params: { user_id: userId } }
@@ -377,6 +520,17 @@ export const messagesService = {
 
   /** Send a direct message */
   async sendMessage(data: SendMessageRequest): Promise<Message> {
+    if (devMockEnabled()) {
+      let senderId = 'dev-customer';
+      try {
+        const raw = localStorage.getItem('user');
+        const parsed = raw ? JSON.parse(raw) : null;
+        if (parsed?.id) senderId = parsed.id;
+      } catch {
+        /* keep the default */
+      }
+      return addDevMessage(data.recipient, senderId, data.content) as unknown as Message;
+    }
     const response = await apiClient.post<Message>(API_ENDPOINTS.MESSAGES.LIST, data);
     return response.data;
   },

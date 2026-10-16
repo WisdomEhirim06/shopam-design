@@ -3,13 +3,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Info, Loader2, RefreshCcw, Send, ShieldCheck } from 'lucide-react';
-import { authService, messagesService, ordersService } from '@/lib/api';
+import { authService, messagesService, ordersService, reviewsService } from '@/lib/api';
 import type { Order } from '@/lib/api';
 import { statusLabel } from '@/lib/order-steps';
 import OrderProgress from '@/app/components/OrderProgress';
 import { buildMessagesUI, type ChatMessage } from './chat-logic';
 import MessageBubble from './MessageBubble';
+import ReviewModal from './ReviewModal';
+import DisputeModal from './DisputeModal';
 
 export default function OrderChatPage() {
   const params = useParams();
@@ -23,6 +26,9 @@ export default function OrderChatPage() {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [disputeOpen, setDisputeOpen] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -95,6 +101,48 @@ export default function OrderChatPage() {
 
   const handleReviewAndPay = () => {
     router.push(`/checkout/${orderId}`);
+  };
+
+  const handleConfirmDelivery = async () => {
+    if (!order) return;
+    setActionBusy(true);
+    try {
+      await ordersService.confirmHandover(orderId, { code: order.confirmation_code || '' });
+      await refreshOrder();
+    } catch {
+      setError('Could not confirm delivery. Please try again.');
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const handleSubmitReview = async (rating: number, comment: string) => {
+    try {
+      await reviewsService.createReview({
+        order: orderId,
+        product: order?.items[0]?.product ?? null,
+        rating,
+        comment,
+      });
+    } catch {
+      /* review is non-critical */
+    } finally {
+      setReviewOpen(false);
+    }
+  };
+
+  const handleSubmitDispute = async (reason: string, email: string, details: string) => {
+    try {
+      await ordersService.raiseDispute(orderId, {
+        email,
+        reason: details ? `${reason} — ${details}` : reason,
+      });
+      await refreshOrder();
+    } catch {
+      setError('Could not submit the dispute. Please try again.');
+    } finally {
+      setDisputeOpen(false);
+    }
   };
 
   const vendorName = order?.vendor_name || 'Vendor';
@@ -204,6 +252,9 @@ export default function OrderChatPage() {
               onAcceptChanges={handleAcceptChanges}
               onRequestChanges={handleRequestChanges}
               onReviewAndPay={handleReviewAndPay}
+              onConfirmDelivery={handleConfirmDelivery}
+              onLeaveReview={() => setReviewOpen(true)}
+              onRaiseDispute={() => setDisputeOpen(true)}
             />
           ))}
           <div ref={messagesEndRef} />
@@ -242,6 +293,20 @@ export default function OrderChatPage() {
           </form>
         </div>
       </footer>
+
+      <AnimatePresence>
+        <ReviewModal
+          open={reviewOpen}
+          onClose={() => setReviewOpen(false)}
+          onSubmit={handleSubmitReview}
+        />
+        <DisputeModal
+          open={disputeOpen}
+          defaultEmail={authService.getCurrentUser()?.email}
+          onClose={() => setDisputeOpen(false)}
+          onSubmit={handleSubmitDispute}
+        />
+      </AnimatePresence>
     </div>
   );
 }

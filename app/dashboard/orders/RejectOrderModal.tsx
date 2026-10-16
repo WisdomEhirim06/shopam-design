@@ -37,9 +37,9 @@ export default function RejectOrderModal({
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-ink">Decline order</h2>
-            <p className="text-xs text-slate-500">Let the buyer know why.</p>
+            <p className="text-xs text-slate-600">Let the buyer know why.</p>
           </div>
-          <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100">
+          <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100">
             <X size={18} />
           </button>
         </div>

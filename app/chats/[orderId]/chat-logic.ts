@@ -7,7 +7,6 @@ export interface ChatOrderItem {
   quantity: number;
   image?: string;
   variant?: string;
-  /** Vendor-proposed values, when a modification is pending review. */
   originalQuantity?: number;
   originalPrice?: number;
 }
@@ -16,9 +15,12 @@ export type MessageKind =
   | 'order'
   | 'text'
   | 'changes'
-  | 'rejected'
   | 'accepted'
-  | 'payment';
+  | 'payment'
+  | 'shipped'
+  | 'delivered'
+  | 'rejected'
+  | 'disputed';
 
 export interface ChatMessage {
   id: string | number;
@@ -34,7 +36,7 @@ export interface ChatMessage {
   address?: string;
   reason?: string;
   /** What the viewer is waiting on, used to render the right call-to-action. */
-  awaiting?: 'vendor' | 'customer' | 'payment';
+  awaiting?: 'vendor' | 'customer' | 'payment' | 'delivery' | 'post';
 }
 
 /* ─────────────── Helpers ─────────────── */
@@ -48,6 +50,10 @@ const ACCEPTED_STATUSES = [
   'delivered',
   'completed',
 ];
+
+const PAID_STATUSES = ['paid', 'shipped', 'delivered', 'completed'];
+const SHIPPED_STATUSES = ['shipped', 'delivered', 'completed'];
+const DELIVERED_STATUSES = ['delivered', 'completed'];
 
 function toItems(order: Order, useProposal = false): ChatOrderItem[] {
   return order.items.map((item) => {
@@ -71,92 +77,112 @@ export function buildMessagesUI(
   textThreads: { id: string; sender: string; content: string; created_at: string }[],
   currentUserId: string | undefined
 ): ChatMessage[] {
-  const vName = o.vendor_name || 'Vendor';
+  const extra = o as unknown as { rejection_reason?: string; dispute_reason?: string };
+  const vendorName = o.vendor_name || 'Vendor';
   const deliveryFee = Number(o.shipping_fee) || 0;
   const total = Number(o.grand_total) || 0;
   const subtotal = Math.max(0, total - deliveryFee);
-  const stamp = new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const systemMsgs: ChatMessage[] = [];
+  const baseTime = new Date(o.created_at).getTime() || Date.now();
 
-  const base = {
-    time: stamp,
-    created_at: o.created_at,
+  // Synthetic, ascending timestamps so the timeline reads in order (the API
+  // does not return per-event timestamps).
+  let step = 0;
+  const nextAt = () => {
+    const at = baseTime + step * 60_000;
+    step += 1;
+    return new Date(at).toISOString();
+  };
+  const atTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const events: ChatMessage[] = [];
+  const push = (msg: Omit<ChatMessage, 'time' | 'created_at'>) => {
+    const created_at = nextAt();
+    events.push({ ...msg, created_at, time: atTime(created_at) });
+  };
+
+  const totals = {
     subtotal,
     deliveryFee: deliveryFee || undefined,
     total,
     address: o.shipping_address || undefined,
   };
 
-  // The order proposal card (always present).
-  systemMsgs.push({
+  // 1. Order request (immutable)
+  push({
     id: 'order_card',
     kind: 'order',
     from: 'customer',
     items: toItems(o),
-    ...base,
+    ...totals,
     awaiting: o.status === 'pending_vendor_review' ? 'vendor' : undefined,
   });
 
-  // Vendor proposed changes — waiting on the customer.
+  // 2. Vendor proposed changes
   if (o.status === 'pending_customer_approval') {
-    systemMsgs.push({
-      id: 'changes_card',
-      kind: 'changes',
-      from: 'vendor',
-      items: toItems(o, true),
-      ...base,
-      awaiting: 'customer',
-    });
+    push({ id: 'changes_card', kind: 'changes', from: 'vendor', items: toItems(o, true), ...totals, awaiting: 'customer' });
   }
 
-  // Vendor accepted the order.
+  // 3. Vendor accepted
   if (ACCEPTED_STATUSES.includes(o.status)) {
-    systemMsgs.push({
+    push({
       id: 'accepted_card',
       kind: 'accepted',
       from: 'vendor',
       items: toItems(o),
-      ...base,
+      ...totals,
       awaiting: ['awaiting_payment', 'awaiting_shipping_details', 'shipping_set'].includes(o.status)
         ? 'payment'
         : undefined,
     });
   }
 
-  // Rejected / cancelled.
-  if (o.status === 'cancelled') {
-    systemMsgs.push({
-      id: 'rejected_card',
-      kind: 'rejected',
+  // 4. Payment received
+  if (PAID_STATUSES.includes(o.status)) {
+    push({ id: 'payment_card', kind: 'payment', from: 'system', total });
+  }
+
+  // 5. Shipped
+  if (SHIPPED_STATUSES.includes(o.status)) {
+    push({
+      id: 'shipped_card',
+      kind: 'shipped',
       from: 'vendor',
-      ...base,
-      reason: (o as unknown as { rejection_reason?: string }).rejection_reason || 'This order could not be fulfilled.',
+      awaiting: o.status === 'shipped' ? 'delivery' : undefined,
     });
   }
 
-  // Payment received.
-  if (['paid', 'shipped', 'delivered', 'completed'].includes(o.status)) {
-    systemMsgs.push({
-      id: 'payment_card',
-      kind: 'payment',
+  // 6. Delivered
+  if (DELIVERED_STATUSES.includes(o.status)) {
+    push({
+      id: 'delivered_card',
+      kind: 'delivered',
       from: 'system',
-      time: stamp,
-      created_at: o.created_at,
-      total,
+      awaiting: o.status === 'disputed' ? undefined : 'post',
     });
   }
 
-  // Append the text thread.
+  // 7. Declined
+  if (o.status === 'cancelled') {
+    push({ id: 'rejected_card', kind: 'rejected', from: 'vendor', reason: extra.rejection_reason || 'This order could not be fulfilled.' });
+  }
+
+  // 8. Disputed
+  if (o.status === 'disputed') {
+    push({ id: 'disputed_card', kind: 'disputed', from: 'customer', reason: extra.dispute_reason || 'A dispute was raised for this order.' });
+  }
+
+  // Chat text interleaved by real time.
   const textMsgs: ChatMessage[] = textThreads.map((msg) => ({
     id: msg.id,
     kind: 'text' as const,
     from: msg.sender === currentUserId ? 'customer' : 'vendor',
     text: msg.content,
-    time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    time: atTime(new Date(msg.created_at).toISOString()),
     created_at: msg.created_at,
   }));
 
-  return [...systemMsgs, ...textMsgs].sort((a, b) => {
+  return [...events, ...textMsgs].sort((a, b) => {
     if (!a.created_at || !b.created_at) return 0;
     return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
   });

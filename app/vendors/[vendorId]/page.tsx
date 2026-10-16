@@ -25,11 +25,12 @@ import {
 import type { ProductService, Vendor } from '@/lib/api';
 import { compactNumber } from '@/lib/format';
 import { DEV_AUTH_BYPASS } from '@/lib/devAuth';
-import Navbar from '../../components/home/Navbar';
+import AppHeader from '../../components/AppHeader';
 import ProductCard from '../../explore/components/ProductCard';
 import PostCard from '../../components/feed/PostCard';
 import { toFeedPost, FEED_POSTS, type FeedPost } from '../../components/feed/data';
 import { fallbackVendor, FALLBACK_VENDOR_PRODUCTS } from './data';
+import BottomNav from '../../components/BottomNav';
 
 type Tab = 'products' | 'posts' | 'info';
 
@@ -170,8 +171,8 @@ export default function VendorShopPage() {
   if (loading || !vendor) {
     return (
       <div className="min-h-screen bg-canvas">
-        <Navbar actions />
-        <main className="mx-auto max-w-7xl animate-pulse px-4 pb-28 pt-28 sm:px-6 lg:px-8">
+        <AppHeader />
+        <main className="mx-auto max-w-7xl animate-pulse px-4 pb-28 pt-6 sm:px-6 lg:px-8">
           <div className="h-44 rounded-3xl bg-slate-100 sm:h-60" />
           <div className="mx-auto mt-6 flex max-w-xl flex-col items-center gap-3">
             <div className="h-24 w-24 rounded-full bg-slate-100" />
@@ -196,7 +197,7 @@ export default function VendorShopPage() {
 
   return (
     <div className="min-h-screen bg-canvas font-sans text-ink antialiased">
-      <Navbar actions />
+      <AppHeader />
 
       {/* Toast */}
       <AnimatePresence>
@@ -206,7 +207,7 @@ export default function VendorShopPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className={`fixed left-1/2 top-20 z-[200] -translate-x-1/2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-lg ${
-              toast.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
+              toast.type === 'success' ? 'bg-ink' : 'bg-red-500'
             }`}
           >
             {toast.message}
@@ -214,7 +215,7 @@ export default function VendorShopPage() {
         )}
       </AnimatePresence>
 
-      <main className="mx-auto max-w-7xl px-4 pb-28 pt-28 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8">
         <Link
           href="/vendors"
           className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-ink"
@@ -470,11 +471,13 @@ export default function VendorShopPage() {
         )}
       </main>
 
+      <BottomNav />
+
       {/* Floating message button (mobile) */}
       <Link
         href={`/chats/${vendor.id}`}
         aria-label={`Message ${vendor.name}`}
-        className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-ink text-white shadow-lg transition-colors hover:bg-[#FA3728] sm:hidden"
+        className="fixed bottom-20 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-ink text-white shadow-lg transition-colors hover:bg-[#FA3728] sm:hidden"
       >
         <MessageCircle size={20} />
       </Link>

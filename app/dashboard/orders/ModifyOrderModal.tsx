@@ -62,9 +62,9 @@ export default function ModifyOrderModal({
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur">
           <div>
             <h2 className="text-lg font-bold text-ink">Modify order</h2>
-            <p className="text-xs text-slate-500">The buyer must review and accept your changes.</p>
+            <p className="text-xs text-slate-600">The buyer must review and accept your changes.</p>
           </div>
-          <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100">
+          <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100">
             <X size={18} />
           </button>
         </div>
@@ -84,7 +84,7 @@ export default function ModifyOrderModal({
                   </button>
                 </div>
                 <div className="flex flex-1 items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-500">Unit ₦</span>
+                  <span className="text-xs font-semibold text-slate-600">Unit ₦</span>
                   <input
                     type="number"
                     inputMode="numeric"

@@ -5,12 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SlidersHorizontal, Loader2 } from 'lucide-react';
 import { productsService, cartService } from '@/lib/api';
 import type { Product } from '@/lib/api';
-import Navbar from '../components/home/Navbar';
+import AppHeader from '../components/AppHeader';
 import SearchBar from '../components/home/SearchBar';
 import CategoryPills from '../components/home/CategoryPills';
 import { DUMMY_PRODUCTS } from './data';
 import ProductCard from './components/ProductCard';
 import FilterDropdown from './components/FilterDropdown';
+import BottomNav from '../components/BottomNav';
 
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -136,7 +137,7 @@ export default function ExplorePage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className={`fixed left-1/2 top-20 z-[200] -translate-x-1/2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-lg ${
-              toast.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
+              toast.type === 'success' ? 'bg-ink' : 'bg-red-500'
             }`}
           >
             {toast.message}
@@ -144,20 +145,18 @@ export default function ExplorePage() {
         )}
       </AnimatePresence>
 
-      <Navbar actions />
+      <AppHeader />
 
-      <main className="mx-auto max-w-7xl px-4 pb-24 pt-36 sm:px-6 sm:pt-40 lg:px-8 lg:pt-44">
-        {/* Hero: heading + centered search */}
-        <div className="mx-auto max-w-2xl text-center">
-          <h1 className="font-bricolage text-3xl font-black tracking-tight text-ink sm:text-4xl lg:text-5xl">
+      <main className="mx-auto max-w-7xl px-4 pb-24 pt-10 sm:px-6 lg:px-8">
+        {/* Compact heading + search */}
+        <div className="mb-5 text-center">
+          <h1 className="font-bricolage text-2xl font-black tracking-tight text-ink sm:text-3xl">
             Discover Products
           </h1>
-          <p className="mx-auto mt-3 max-w-md text-sm text-slate-600 sm:text-base">
-            Quality products and services from{' '}
-            <strong className="font-semibold text-ink">verified vendors</strong> across Nigeria.
+          <p className="mx-auto mt-1 max-w-md text-sm text-slate-600">
+            Quality products and services from verified vendors across Nigeria.
           </p>
-
-          <div className="mt-6">
+          <div className="mx-auto mt-4 max-w-2xl">
             <SearchBar
               key={searchQuery}
               initialValue={searchQuery}
@@ -168,7 +167,7 @@ export default function ExplorePage() {
         </div>
 
         {/* Category pills — same as the homepage */}
-        <div className="mt-6">
+        <div>
           <CategoryPills
             selected={selectedCategories}
             onSelect={toggleCategory}
@@ -285,6 +284,8 @@ export default function ExplorePage() {
           </div>
         )}
       </main>
+
+      <BottomNav />
     </div>
   );
 }

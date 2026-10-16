@@ -79,6 +79,17 @@ export const REJECTION_REASONS = [
 
 export type RejectionReason = (typeof REJECTION_REASONS)[number];
 
+/** Buyer dispute reasons offered after delivery. */
+export const DISPUTE_REASONS = [
+  'Not delivered',
+  'Damaged item',
+  'Wrong item',
+  'Not as described',
+  'Other',
+] as const;
+
+export type DisputeReason = (typeof DISPUTE_REASONS)[number];
+
 /** Default delivery fee suggested to the vendor (they can change it). */
 export const SUGGESTED_SHIPPING_FEE = 1500;
 

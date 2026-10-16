@@ -5,11 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SlidersHorizontal, Loader2, Check } from 'lucide-react';
 import { vendorsService } from '@/lib/api';
 import type { Vendor } from '@/lib/api';
-import Navbar from '../components/home/Navbar';
+import AppHeader from '../components/AppHeader';
 import SearchBar from '../components/home/SearchBar';
 import CategoryPills from '../components/home/CategoryPills';
 import VendorCard from './components/VendorCard';
 import { FALLBACK_VENDORS, VENDOR_SORTS, matchesCategory, type VendorSort } from './data';
+import BottomNav from '../components/BottomNav';
 
 export default function VendorsPage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -79,19 +80,18 @@ export default function VendorsPage() {
 
   return (
     <div className="min-h-screen bg-canvas font-sans text-ink antialiased">
-      <Navbar actions />
+      <AppHeader />
 
-      <main className="mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
-        {/* Hero */}
-        <div className="mx-auto max-w-2xl text-center">
-          <h1 className="font-bricolage text-3xl font-black tracking-tight text-ink sm:text-4xl lg:text-5xl">
+      <main className="mx-auto max-w-7xl px-4 pb-24 pt-10 sm:px-6 lg:px-8">
+        {/* Compact heading + search */}
+        <div className="mb-5 text-center">
+          <h1 className="font-bricolage text-2xl font-black tracking-tight text-ink sm:text-3xl">
             Discover Shops
           </h1>
-          <p className="mx-auto mt-3 max-w-md text-sm text-slate-600 sm:text-base">
-            Find and follow{' '}
-            <strong className="font-semibold text-ink">verified vendors</strong> from across Nigeria.
+          <p className="mx-auto mt-1 max-w-md text-sm text-slate-600">
+            Find and follow verified vendors from across Nigeria.
           </p>
-          <div className="mt-6">
+          <div className="mx-auto mt-4 max-w-2xl">
             <SearchBar
               key={query}
               initialValue={query}
@@ -102,7 +102,7 @@ export default function VendorsPage() {
         </div>
 
         {/* Category pills — same as the homepage */}
-        <div className="mt-6">
+        <div>
           <CategoryPills
             selected={selectedCategories}
             onSelect={toggleCategory}
@@ -174,7 +174,7 @@ export default function VendorsPage() {
           </div>
 
           {/* Desktop filter rail */}
-          <aside className="hidden lg:sticky lg:top-28 lg:block lg:self-start">
+          <aside className="hidden lg:sticky lg:top-24 lg:block lg:self-start">
             <div className="rounded-2xl border border-slate-200/70 bg-white p-4">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="inline-flex items-center gap-1.5 text-sm font-bold text-ink">
@@ -252,6 +252,8 @@ export default function VendorsPage() {
           )}
         </AnimatePresence>
       </main>
+
+      <BottomNav />
     </div>
   );
 }

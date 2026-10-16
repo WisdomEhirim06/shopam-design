@@ -42,7 +42,7 @@ export default function ProductsShowcase() {
               className="group overflow-hidden rounded-lg sm:rounded-xl bg-white shadow-xs transition-all hover:shadow-md"
             >
               <Link href={`/explore?q=${encodeURIComponent(product.name)}`} className="block h-full">
-                <div className="relative aspect-square w-full bg-gray-100 sm:aspect-[4/3]">
+                <div className="relative aspect-square w-full bg-slate-100 sm:aspect-[4/3]">
                   <Image
                     src={product.image}
                     alt={product.name}
@@ -66,7 +66,7 @@ export default function ProductsShowcase() {
                 </div>
 
                 <div className="p-1.5 sm:p-3">
-                  <p className="mb-0.5 truncate text-[8px] sm:text-[10px] text-gray-500">{product.vendor}</p>
+                  <p className="mb-0.5 truncate text-[8px] sm:text-[10px] text-slate-600">{product.vendor}</p>
                   <h3 className="mb-0.5 line-clamp-2 text-[10px] sm:text-xs lg:text-sm font-semibold leading-tight text-ink">
                     {product.name}
                   </h3>
@@ -75,12 +75,12 @@ export default function ProductsShowcase() {
                       ₦{product.price.toLocaleString()}
                     </p>
                     {product.originalPrice && (
-                      <p className="text-[8px] sm:text-[10px] text-gray-400 line-through">
+                      <p className="text-[8px] sm:text-[10px] text-slate-500 line-through">
                         ₦{product.originalPrice.toLocaleString()}
                       </p>
                     )}
                   </div>
-                  <p className="text-[8px] sm:text-[10px] text-gray-400">({product.reviews})</p>
+                  <p className="text-[8px] sm:text-[10px] text-slate-500">({product.reviews})</p>
                 </div>
               </Link>
             </motion.div>

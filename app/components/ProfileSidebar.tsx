@@ -1,23 +1,79 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Shield, LogOut, LogIn, UserPlus } from 'lucide-react';
+import { X, User, Settings, Bell, LayoutDashboard, LogOut, LogIn, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { authService } from '@/lib/api';
+import type { UserProfile } from '@/lib/api';
 
 interface ProfileSidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+function initialsOf(user: UserProfile): string {
+  const firstPart = user.first_name || user.username || '';
+  const first = firstPart.charAt(0);
+  let last = (user.last_name || '').charAt(0);
+  if (!last && firstPart.includes(' ')) {
+    const parts = firstPart.trim().split(/\s+/);
+    if (parts.length > 1) last = parts[parts.length - 1].charAt(0);
+  }
+  return `${first}${last}`.toUpperCase().trim();
+}
+
+function Item({
+  icon: Icon,
+  title,
+  subtitle,
+  href,
+  onClick,
+  danger,
+}: {
+  icon: React.ComponentType<{ size?: number }>;
+  title: string;
+  subtitle?: string;
+  href?: string;
+  onClick?: () => void;
+  danger?: boolean;
+}) {
+  const className = `flex w-full items-center gap-3.5 border-b border-slate-100 px-4 py-3.5 text-left transition-colors last:border-0 hover:bg-slate-50/60`;
+  const inner = (
+    <>
+      <span
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+          danger ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700'
+        }`}
+      >
+        <Icon size={17} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className={`block text-sm font-semibold ${danger ? 'text-red-600' : 'text-ink'}`}>{title}</span>
+        {subtitle && <span className="mt-0.5 block text-xs text-slate-600">{subtitle}</span>}
+      </span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} onClick={onClick} className={className}>
+        {inner}
+      </Link>
+    );
+  }
+  return (
+    <button onClick={onClick} className={className}>
+      {inner}
+    </button>
+  );
+}
+
 export default function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps) {
-  const [user, setUser] = useState<any>(null);
-  const isAuthenticated = !!user;
+  const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
+    setUser(authService.getCurrentUser());
   }, [isOpen]);
 
   const handleLogout = async () => {
@@ -26,7 +82,7 @@ export default function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps)
     } finally {
       setUser(null);
       onClose();
-      window.location.href = '/auth/signin';
+      window.location.href = '/';
     }
   };
 
@@ -34,111 +90,63 @@ export default function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps)
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 z-[100] backdrop-blur-sm"
+            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
           />
-          
-          {/* Sidebar */}
+
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed top-0 right-0 h-full w-full max-w-xs sm:max-w-sm bg-white z-[101] shadow-2xl flex flex-col pt-safe"
+            transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+            className="fixed right-0 top-0 z-[101] flex h-full w-full max-w-xs flex-col bg-white shadow-2xl sm:max-w-sm"
           >
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 mt-2">
-              <h2 className="text-xl font-bold text-gray-900">Account</h2>
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4">
+              <h2 className="text-base font-bold text-ink">Account</h2>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                aria-label="Close Profile Sidebar"
+                aria-label="Close account menu"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100"
               >
-                <X size={20} className="text-gray-500" />
+                <X size={20} />
               </button>
             </div>
 
-            <div className="p-4 flex-1 overflow-y-auto">
-              <div className="space-y-3">
-                {isAuthenticated ? (
-                  <>
-                    <Link
-                      href={user?.is_vendor ? "/dashboard/profile" : "/profile"}
-                      onClick={onClose}
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 group"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-[#FA3728]/5 group-hover:bg-[#FA3728]/10 flex items-center justify-center text-[#FA3728] transition-colors">
-                        <User size={20} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">Profile</h3>
-                        <p className="text-xs text-gray-500">Manage your personal details</p>
-                      </div>
-                    </Link>
-
-                    <Link
-                      href={user?.is_vendor ? "/dashboard/settings" : "/profile"}
-                      onClick={onClose}
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 group"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center text-gray-700 transition-colors">
-                        <Shield size={20} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">Privacy & Security</h3>
-                        <p className="text-xs text-gray-500">Protect your account data</p>
-                      </div>
-                    </Link>
-
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-3 p-3 w-full rounded-xl hover:bg-red-50 text-left transition-colors border border-transparent hover:border-red-100 group"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-red-50 group-hover:bg-red-100 flex items-center justify-center text-red-600 transition-colors">
-                        <LogOut size={20} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-red-600">Logout</h3>
-                        <p className="text-xs text-red-400">Sign out of your account</p>
-                      </div>
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      href="/auth/signin"
-                      onClick={onClose}
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 group"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center text-gray-700 transition-colors">
-                        <LogIn size={20} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">Sign In</h3>
-                        <p className="text-xs text-gray-500">Access your account</p>
-                      </div>
-                    </Link>
-
-                    <Link
-                      href="/auth/user-signup"
-                      onClick={onClose}
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 group"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-[#FA3728]/5 group-hover:bg-[#FA3728]/10 flex items-center justify-center text-[#FA3728] transition-colors">
-                        <UserPlus size={20} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">Sign Up</h3>
-                        <p className="text-xs text-gray-500">Create a new account</p>
-                      </div>
-                    </Link>
-                  </>
-                )}
+            {user && (
+              <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FA3728] text-sm font-bold text-white">
+                  {initialsOf(user)}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-ink">
+                    {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.username}
+                  </p>
+                  <p className="truncate text-xs text-slate-600">{user.email}</p>
+                </div>
               </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto">
+              {user ? (
+                <div className="overflow-hidden">
+                  <Item icon={User} title="Profile" subtitle="Your account and activity" href="/profile" onClick={onClose} />
+                  <Item icon={Settings} title="Settings" subtitle="Profile, password and notifications" href="/profile/settings" onClick={onClose} />
+                  <Item icon={Bell} title="Notifications" subtitle="Order and message updates" href="/notifications" onClick={onClose} />
+                  {user.is_vendor && (
+                    <Item icon={LayoutDashboard} title="Vendor dashboard" subtitle="Manage your shop" href="/dashboard" onClick={onClose} />
+                  )}
+                  <Item icon={LogOut} title="Sign out" onClick={handleLogout} danger />
+                </div>
+              ) : (
+                <div className="overflow-hidden">
+                  <Item icon={LogIn} title="Sign in" subtitle="Access your account" href="/auth/signin" onClick={onClose} />
+                  <Item icon={UserPlus} title="Create account" subtitle="Join ShopAm" href="/auth/user-signup" onClick={onClose} />
+                </div>
+              )}
             </div>
           </motion.div>
         </>
