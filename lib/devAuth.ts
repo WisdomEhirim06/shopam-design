@@ -12,7 +12,7 @@ const ROLE: 'vendor' | 'customer' =
 export const DEV_USER: UserProfile = {
   id: 'dev-user',
   username: ROLE === 'vendor' ? 'dev-vendor' : 'dev-customer',
-  email: 'dev@shopam.local',
+  email: 'dev@shopsafe.local',
   first_name: 'Dev',
   last_name: ROLE === 'vendor' ? 'Vendor' : 'Shopper',
   phone: '08000000000',

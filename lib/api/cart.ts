@@ -55,6 +55,7 @@ function readGuest(): GuestLine[] {
 function writeGuest(lines: GuestLine[]) {
   if (!isBrowser()) return;
   localStorage.setItem(GUEST_CART_KEY, JSON.stringify(lines));
+  window.dispatchEvent(new Event('shopsafe:cart-updated'));
   window.dispatchEvent(new Event('shopam:cart-updated'));
 }
 
@@ -78,7 +79,7 @@ function toGuestCart(lines: GuestLine[]): Cart {
 
   for (const line of lines) {
     const vendorId = line.product.owner || 'vendor';
-    const vendorName = line.product.owner_name || 'ShopAm Vendor';
+    const vendorName = line.product.owner_name || 'ShopSafe Vendor';
     if (!groups.has(vendorId)) groups.set(vendorId, { vendorName, items: [] });
     groups.get(vendorId)!.items.push(buildGuestItem(line.product, line.quantity));
   }

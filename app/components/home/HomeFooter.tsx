@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, Mail, Phone, Instagram, Twitter, Facebook, Linkedin } from 'lucide-react';
+import ShopSafeLogo from '../ui/ShopSafeLogo';
 
 export default function HomeFooter() {
   return (
@@ -12,14 +13,8 @@ export default function HomeFooter() {
         <div className="block md:hidden space-y-6">
           {/* Brand & Compact Contact */}
           <div className="space-y-2.5">
-            <Link href="/" className="inline-block">
-              <Image
-                src="/images/black-logo.png"
-                alt="ShopAm"
-                width={124}
-                height={36}
-                className="h-7 w-auto object-contain"
-              />
+            <Link href="/" className="inline-block" aria-label="ShopSafeNG home">
+              <ShopSafeLogo height={30} />
             </Link>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
@@ -27,8 +22,8 @@ export default function HomeFooter() {
                 <MapPin size={13} className="text-[#FA3728]" /> Lagos, Nigeria
               </span>
               <span>•</span>
-              <a href="mailto:support@shopam.net" className="flex items-center gap-1 hover:text-ink">
-                <Mail size={13} className="text-[#FA3728]" /> support@shopam.net
+              <a href="mailto:support@shopsafe.ng" className="flex items-center gap-1 hover:text-ink">
+                <Mail size={13} className="text-[#FA3728]" /> support@shopsafe.ng
               </a>
             </div>
           </div>
@@ -36,7 +31,7 @@ export default function HomeFooter() {
           {/* Social Icons row */}
           <div className="flex items-center gap-2">
             <a
-              href="https://twitter.com/shopam_ng"
+              href="https://twitter.com/shopsafeng"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="X (Twitter)"
@@ -45,7 +40,7 @@ export default function HomeFooter() {
               <Twitter size={14} />
             </a>
             <a
-              href="https://instagram.com/shopam_ng"
+              href="https://instagram.com/shopsafeng"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
@@ -54,7 +49,7 @@ export default function HomeFooter() {
               <Instagram size={14} />
             </a>
             <a
-              href="https://facebook.com/shopam"
+              href="https://facebook.com/shopsafeng"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Facebook"
@@ -63,7 +58,7 @@ export default function HomeFooter() {
               <Facebook size={14} />
             </a>
             <a
-              href="https://linkedin.com/company/shopam"
+              href="https://linkedin.com/company/shopsafeng"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="LinkedIn"
@@ -124,8 +119,8 @@ export default function HomeFooter() {
 
           {/* Mobile bottom copyright */}
           <div className="pt-2 text-[11px] text-slate-400 border-t border-slate-100 flex items-center justify-between">
-            <span>Powered by ShopAm Nigeria</span>
-            <span>© 2026 ShopAm Inc.</span>
+            <span>Powered by ShopSafeNG Nigeria</span>
+            <span>© 2026 ShopSafeNG Inc.</span>
           </div>
         </div>
 
@@ -133,14 +128,8 @@ export default function HomeFooter() {
         <div className="hidden md:grid grid-cols-3 lg:grid-cols-6 gap-8 pb-12 border-b border-slate-100">
           {/* Brand & Address Column */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-block">
-              <Image
-                src="/images/black-logo.png"
-                alt="ShopAm"
-                width={150}
-                height={44}
-                className="h-9 w-auto object-contain"
-              />
+            <Link href="/" className="inline-block" aria-label="ShopSafeNG home">
+              <ShopSafeLogo height={38} />
             </Link>
 
             <p className="max-w-sm text-sm text-slate-500 leading-relaxed">
@@ -154,13 +143,13 @@ export default function HomeFooter() {
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail size={16} className="shrink-0 text-[#FA3728]" />
-                <a href="mailto:support@shopam.net" className="hover:text-ink transition-colors">
-                  support@shopam.net
+                <a href="mailto:support@shopsafe.ng" className="hover:text-ink transition-colors">
+                  support@shopsafe.ng
                 </a>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone size={16} className="shrink-0 text-[#FA3728]" />
-                <span>+234 (0) 800 SHOPAM</span>
+                <span>+234 (0) 800 SHOPSAFE</span>
               </div>
             </div>
           </div>
@@ -231,7 +220,7 @@ export default function HomeFooter() {
             <ul className="space-y-2.5 text-xs sm:text-sm text-slate-500">
               <li>
                 <a
-                  href="https://twitter.com/shopam_ng"
+                  href="https://twitter.com/shopsafeng"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 hover:text-ink transition-colors font-medium"
@@ -242,7 +231,7 @@ export default function HomeFooter() {
               </li>
               <li>
                 <a
-                  href="https://instagram.com/shopam_ng"
+                  href="https://instagram.com/shopsafeng"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 hover:text-ink transition-colors font-medium"
@@ -253,7 +242,7 @@ export default function HomeFooter() {
               </li>
               <li>
                 <a
-                  href="https://facebook.com/shopam"
+                  href="https://facebook.com/shopsafeng"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 hover:text-ink transition-colors font-medium"
@@ -264,7 +253,7 @@ export default function HomeFooter() {
               </li>
               <li>
                 <a
-                  href="https://linkedin.com/company/shopam"
+                  href="https://linkedin.com/company/shopsafeng"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 hover:text-ink transition-colors font-medium"
@@ -309,9 +298,9 @@ export default function HomeFooter() {
         {/* Desktop Bottom bar */}
         <div className="hidden md:flex pt-8 items-center justify-between gap-4 text-xs text-slate-400">
           <p>
-            Powered by <strong className="font-semibold text-slate-700">ShopAm Nigeria</strong>. Built for smart buyers and verified merchants.
+            Powered by <strong className="font-semibold text-slate-700">ShopSafeNG Nigeria</strong>. Built for smart buyers and verified merchants.
           </p>
-          <p>© 2026 ShopAm Inc. All rights reserved.</p>
+          <p>© 2026 ShopSafeNG Inc. All rights reserved.</p>
         </div>
       </div>
     </footer>

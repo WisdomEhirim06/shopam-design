@@ -4,12 +4,12 @@ import BottomNav from '@/app/components/BottomNav';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'How ShopAm collects, uses and protects your data.',
+  description: 'How ShopSafeNG collects, uses and protects your data.',
 };
 
 const SECTIONS = [
   { title: 'What we collect', body: 'Account details (name, email, phone), order history, and the messages you exchange with vendors.' },
-  { title: 'How we use it', body: 'To run your orders, keep you signed in, send service updates, and improve ShopAm.' },
+  { title: 'How we use it', body: 'To run your orders, keep you signed in, send service updates, and improve ShopSafeNG.' },
   { title: 'Sharing', body: 'We share only what a vendor needs to fulfil your order. We never sell your personal data.' },
   { title: 'Your choices', body: 'You can update your details in Settings, control notifications, or deactivate your account at any time.' },
 ];

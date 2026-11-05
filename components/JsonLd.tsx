@@ -2,39 +2,39 @@ export default function JsonLd() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "ShopAm",
+    "name": "ShopSafeNG",
     "description": "Nigeria's trusted online marketplace connecting buyers with verified vendors",
-    "url": "https://shopam.ng",
+    "url": "https://shopsafe.ng",
     "potentialAction": {
       "@type": "SearchAction",
       "target": {
         "@type": "EntryPoint",
-        "urlTemplate": "https://shopam.ng/explore?search={search_term_string}"
+        "urlTemplate": "https://shopsafe.ng/explore?search={search_term_string}"
       },
       "query-input": "required name=search_term_string"
     },
     "publisher": {
       "@type": "Organization",
-      "name": "ShopAm",
+      "name": "ShopSafeNG",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://shopam.ng/logo.png"
+        "url": "https://shopsafe.ng/images/shopsafe-logo.svg"
       }
     },
     "sameAs": [
-      "https://facebook.com/shopam",
-      "https://twitter.com/shopam_ng",
-      "https://instagram.com/shopam_ng"
+      "https://facebook.com/shopsafeng",
+      "https://twitter.com/shopsafeng",
+      "https://instagram.com/shopsafeng"
     ]
   };
 
   const organizationData = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "ShopAm",
-    "alternateName": "ShopAm Nigeria",
-    "url": "https://shopam.ng",
-    "logo": "https://shopam.ng/logo.png",
+    "name": "ShopSafeNG",
+    "alternateName": "ShopSafe Nigeria",
+    "url": "https://shopsafe.ng",
+    "logo": "https://shopsafe.ng/images/shopsafe-logo.svg",
     "description": "Nigeria's trusted online marketplace with 500+ verified vendors across 50+ categories",
     "address": {
       "@type": "PostalAddress",
@@ -52,9 +52,9 @@ export default function JsonLd() {
   const marketplaceData = {
     "@context": "https://schema.org",
     "@type": "MarketPlace",
-    "name": "ShopAm Marketplace",
+    "name": "ShopSafeNG Marketplace",
     "description": "Shop electronics, fashion, food, beauty products and services from verified Nigerian vendors",
-    "url": "https://shopam.ng/explore",
+    "url": "https://shopsafe.ng/explore",
     "offers": {
       "@type": "AggregateOffer",
       "offerCount": "5000+",

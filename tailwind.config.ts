@@ -19,6 +19,7 @@ const config: Config = {
         charcoal: "#0A0A0A",
         pitch: "#000000",
         crimson: "#E31B23",
+        shopsafe: "#FA3728",
         shopam: "#FA3728",
         ink: "#0F172A",
         canvas: "#F8F9FA",

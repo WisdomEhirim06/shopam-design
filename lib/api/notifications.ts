@@ -19,7 +19,7 @@ const SAMPLE: Notification[] = [
     created_at: new Date(Date.now() - 1 * 3_600_000).toISOString(),
   },
   {
-    id: 4, recipient: 'dev', actor: { id: 'u4', username: 'ShopAm', email: '', phone: '' },
+    id: 4, recipient: 'dev', actor: { id: 'u4', username: 'ShopSafeNG', email: '', phone: '' },
     verb: 'scheduled your payout', target_type: 'payout', target_object_id: 7, is_read: true,
     created_at: new Date(Date.now() - 1 * 86_400_000).toISOString(),
   },

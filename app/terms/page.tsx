@@ -4,12 +4,12 @@ import BottomNav from '@/app/components/BottomNav';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'The terms that govern your use of ShopAm.',
+  description: 'The terms that govern your use of ShopSafeNG.',
 };
 
 const SECTIONS = [
-  { title: 'Using ShopAm', body: 'By creating an account you agree to provide accurate information and to keep your login secure. You are responsible for activity on your account.' },
-  { title: 'Buying & selling', body: 'Orders are placed between buyers and vendors. ShopAm facilitates payments and communication but is not a party to the sale.' },
+  { title: 'Using ShopSafeNG', body: 'By creating an account you agree to provide accurate information and to keep your login secure. You are responsible for activity on your account.' },
+  { title: 'Buying & selling', body: 'Orders are placed between buyers and vendors. ShopSafeNG facilitates payments and communication but is not a party to the sale.' },
   { title: 'Payments & refunds', body: 'Payments are held securely until an order is confirmed as delivered. Refunds and disputes follow the order timeline.' },
   { title: 'Acceptable use', body: 'Do not post unlawful, misleading or harmful content. We may suspend accounts that break these rules.' },
 ];

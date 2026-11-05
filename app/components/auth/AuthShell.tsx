@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import ShopSafeLogo from '../ui/ShopSafeLogo';
 
 export default function AuthShell({
   title,
@@ -27,14 +28,8 @@ export default function AuthShell({
           className="object-cover object-center"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-black/20" />
-        <Link href="/" className="absolute left-10 top-10 z-10 transition-transform hover:scale-105 active:scale-95">
-          <Image
-            src="/images/shopam-logo.png"
-            alt="ShopAm"
-            width={124}
-            height={40}
-            className="h-9 w-auto object-contain"
-          />
+        <Link href="/" className="absolute left-10 top-10 z-10 transition-transform hover:scale-105 active:scale-95" aria-label="ShopSafeNG home">
+          <ShopSafeLogo variant="white" height={36} />
         </Link>
       </div>
 
@@ -44,35 +39,26 @@ export default function AuthShell({
           <div className="mx-auto w-full max-w-sm sm:max-w-md">
             {/* Mobile logo */}
             <div
-              className={`mb-8 sm:mb-9 lg:hidden ${
-                align === 'center' ? 'flex justify-center' : 'flex justify-start'
-              }`}
+              className={`mb-8 sm:mb-9 lg:hidden ${align === 'center' ? 'flex justify-center' : 'flex justify-start'
+                }`}
             >
-              <Link href="/" className="inline-block transition-transform hover:scale-105 active:scale-95">
-                <Image
-                  src="/images/black-logo.png"
-                  alt="ShopAm"
-                  width={130}
-                  height={38}
-                  className="h-8 w-auto object-contain"
-                />
+              <Link href="/" className="inline-block transition-transform hover:scale-105 active:scale-95" aria-label="ShopSafeNG home">
+                <ShopSafeLogo height={32} />
               </Link>
             </div>
 
             {/* Heading */}
             <div className={align === 'center' ? 'text-center' : 'text-left'}>
               <h1
-                className={`font-bricolage text-[28px] font-black leading-[1.12] tracking-tight text-ink sm:text-4xl lg:text-[44px] ${
-                  align === 'center' ? 'text-center' : 'text-left'
-                }`}
+                className={`font-bricolage text-[28px] font-black leading-[1.12] tracking-tight text-ink sm:text-4xl lg:text-[44px] ${align === 'center' ? 'text-center' : 'text-left'
+                  }`}
               >
                 {title}
               </h1>
               {subtitle && (
                 <p
-                  className={`mt-3 text-base leading-relaxed text-slate-500 sm:mt-3.5 sm:text-lg ${
-                    align === 'center' ? 'text-center' : 'text-left'
-                  }`}
+                  className={`mt-3 text-base leading-relaxed text-slate-500 sm:mt-3.5 sm:text-lg ${align === 'center' ? 'text-center' : 'text-left'
+                    }`}
                 >
                   {subtitle}
                 </p>

@@ -6,13 +6,13 @@ import BottomNav from '@/app/components/BottomNav';
 
 export const metadata: Metadata = {
   title: 'Help & Support',
-  description: 'Get help with your ShopAm account, orders and payments.',
+  description: 'Get help with your ShopSafeNG account, orders and payments.',
 };
 
 const LINKS = [
   { icon: MessageCircle, title: 'Order & delivery help', copy: 'Questions about an order, shipping or delivery.', href: '/chats' },
   { icon: LifeBuoy, title: 'Report a problem', copy: 'Raise a dispute for a delivered order.', href: '/chats' },
-  { icon: Mail, title: 'Email us', copy: 'support@shopam.net — we reply within 24 hours.', href: 'mailto:support@shopam.net' },
+  { icon: Mail, title: 'Email us', copy: 'support@shopsafe.ng — we reply within 24 hours.', href: 'mailto:support@shopsafe.ng' },
 ];
 
 export default function SupportPage() {
@@ -23,7 +23,7 @@ export default function SupportPage() {
         <div>
           <h1 className="text-2xl font-black tracking-tight text-ink">How can we help?</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Find answers or reach the ShopAm team. We&rsquo;re here every day.
+            Find answers or reach the ShopSafeNG team. We&rsquo;re here every day.
           </p>
         </div>
 

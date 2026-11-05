@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150" fill="none">
+  <!-- Motion / Speed lines -->
+  <rect x="25" y="55" width="28" height="7" rx="3.5" fill="#FA3728" />
+  <rect x="33" y="67" width="24" height="7" rx="3.5" fill="#FA3728" />
+
+  <!-- Shield with Checkmark (inside the cart) -->
+  <g id="shield-group">
+    <!-- Shield base -->
+    <path d="M 90 35 L 115 35 Q 125 35 127 45 C 128 65 118 80 102.5 90 C 87 80 77 65 78 45 Q 80 35 90 35 Z" fill="#FA3728" />
+    <!-- White Checkmark -->
+    <path d="M 90 62 L 98 70 L 115 50" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- Shopping Cart Body & Handle -->
+  <path d="M 38 46 C 44 46 47 48 49 54 L 56 75 C 60 88 72 95 86 96 C 102 96 117 89 126 76 C 123 87 110 102 88 102 C 67 102 53 92 48 78 L 42 59 L 38 59 C 35.5 59 33.5 57 33.5 54.5 C 33.5 52 35.5 46 38 46 Z" fill="#031435" />
+
+  <!-- Cart Wheels -->
+  <circle cx="68" cy="115" r="9" fill="#031435" />
+  <circle cx="106" cy="115" r="9" fill="#031435" />
+</svg>
+

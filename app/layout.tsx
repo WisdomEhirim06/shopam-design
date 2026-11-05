@@ -4,13 +4,13 @@ import "./globals.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import JsonLd from "@/components/JsonLd";
 
-const jakartaSans = Plus_Jakarta_Sans({ 
+const jakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: '--font-jakarta',
   display: 'swap',
 });
 
-const dmSans = DM_Sans({ 
+const dmSans = DM_Sans({
   subsets: ["latin"],
   variable: '--font-dm-sans',
   display: 'swap',
@@ -31,8 +31,8 @@ const bricolage = Bricolage_Grotesque({
 
 export const metadata: Metadata = {
   title: {
-    default: "ShopAm - Nigeria's Trusted Online Marketplace | Shop from Verified Vendors",
-    template: "%s | ShopAm"
+    default: "ShopSafeNG - Nigeria's Trusted Online Marketplace | Shop from Verified Vendors",
+    template: "%s | ShopSafeNG"
   },
   description: "Discover quality products and services from trusted vendors across Nigeria. Shop electronics, fashion, food, beauty, home services and more. 500+ verified vendors, 50+ categories, 24/7 support.",
   keywords: [
@@ -47,24 +47,26 @@ export const metadata: Metadata = {
     "food delivery Nigeria",
     "beauty products Nigeria",
     "verified sellers",
-    "ShopAm",
+    "ShopSafeNG",
+    "ShopSafe",
     "social commerce",
     "vendor marketplace"
   ],
-  authors: [{ name: "ShopAm Team" }],
-  creator: "ShopAm",
-  publisher: "ShopAm",
+  authors: [{ name: "ShopSafeNG Team" }],
+  creator: "ShopSafeNG",
+  publisher: "ShopSafeNG",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://www.shopam.net'), // Update with your actual domain
+  metadataBase: new URL('https://shopsafe.ng'),
   alternates: {
     canonical: '/',
   },
   icons: {
     icon: [
+      { url: '/images/shopsafe-icon.svg', type: 'image/svg+xml' },
       { url: '/images/Vector.png' },
       { url: '/icon.png', type: 'image/png', sizes: '32x32' },
       { url: '/icon.svg', type: 'image/svg+xml' },
@@ -74,16 +76,16 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "ShopAm - Nigeria's Trusted Online Marketplace",
+    title: "ShopSafeNG - Nigeria's Trusted Online Marketplace",
     description: "Shop from 500+ verified vendors across 50+ categories. Quality products, trusted service, 24/7 support.",
-    url: 'https://www.shopam.net',
-    siteName: 'ShopAm',
+    url: 'https://shopsafe.ng',
+    siteName: 'ShopSafeNG',
     images: [
       {
         url: '/images/hero-3.jpg',
         width: 1200,
         height: 630,
-        alt: 'ShopAm - Shopping Never Gets Stressful',
+        alt: 'ShopSafeNG - Shop n Get. Shopping Never Gets Stressful',
       },
     ],
     locale: 'en_NG',
@@ -91,10 +93,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "ShopAm - Nigeria's Trusted Online Marketplace",
+    title: "ShopSafeNG - Nigeria's Trusted Online Marketplace",
     description: "Shop from 500+ verified vendors. Quality products, trusted service.",
     images: ['/twitter-image.jpg'],
-    creator: '@shopam_ng',
+    creator: '@shopsafeng',
   },
   robots: {
     index: true,

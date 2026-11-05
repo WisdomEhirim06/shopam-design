@@ -13,6 +13,7 @@ import { pageTitle } from './nav';
 import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
 import NotificationsPanel from './components/NotificationsPanel';
+import ShopSafeLogo from '@/app/components/ui/ShopSafeLogo';
 
 export default function VendorDashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -45,7 +46,7 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
   useEffect(() => {
     const ping = () => {
       if (document.hidden) return;
-      apiClient.get(API_ENDPOINTS.AUTH.PROFILE, { headers: { 'X-Keepalive': 'true' } }).catch(() => {});
+      apiClient.get(API_ENDPOINTS.AUTH.PROFILE, { headers: { 'X-Keepalive': 'true' } }).catch(() => { });
     };
     const id = setInterval(ping, 4 * 60 * 1000);
     return () => clearInterval(id);
@@ -53,7 +54,7 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
 
   useEffect(() => {
     if (!authChecked) return;
-    notificationsService.list().then(setNotifications).catch(() => {});
+    notificationsService.list().then(setNotifications).catch(() => { });
   }, [authChecked]);
 
   if (!authChecked) return null;
@@ -64,7 +65,7 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
 
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    notificationsService.markAllRead().catch(() => {});
+    notificationsService.markAllRead().catch(() => { });
   };
 
   return (
@@ -73,8 +74,8 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
       <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/95 backdrop-blur-md md:pl-60">
         <div className="flex items-center justify-between px-5 py-3.5 md:px-8">
           <div className="flex items-center">
-            <Link href="/dashboard" className="md:hidden">
-              <Image src="/images/black-logo.png" alt="ShopAm" width={96} height={26} className="h-7 w-auto object-contain" />
+            <Link href="/dashboard" className="md:hidden" aria-label="ShopSafeNG Dashboard">
+              <ShopSafeLogo height={26} />
             </Link>
             <h1 className="hidden text-base font-bold text-ink md:block">{pageTitle(pathname)}</h1>
           </div>

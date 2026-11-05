@@ -40,7 +40,7 @@ export function normalizeVendor(raw: any): Vendor {
     asString(raw?.name) ||
     [asString(user?.first_name), asString(user?.last_name)].filter(Boolean).join(' ') ||
     asString(raw?.username) ||
-    'ShopAm Vendor';
+    'ShopSafe Vendor';
 
   return {
     id,

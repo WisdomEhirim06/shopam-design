@@ -8,6 +8,7 @@ import { ShoppingCart } from 'lucide-react';
 import { cartService } from '@/lib/api';
 import ProfileButton from './ProfileButton';
 import NotificationsBell from './NotificationsBell';
+import ShopSafeLogo from './ui/ShopSafeLogo';
 
 const TABS = [
   { href: '/explore', label: 'Products' },
@@ -52,9 +53,11 @@ export default function AppHeader() {
       }
     };
     refresh();
+    window.addEventListener('shopsafe:cart-updated', refresh);
     window.addEventListener('shopam:cart-updated', refresh);
     return () => {
       active = false;
+      window.removeEventListener('shopsafe:cart-updated', refresh);
       window.removeEventListener('shopam:cart-updated', refresh);
     };
   }, []);
@@ -67,9 +70,8 @@ export default function AppHeader() {
           <Link
             key={tab.href}
             href={tab.href}
-            className={`relative px-1 py-2 text-sm font-semibold transition-colors ${
-              active ? 'text-ink' : 'text-slate-500 hover:text-ink'
-            }`}
+            className={`relative px-1 py-2 text-sm font-semibold transition-colors ${active ? 'text-ink' : 'text-slate-500 hover:text-ink'
+              }`}
           >
             {tab.label}
             {active && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-[#FA3728]" />}
@@ -82,15 +84,8 @@ export default function AppHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" className="flex shrink-0 items-center" aria-label="ShopAm home">
-          <Image
-            src="/images/black-logo.png"
-            alt="ShopAm"
-            width={120}
-            height={30}
-            priority
-            className="h-6 w-auto object-contain sm:h-7"
-          />
+        <Link href="/" className="flex shrink-0 items-center" aria-label="ShopSafeNG home">
+          <ShopSafeLogo height={30} className="sm:h-8" />
         </Link>
 
         {/* Desktop nav links (centered) */}

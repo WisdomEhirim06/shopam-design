@@ -1,8 +1,8 @@
 import { MetadataRoute } from 'next'
- 
+
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://shopam.ng' // Update with your actual domain
-  
+  const baseUrl = 'https://shopsafe.ng' // Update with your actual domain
+
   return {
     rules: [
       {
