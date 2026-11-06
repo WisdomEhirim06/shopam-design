@@ -70,8 +70,9 @@ export default function AppHeader() {
           <Link
             key={tab.href}
             href={tab.href}
-            className={`relative px-1 py-2 text-sm font-semibold transition-colors ${active ? 'text-ink' : 'text-slate-500 hover:text-ink'
-              }`}
+            className={`relative px-1 py-2 text-sm font-semibold transition-colors ${
+              active ? 'text-ink' : 'text-slate-500 hover:text-ink'
+            }`}
           >
             {tab.label}
             {active && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-[#FA3728]" />}

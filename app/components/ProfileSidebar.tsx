@@ -42,8 +42,9 @@ function Item({
   const inner = (
     <>
       <span
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${danger ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700'
-          }`}
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+          danger ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700'
+        }`}
       >
         <Icon size={17} />
       </span>

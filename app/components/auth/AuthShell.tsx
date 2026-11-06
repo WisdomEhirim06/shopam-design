@@ -39,8 +39,9 @@ export default function AuthShell({
           <div className="mx-auto w-full max-w-sm sm:max-w-md">
             {/* Mobile logo */}
             <div
-              className={`mb-8 sm:mb-9 lg:hidden ${align === 'center' ? 'flex justify-center' : 'flex justify-start'
-                }`}
+              className={`mb-8 sm:mb-9 lg:hidden ${
+                align === 'center' ? 'flex justify-center' : 'flex justify-start'
+              }`}
             >
               <Link href="/" className="inline-block transition-transform hover:scale-105 active:scale-95" aria-label="ShopSafeNG home">
                 <ShopSafeLogo height={32} />
@@ -50,15 +51,17 @@ export default function AuthShell({
             {/* Heading */}
             <div className={align === 'center' ? 'text-center' : 'text-left'}>
               <h1
-                className={`font-bricolage text-[28px] font-black leading-[1.12] tracking-tight text-ink sm:text-4xl lg:text-[44px] ${align === 'center' ? 'text-center' : 'text-left'
-                  }`}
+                className={`font-bricolage text-[28px] font-black leading-[1.12] tracking-tight text-ink sm:text-4xl lg:text-[44px] ${
+                  align === 'center' ? 'text-center' : 'text-left'
+                }`}
               >
                 {title}
               </h1>
               {subtitle && (
                 <p
-                  className={`mt-3 text-base leading-relaxed text-slate-500 sm:mt-3.5 sm:text-lg ${align === 'center' ? 'text-center' : 'text-left'
-                    }`}
+                  className={`mt-3 text-base leading-relaxed text-slate-500 sm:mt-3.5 sm:text-lg ${
+                    align === 'center' ? 'text-center' : 'text-left'
+                  }`}
                 >
                   {subtitle}
                 </p>

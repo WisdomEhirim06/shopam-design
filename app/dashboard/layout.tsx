@@ -46,7 +46,7 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
   useEffect(() => {
     const ping = () => {
       if (document.hidden) return;
-      apiClient.get(API_ENDPOINTS.AUTH.PROFILE, { headers: { 'X-Keepalive': 'true' } }).catch(() => { });
+      apiClient.get(API_ENDPOINTS.AUTH.PROFILE, { headers: { 'X-Keepalive': 'true' } }).catch(() => {});
     };
     const id = setInterval(ping, 4 * 60 * 1000);
     return () => clearInterval(id);
@@ -54,7 +54,7 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
 
   useEffect(() => {
     if (!authChecked) return;
-    notificationsService.list().then(setNotifications).catch(() => { });
+    notificationsService.list().then(setNotifications).catch(() => {});
   }, [authChecked]);
 
   if (!authChecked) return null;
@@ -65,7 +65,7 @@ export default function VendorDashboardLayout({ children }: { children: React.Re
 
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    notificationsService.markAllRead().catch(() => { });
+    notificationsService.markAllRead().catch(() => {});
   };
 
   return (

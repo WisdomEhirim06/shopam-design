@@ -30,7 +30,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('shopsafe-theme', theme);
       localStorage.setItem('shopam-theme', theme);
       document.documentElement.setAttribute('data-theme', theme);
-
+      
       // Update body background
       if (theme === 'light') {
         document.body.style.backgroundColor = '#F8F9FA';

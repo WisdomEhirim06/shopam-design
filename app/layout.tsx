@@ -4,13 +4,13 @@ import "./globals.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import JsonLd from "@/components/JsonLd";
 
-const jakartaSans = Plus_Jakarta_Sans({
+const jakartaSans = Plus_Jakarta_Sans({ 
   subsets: ["latin"],
   variable: '--font-jakarta',
   display: 'swap',
 });
 
-const dmSans = DM_Sans({
+const dmSans = DM_Sans({ 
   subsets: ["latin"],
   variable: '--font-dm-sans',
   display: 'swap',

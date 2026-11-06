@@ -33,7 +33,7 @@ export default function NotificationsBell() {
       .then((n) => {
         if (active) setItems(n);
       })
-      .catch(() => { });
+      .catch(() => {});
     return () => {
       active = false;
     };
@@ -109,8 +109,9 @@ export default function NotificationsBell() {
                   <button
                     key={item.id}
                     onClick={() => markRead(item.id)}
-                    className={`flex w-full items-start gap-2 border-b border-slate-50 px-4 py-3 text-left last:border-0 hover:bg-slate-50/60 ${item.is_read ? 'border-l-2 border-l-transparent' : 'border-l-2 border-l-[#FA3728]'
-                      }`}
+                    className={`flex w-full items-start gap-2 border-b border-slate-50 px-4 py-3 text-left last:border-0 hover:bg-slate-50/60 ${
+                      item.is_read ? 'border-l-2 border-l-transparent' : 'border-l-2 border-l-[#FA3728]'
+                    }`}
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] leading-snug text-slate-700">
