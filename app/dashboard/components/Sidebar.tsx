@@ -33,9 +33,8 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
-                active ? 'bg-[#FA3728]/10 text-[#FA3728]' : 'text-slate-600 hover:bg-slate-50'
-              }`}
+              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${active ? 'bg-[#FA3728]/10 text-[#FA3728]' : 'text-slate-600 hover:bg-slate-50'
+                }`}
             >
               <Icon size={17} />
               {item.label}
