@@ -34,7 +34,7 @@ export default function AccountTypeDialog({ open, onClose }: { open: boolean; on
                 <X size={16} />
               </button>
             </div>
-            <p className="mt-0.5 text-xs text-slate-500">How do you want to use ShopAm?</p>
+            <p className="mt-0.5 text-xs text-slate-500">How do you want to use ShopSafeNG?</p>
 
             <div className="mt-4 space-y-2.5">
               <Link

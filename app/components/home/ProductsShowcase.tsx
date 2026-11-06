@@ -17,7 +17,7 @@ export default function ProductsShowcase() {
               Popular Products
             </h2>
             <p className="mt-2 text-sm text-slate-500 sm:text-base">
-              Discover what&apos;s <strong className="font-semibold text-slate-800">trending</strong> on ShopAm
+              Discover what&apos;s <strong className="font-semibold text-slate-800">trending</strong> on ShopSafeNG
             </p>
           </div>
 

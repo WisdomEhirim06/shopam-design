@@ -144,7 +144,7 @@ export default function ProfileSidebar({ isOpen, onClose }: ProfileSidebarProps)
               ) : (
                 <div className="overflow-hidden">
                   <Item icon={LogIn} title="Sign in" subtitle="Access your account" href="/auth/signin" onClick={onClose} />
-                  <Item icon={UserPlus} title="Create account" subtitle="Join ShopAm" href="/auth/user-signup" onClick={onClose} />
+                  <Item icon={UserPlus} title="Create account" subtitle="Join ShopSafeNG" href="/auth/user-signup" onClick={onClose} />
                 </div>
               )}
             </div>

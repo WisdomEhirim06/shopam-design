@@ -46,7 +46,7 @@ export const paymentsService = {
    */
   async bankTransfer(data: BankTransferInitRequest): Promise<Record<string, unknown>> {
     if (devMockEnabled()) {
-      return { bankName: 'Wema Bank', accountNumber: '0123456789', accountName: 'ShopAm Dev' };
+      return { bankName: 'Wema Bank', accountNumber: '0123456789', accountName: 'ShopSafe Dev' };
     }
     const response = await apiClient.post<Record<string, unknown>>(
       API_ENDPOINTS.PAYMENTS.BANK_TRANSFER,

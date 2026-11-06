@@ -14,7 +14,7 @@ export default function CustomersSpotlight() {
           <div className="relative h-full overflow-hidden rounded-2xl bg-slate-100 shadow-[0_18px_50px_-18px_rgba(15,23,42,0.2)] ring-1 ring-slate-900/5">
             <Image
               src={customerCollage[0]}
-              alt="ShopAm community"
+              alt="ShopSafeNG community"
               fill
               sizes="(max-width: 1024px) 50vw, 300px"
               className="object-cover"
@@ -24,7 +24,7 @@ export default function CustomersSpotlight() {
             <div className="relative h-full overflow-hidden rounded-2xl bg-slate-100 shadow-[0_18px_50px_-18px_rgba(15,23,42,0.2)] ring-1 ring-slate-900/5">
               <Image
                 src={customerCollage[1]}
-                alt="ShopAm families"
+                alt="ShopSafeNG families"
                 fill
                 sizes="(max-width: 1024px) 50vw, 300px"
                 className="object-cover"
@@ -33,7 +33,7 @@ export default function CustomersSpotlight() {
             <div className="relative h-full overflow-hidden rounded-2xl bg-slate-100 shadow-[0_18px_50px_-18px_rgba(15,23,42,0.2)] ring-1 ring-slate-900/5">
               <Image
                 src={customerCollage[2]}
-                alt="ShopAm customers"
+                alt="ShopSafeNG customers"
                 fill
                 sizes="(max-width: 1024px) 50vw, 300px"
                 className="object-cover"

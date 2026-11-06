@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-const FULL_TEXT = "Shopping without stress. That's ShopAm.";
-const SHOPAM_START = FULL_TEXT.indexOf("ShopAm");
+const FULL_TEXT = "Shopping without stress. That's ShopSafeNG.";
+const SHOPSAFE_START = FULL_TEXT.indexOf("ShopSafeNG");
 
 export default function TypewriterLine() {
   const [count, setCount] = useState(0);
@@ -35,8 +35,8 @@ export default function TypewriterLine() {
   }, []);
 
   const shown = FULL_TEXT.slice(0, count);
-  const before = shown.length > SHOPAM_START ? shown.slice(0, SHOPAM_START) : shown;
-  const after = shown.length > SHOPAM_START ? shown.slice(SHOPAM_START) : '';
+  const before = shown.length > SHOPSAFE_START ? shown.slice(0, SHOPSAFE_START) : shown;
+  const after = shown.length > SHOPSAFE_START ? shown.slice(SHOPSAFE_START) : '';
 
   return (
     <section className="bg-canvas py-10 sm:py-24">

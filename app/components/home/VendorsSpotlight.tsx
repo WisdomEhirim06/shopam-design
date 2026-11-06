@@ -94,7 +94,7 @@ export default function VendorsSpotlight() {
           </h2>
 
           <p className="mt-3 sm:mt-5 max-w-md mx-auto lg:mx-0 text-sm sm:text-base leading-relaxed text-slate-500">
-            Every shop on ShopAm is <strong className="font-bold text-slate-800">verified</strong>, <strong className="font-bold text-slate-800">reviewed</strong>, and ready to serve. Discover trusted creators and businesses behind the products you love.
+            Every shop on ShopSafeNG is <strong className="font-bold text-slate-800">verified</strong>, <strong className="font-bold text-slate-800">reviewed</strong>, and ready to serve. Discover trusted creators and businesses behind the products you love.
           </p>
         </div>
 

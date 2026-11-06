@@ -18,7 +18,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Load theme from localStorage on mount
   useEffect(() => {
     setMounted(true);
-    const savedTheme = localStorage.getItem('shopam-theme') as Theme;
+    const savedTheme = (localStorage.getItem('shopsafe-theme') || localStorage.getItem('shopam-theme')) as Theme;
     if (savedTheme) {
       setTheme(savedTheme);
     }
@@ -27,6 +27,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Update theme in localStorage and document
   useEffect(() => {
     if (mounted) {
+      localStorage.setItem('shopsafe-theme', theme);
       localStorage.setItem('shopam-theme', theme);
       document.documentElement.setAttribute('data-theme', theme);
       

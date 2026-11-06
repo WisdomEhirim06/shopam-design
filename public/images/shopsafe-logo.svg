@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 110" fill="none">
+  <!-- ICON -->
+  <g transform="translate(5, 5) scale(0.68)">
+    <!-- Motion lines -->
+    <rect x="15" y="52" width="34" height="9" rx="4.5" fill="#FA3728" />
+    <rect x="25" y="67" width="28" height="9" rx="4.5" fill="#FA3728" />
+
+    <!-- Shield with Checkmark -->
+    <path d="M 85 24 Q 102 18 120 24 Q 128 48 126 66 C 122 84 104 96 102.5 98 C 101 96 83 84 79 66 C 77 48 85 24 85 24 Z" fill="#FA3728" />
+    <path d="M 91 58 L 99 66 L 115 48" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+
+    <!-- Shopping Cart Frame -->
+    <path d="M 32 38 C 40 38 43 40 46 47 L 54 70 C 58 84 70 93 85 94 C 104 95 119 86 127 71 C 123 84 109 101 84 101 C 63 101 49 90 44 75 L 38 52 L 32 52 C 28.5 52 26 49.5 26 46 C 26 41.5 28.5 38 32 38 Z" fill="#031435" />
+
+    <!-- Wheels -->
+    <circle cx="65" cy="115" r="10.5" fill="#031435" />
+    <circle cx="106" cy="115" r="10.5" fill="#031435" />
+  </g>
+
+  <!-- TEXT -->
+  <!-- "ShopSafe" in deep navy + "NG" in orange -->
+  <text x="110" y="62" font-family="system-ui, -apple-system, 'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="39" letter-spacing="-0.5px">
+    <tspan fill="#031435">ShopSafe</tspan><tspan fill="#FA3728">NG</tspan>
+  </text>
+
+  <!-- Tagline: "Shop n Get." -->
+  <text x="112" y="84" font-family="system-ui, -apple-system, 'Plus Jakarta Sans', sans-serif" font-weight="600" font-size="14.5" fill="#031435" letter-spacing="0.2px">
+    Shop n Get.
+  </text>
+</svg>
+

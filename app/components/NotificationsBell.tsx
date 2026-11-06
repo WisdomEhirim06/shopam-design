@@ -115,7 +115,7 @@ export default function NotificationsBell() {
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] leading-snug text-slate-700">
-                        <span className="font-semibold text-ink">{item.actor?.username ?? 'ShopAm'}</span>
+                        <span className="font-semibold text-ink">{item.actor?.username ?? 'ShopSafeNG'}</span>
                         {': '}
                         {item.verb}
                       </p>
